@@ -3,7 +3,7 @@ import { apiClient, demoProducts, formatMoney, Product, Tender } from './api'
 import { fallbackTeamSnapshot, fetchTeamSnapshot, hasLiveActivityUrl, type AgentActivity, type TeamSnapshot } from './teamActivity'
 
 type View = 'today' | 'sell' | 'stock' | 'monitor'
-type Basket = Record<number, number>
+type Basket = Record<string, number>
 
 function Logo() {
   return <div className="brand-mark" aria-label="Street CEO logo"><span>SC</span></div>

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Annotated
@@ -129,6 +130,24 @@ class InMemoryStore:
         self.shops[shop.id] = _ShopRecord(shop=shop)
         return shop
 
+    def seed_demo_shop(self) -> UUID:
+        """Create the stable local catalogue used by the browser demo."""
+        shop_id = UUID("00000000-0000-0000-0000-000000000001")
+        if shop_id in self.shops:
+            return shop_id
+        shop = Shop(id=shop_id, name="Street CEO Demo Tuckshop", currency="USD", timezone="Africa/Harare")
+        record = _ShopRecord(shop=shop)
+        products = (
+            ("COKE-300", "Coca-Cola 300ml", 150, 18), ("BREAD-700", "Bread loaf", 180, 11),
+            ("SUGAR-1KG", "Sugar 1kg", 240, 7), ("MILK-500", "Milk 500ml", 130, 15),
+            ("CHIPS-100", "Potato chips", 100, 23), ("SOAP-175", "Bath soap", 220, 5),
+        )
+        for index, (sku, name, price, stock) in enumerate(products, start=1):
+            product = Product(id=UUID(f"00000000-0000-0000-0000-{index:012d}"), shop_id=shop_id, sku=sku, name=name, unit_price_cents=price, stock_qty=stock)
+            record.products[product.id] = product
+        self.shops[shop_id] = record
+        return shop_id
+
 
 def _payload_fingerprint(request: SaleCreate) -> str:
     canonical = json.dumps(request.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
@@ -150,6 +169,8 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         allow_headers=["*"],
     )
     app.state.store = store
+    if os.getenv("STREET_CEO_SEED_DEMO", "false").strip().lower() in {"1", "true", "yes", "on"} and isinstance(store, InMemoryStore):
+        app.state.demo_shop_id = str(store.seed_demo_shop())
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -182,13 +203,13 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         return record
 
     @app.get("/shops/{shop_id}", response_model=Shop)
-    def get_shop(record: Annotated[_ShopRecord, Depends(shop_scope)]) -> Shop:
+    def get_shop(record: _ShopRecord = Depends(shop_scope)) -> Shop:
         return record.shop
 
     @app.post("/shops/{shop_id}/products", response_model=Product, status_code=status.HTTP_201_CREATED)
     def create_product(
         request: ProductCreate,
-        record: Annotated[_ShopRecord, Depends(shop_scope)],
+        record: _ShopRecord = Depends(shop_scope),
     ) -> Product:
         if any(product.sku == request.sku for product in record.products.values()):
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="sku already exists")
@@ -200,13 +221,13 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         return product
 
     @app.get("/shops/{shop_id}/products", response_model=list[Product])
-    def list_products(record: Annotated[_ShopRecord, Depends(shop_scope)]) -> list[Product]:
+    def list_products(record: _ShopRecord = Depends(shop_scope)) -> list[Product]:
         return list(record.products.values())
 
     @app.post("/shops/{shop_id}/sales", response_model=Sale, status_code=status.HTTP_201_CREATED)
     def create_sale(
         request: SaleCreate,
-        record: Annotated[_ShopRecord, Depends(shop_scope)],
+        record: _ShopRecord = Depends(shop_scope),
         idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
     ) -> Sale:
         if not idempotency_key or not idempotency_key.strip():
