@@ -47,3 +47,16 @@ line-by-line generation stream.
 
 The service worker, IndexedDB, and sync queue are intentionally not included;
 those belong to Fambai's offline layer.
+
+## Voice input
+
+On the Sell screen, press and hold `Press and hold to talk` to capture a short
+command with the browser microphone. The UI walks through listening,
+transcribing, confirmation, success, and failure states; voice never posts a
+sale without confirmation. To connect Hwaro/Inzwi's server-side transcription
+boundary when it is available, set `VITE_VOICE_INPUT_URL` before starting Vite.
+The browser sends only a multipart audio blob to that configured URL and holds
+no provider key. If the URL is absent, permission is denied, or transcription
+fails, the UI exposes a text-command fallback. The confirmed voice command is
+passed to the existing manual sale review path; the existing Hwaro sale client
+remains the only business transaction writer.

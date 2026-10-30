@@ -67,3 +67,24 @@ shop scope, and atomic stock behavior.
   the same suite passed using the repository-local `.pytest-basetemp` base.
 - No HTTP transport smoke test was added because the existing host limitation
   affects synchronous ASGI transport; route handler and fixture coverage pass.
+
+## W3-VOICE-INPUT-001C checkpoint — 2026-10-30
+
+- Added backend-local transcript and audio request boundaries under
+  `services/api/` with shop scope and required `Idempotency-Key` handling.
+- Transcript requests use the existing server-side Meta Llama interpreter when
+  configured, return only normalized bounded intent/status data, and never post
+  a sale. Audio requests validate/fingerprint bounded base64 bytes and return a
+  safe unavailable status until STT is supplied.
+- Verified `python -m pytest services/api -q --basetemp .pytest-basetemp`:
+  18 passed.
+- Verified `python -m compileall -q services/api`: exit 0.
+
+## W3 voice limitations
+
+- No Meta credentials or live provider request were used; provider-unavailable
+  behavior is tested through the injected/no-credential path.
+- Audio transcription remains the Inzwi-owned provider boundary; the backend
+  accepts and fingerprints audio without storing it or posting a sale.
+- HTTP-level smoke testing remains for Chengetai because of the existing host
+  ASGI transport limitation.

@@ -2,6 +2,53 @@
 
 Handoff history initialized 2026-10-29.
 
+## 2026-10-30 — W3-VOICE-INPUT-001A: browser microphone capture UI
+
+### Assignment summary
+
+Add Runako-owned microphone/push-to-talk capture UX to `apps/web/`, keep
+provider credentials out of the browser, integrate through a bounded backend
+boundary when available, preserve text fallback, and never post an unconfirmed
+voice sale.
+
+### Files changed
+
+- `apps/web/src/VoiceCapture.tsx` — browser `MediaRecorder` capture with
+  press-and-hold pointer/keyboard controls and listening, transcribing,
+  confirmation, success, and failure states. Includes a text command fallback.
+- `apps/web/src/voice.ts` — optional `VITE_VOICE_INPUT_URL` multipart audio
+  client; no provider SDK or key; validates a `{ transcript }` response.
+- `apps/web/src/App.tsx` — mounts the voice capture panel on Sell and sends only
+  confirmed command text to the existing manual sale review notice; Hwaro's
+  existing sale client remains the transaction writer.
+- `apps/web/src/voice.css`, `apps/web/src/main.tsx` — voice UI styling/import.
+- `apps/web/README.md` — setup, boundary, fallback, and safety documentation.
+- Runako brain files — assignment status and evidence updated.
+
+### Verified results
+
+- `npm run build` passed: TypeScript completed and Vite transformed 24 modules,
+  emitting the production bundle.
+- Source inspection confirms browser capture uses `navigator.mediaDevices` and
+  `MediaRecorder`; no provider key, secret, or provider SDK is present.
+- Permission denial, unsupported browsers, missing configured voice endpoint,
+  empty recordings, non-2xx responses, and malformed transcripts reach a
+  visible failure state with text fallback.
+- A voice command is displayed for confirmation first; confirmation only
+  marks it ready for manual sale review. It does not directly post a sale.
+- The task stays within `apps/web/`; no backend, voice service, offline layer,
+  API contract, or other agent-owned path was changed.
+
+### Outstanding issues
+
+- Hwaro/Inzwi must provide and configure the actual transcription URL and
+  response contract before live transcription can be demonstrated. Until then,
+  the UI intentionally reports the unavailable provider boundary and keeps text
+  fallback available.
+- The generated tracked `apps/web/tsconfig.tsbuildinfo` may receive a
+  newline-only update during builds; a targeted cleanup was previously blocked
+  by the workspace Git index-lock permission.
+
 ## 2026-10-30 — W3-LIVE-TEAM-001B: live Team Monitor client
 
 ### Assignment summary

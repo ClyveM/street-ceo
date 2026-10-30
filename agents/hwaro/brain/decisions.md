@@ -37,3 +37,14 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
   markers and unsafe relative paths are omitted.
 - Use a bounded recent Git count (20 commits) and numeric test evidence parsed
   from handoff records rather than exposing raw repository documents.
+
+## 2026-10-30 — W3-VOICE-INPUT-001C
+
+- Split browser voice input into transcript and audio endpoints. Both are
+  shop-scoped and require an idempotency key; neither endpoint has permission
+  to create a sale.
+- Normalize provider output into a small API-owned intent model and force
+  `needs_confirmation=true` for every response. Provider failures collapse to
+  bounded error codes; raw model output and credentials never cross the API.
+- Keep audio intake JSON/base64 and bounded to 5 MiB until the voice-owned
+  speech-to-text adapter selects a provider. Do not store audio in the API.

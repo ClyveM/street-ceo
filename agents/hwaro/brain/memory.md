@@ -34,3 +34,15 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
 - The response exposes only structured summaries and timestamps. Disabled mode
   returns 404; a missing configured root returns `available=false` with a safe
   error string.
+
+## 2026-10-30 — W3-VOICE-INPUT-001C verified facts
+
+- `services/api/voice_boundary.py` defines bounded transcript/audio request and
+  response models, strict audio size/decode checks, and normalized intent copy.
+- `POST /api/v1/shops/{shop_id}/voice/transcript` calls the existing server-side
+  Meta Llama interpreter when available; it never calls the sale handler.
+- `POST /api/v1/shops/{shop_id}/voice/audio` accepts bounded base64 audio,
+  fingerprints it for replay, and reports `audio_transcription_unavailable`
+  without persisting bytes.
+- `LLAMA_API_KEY` and `LLAMA_MODEL` are read by the server-side adapter only;
+  no credentials are part of API request/response models.

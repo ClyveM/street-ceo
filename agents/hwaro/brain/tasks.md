@@ -64,3 +64,15 @@ Task assignments from Mutungamiri will appear here under an
 - `python -m compileall -q services/api` — **exit 0**.
 - Fixture tests cover board parsing, timestamps/test evidence, safe content
   omission, missing-root unavailable state, and disabled production behavior.
+
+### W3-VOICE-INPUT-001C evidence — 2026-10-30
+
+- Added `services/api/voice_boundary.py`, `services/api/VOICE_API_CONTRACT.md`,
+  and `services/api/test_voice_boundary.py`.
+- Updated `services/api/app.py` and `services/api/persistence.py` only within
+  backend ownership.
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **18 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- Tests cover bounded transcript intent, confirmation, no sale mutation,
+  transcript replay/conflict, audio validation/unavailable response, audio
+  replay/conflict, and disabled behavior.

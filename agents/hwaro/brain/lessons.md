@@ -30,3 +30,13 @@ No lessons recorded yet. Initialized 2026-10-29; no work performed.
 - A local monitor should be content-free and configuration-only: 404 when
   disabled, structured unavailable state for a missing root, and no request
   path input.
+
+## 2026-10-30 — W3-VOICE-INPUT-001C
+
+- FastAPI dependency functions must be defined before route decorators execute;
+  adding routes earlier in `create_app` caused import-time failure and was
+  caught by the focused suite.
+- Keep provider integration lazy and injectable: local tests stay credential-
+  free, while production reads Meta settings only inside the server process.
+- Idempotency applies to interpretation requests too: replay the bounded
+  response for an exact payload and reject changed payloads with `409`.

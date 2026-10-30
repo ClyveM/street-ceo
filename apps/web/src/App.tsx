@@ -101,6 +101,7 @@ function App() {
       {isDemo && <div className="demo-banner"><span>✦</span><span><strong>Demo mode</strong> · Showing starter catalogue data. Connect the API to use live shop data.</span></div>}
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
 
+      {view === 'sell' && <VoiceCapture onConfirmed={(command) => setNotice({ type: 'success', text: `Voice command confirmed for sale review: ${command}` })} />}
       {view === 'today' && <Today summary={shopSummary} onSell={() => setView('sell')} />}
       {view === 'sell' && <Sell products={filteredProducts} allProducts={products} query={query} setQuery={setQuery} basketItems={basketItems} total={total} itemCount={itemCount} tender={tender} setTender={setTender} addToBasket={addToBasket} removeFromBasket={removeFromBasket} submitSale={submitSale} isLoading={isLoading} />}
       {view === 'stock' && <Stock products={products} />}

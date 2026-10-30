@@ -21,6 +21,7 @@ class Settings:
     database_url: str | None = None
     repository_root: Path = Path.cwd()
     team_activity_enabled: bool = True
+    voice_enabled: bool = True
 
     def __post_init__(self) -> None:
         if self.store_backend not in {"memory", "postgres"}:
@@ -35,9 +36,11 @@ class Settings:
         repository_root = Path(os.getenv("STREET_CEO_REPOSITORY_ROOT", str(Path.cwd())))
         enabled_value = os.getenv("STREET_CEO_TEAM_ACTIVITY_ENABLED")
         enabled = (backend == "memory") if enabled_value is None else enabled_value.strip().lower() in {"1", "true", "yes", "on"}
+        voice_value = os.getenv("STREET_CEO_VOICE_ENABLED")
+        voice_enabled = (backend == "memory") if voice_value is None else voice_value.strip().lower() in {"1", "true", "yes", "on"}
         if backend not in {"memory", "postgres"}:
             raise ValueError("STREET_CEO_STORE must be 'memory' or 'postgres'")
-        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled)
+        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled, voice_enabled=voice_enabled)
 
 
 class Repository(Protocol):

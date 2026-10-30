@@ -15,6 +15,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from services.api.persistence import Settings, build_repository
 from services.api.team_activity import TeamActivity, build_team_activity
+from services.api.voice_boundary import (
+    VoiceAudioRequest,
+    VoiceResponse,
+    VoiceTranscriptRequest,
+    audio_fingerprint,
+    decode_audio,
+    normalize_intent,
+    request_fingerprint,
+)
 
 
 class ApiModel(BaseModel):
@@ -123,6 +132,7 @@ class _ShopRecord:
     shop: Shop
     products: dict[UUID, Product] = field(default_factory=dict)
     idempotent_sales: dict[str, tuple[str, Sale]] = field(default_factory=dict)
+    voice_requests: dict[str, tuple[str, VoiceResponse]] = field(default_factory=dict)
 
 
 class InMemoryStore:
@@ -162,7 +172,7 @@ def _payload_fingerprint(request: SaleCreate) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def create_app(store: InMemoryStore | None = None, settings: Settings | None = None) -> FastAPI:
+def create_app(store: InMemoryStore | None = None, settings: Settings | None = None, voice_interpreter: object | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     store = store or build_repository(settings)
     app = FastAPI(title="Street CEO API", version="0.1.0")
@@ -177,6 +187,7 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         allow_headers=["*"],
     )
     app.state.store = store
+    app.state.voice_interpreter = voice_interpreter
     if os.getenv("STREET_CEO_SEED_DEMO", "false").strip().lower() in {"1", "true", "yes", "on"} and isinstance(store, InMemoryStore):
         app.state.demo_shop_id = str(store.seed_demo_shop())
 
@@ -195,10 +206,6 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="team activity is disabled")
         return build_team_activity(settings.repository_root, settings.team_activity_enabled)
 
-    @app.post("/shops", response_model=Shop, status_code=status.HTTP_201_CREATED)
-    def create_shop(request: ShopCreate) -> Shop:
-        return store.create_shop(request)
-
     def shop_scope(
         shop_id: UUID,
         x_shop_id: Annotated[UUID | None, Header()] = None,
@@ -209,6 +216,82 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         if record is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="shop not found")
         return record
+
+    def voice_disabled() -> None:
+        if not settings.voice_enabled:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="voice input is disabled")
+
+    def voice_replay(record: _ShopRecord, key: str, fingerprint: str) -> VoiceResponse | None:
+        previous = record.voice_requests.get(key)
+        if previous is None:
+            return None
+        old_fingerprint, old_response = previous
+        if old_fingerprint != fingerprint:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="idempotency key payload mismatch")
+        return old_response
+
+    def require_voice_key(idempotency_key: str | None) -> str:
+        if not idempotency_key or not idempotency_key.strip():
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Idempotency-Key is required")
+        return idempotency_key.strip()
+
+    def get_interpreter() -> object:
+        if app.state.voice_interpreter is not None:
+            return app.state.voice_interpreter
+        try:
+            from services.voice.meta_llama import build_meta_llama_interpreter
+            return build_meta_llama_interpreter()
+        except Exception:
+            return None
+
+    @app.post("/api/v1/shops/{shop_id}/voice/transcript", response_model=VoiceResponse)
+    def interpret_voice_transcript(
+        request: VoiceTranscriptRequest,
+        record: _ShopRecord = Depends(shop_scope),
+        idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    ) -> VoiceResponse:
+        voice_disabled()
+        key = require_voice_key(idempotency_key)
+        transcript = request.transcript.strip()
+        fingerprint = request_fingerprint("transcript", {"transcript": transcript}).value
+        replay = voice_replay(record, key, fingerprint)
+        if replay is not None:
+            return replay
+        interpreter = get_interpreter()
+        if interpreter is None:
+            response = VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind="transcript", status="unavailable", transcript=transcript, error="provider_unavailable")
+        else:
+            try:
+                intent = normalize_intent(interpreter.interpret(transcript))
+                response = VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind="transcript", status="needs_confirmation" if intent.action == "record_sale" else "interpreted", transcript=transcript, intent=intent)
+            except Exception:
+                response = VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind="transcript", status="rejected", transcript=transcript, error="invalid_or_unsafe_provider_response")
+        record.voice_requests[key] = (fingerprint, response)
+        return response
+
+    @app.post("/api/v1/shops/{shop_id}/voice/audio", response_model=VoiceResponse)
+    def accept_voice_audio(
+        request: VoiceAudioRequest,
+        record: _ShopRecord = Depends(shop_scope),
+        idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    ) -> VoiceResponse:
+        voice_disabled()
+        key = require_voice_key(idempotency_key)
+        try:
+            decoded = decode_audio(request)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+        fingerprint = audio_fingerprint(request, decoded).value
+        replay = voice_replay(record, key, fingerprint)
+        if replay is not None:
+            return replay
+        response = VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind="audio", status="unavailable", error="audio_transcription_unavailable")
+        record.voice_requests[key] = (fingerprint, response)
+        return response
+
+    @app.post("/shops", response_model=Shop, status_code=status.HTTP_201_CREATED)
+    def create_shop(request: ShopCreate) -> Shop:
+        return store.create_shop(request)
 
     @app.get("/shops/{shop_id}", response_model=Shop)
     def get_shop(record: _ShopRecord = Depends(shop_scope)) -> Shop:

@@ -67,6 +67,18 @@ Task assignments from Mutungamiri will appear here under an
 - Build evidence: `npm run build` passed; Vite transformed 21 modules and
   emitted the production bundle under `apps/web/dist/`.
 
+### W3-VOICE-INPUT-001A — Browser microphone capture — complete 2026-10-30
+
+- Added `VoiceCapture` to the Sell surface with browser `MediaRecorder`,
+  push-to-talk controls, listening/transcribing/confirmation/success/failure
+  states, and a text command fallback.
+- Added `voiceClient` behind optional `VITE_VOICE_INPUT_URL`. No provider key
+  or provider SDK is shipped in the browser; no undocumented default endpoint
+  is assumed. The existing Hwaro sale client remains the only transaction
+  writer.
+- Build evidence: `npm run build` passed; Vite transformed 24 modules and
+  emitted the production bundle.
+
 ## Assigned by Mutungamiri
 
 ### TEST-MEMORY-001: summarize agreed React PWA frontend architecture — assigned 2026-10-29

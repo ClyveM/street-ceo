@@ -1,6 +1,6 @@
 # Runako — Current State
 
-Updated 2026-10-30 (W2-RUNAKO-001, 3D command room, and W3 live Team Monitor client).
+Updated 2026-10-30 (W2 shell, 3D/live Team Monitor, and W3 voice input).
 
 ## Status
 
@@ -9,6 +9,8 @@ mobile-first web shell, 2D Team Monitor, and CSS/HTML 3D command room are in
 `apps/web/`.
 W3 adds optional 10-second polling through `VITE_TEAM_ACTIVITY_URL`; both Team
 views consume the same typed snapshot and visibly report live/fallback state.
+W3 voice input adds provider-neutral browser capture on Sell with an explicit
+server boundary and text fallback.
 
 ## Work in progress
 
@@ -32,6 +34,10 @@ views consume the same typed snapshot and visibly report live/fallback state.
   10-second polling, live/fallback badge, last refresh, explicit endpoint error
   state, and shared snapshot props for 2D and 3D Team views. No private-stream
   semantics were added. `npm run build` passed with 21 modules transformed.
+- 2026-10-30 (W3-VOICE-INPUT-001A): added browser MediaRecorder push-to-talk
+  UI, clear capture/transcription/confirmation/failure states, optional
+  `VITE_VOICE_INPUT_URL` multipart boundary, no browser provider keys, and text
+  fallback. `npm run build` passed with 24 modules transformed.
 - 2026-10-29 (TEST-MEMORY-001): loaded AGENTS.md, role.md, all six brain files,
   docs/architecture.md, docs/product-requirements.md. Confirmed scope: exclusive
   writer of `apps/web/` except offline layer (Fambai) plus `agents/runako/`;

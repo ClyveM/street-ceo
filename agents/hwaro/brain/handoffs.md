@@ -120,3 +120,52 @@ timestamps, and numeric test evidence.
 Run the API in local mode with `STREET_CEO_REPOSITORY_ROOT` pointed at the
 workspace and have Runako poll `/api/v1/team/activity`. Keep any UI fallback
 clearly labeled when the endpoint is disabled or unavailable.
+
+## 2026-10-30 — Handoff: W3-VOICE-INPUT-001C
+
+### Assignment summary
+
+Defined and implemented the backend-local voice transport boundary for Runako:
+shop-scoped transcript interpretation and bounded audio intake, with server-side
+Meta credentials, normalized intent responses, idempotent replay, and no direct
+sale posting from model output.
+
+### Files changed
+
+- `services/api/voice_boundary.py`
+- `services/api/VOICE_API_CONTRACT.md`
+- `services/api/test_voice_boundary.py`
+- `services/api/app.py`
+- `services/api/persistence.py`
+
+### Tests and results
+
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **18 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- `git diff --check` — no whitespace errors.
+
+### Contract and safety
+
+- Transcript: `POST /api/v1/shops/{shop_id}/voice/transcript` with bounded text,
+  scope header, and `Idempotency-Key`.
+- Audio: `POST /api/v1/shops/{shop_id}/voice/audio` with bounded base64 audio,
+  media type, scope header, and `Idempotency-Key`.
+- Exact request replay returns the original response; changed payloads return
+  `409`. Missing/mismatched scope remains `403` through the shared dependency.
+- Sale intents return `needs_confirmation=true`; no endpoint mutates stock or
+  invokes the sale handler. Credentials remain server-side.
+
+### Outstanding issues
+
+- No live Meta credentials/provider request was available for smoke testing.
+- Audio-to-transcript provider integration remains Inzwi-owned; audio currently
+  returns a safe unavailable status and does not store bytes.
+- HTTP-level smoke testing remains for Chengetai due to the existing host ASGI
+  transport limitation.
+
+### Next-session instructions
+
+Runako should send transcript JSON or bounded audio JSON using the documented
+routes. Inzwi should connect its audio-to-transcript adapter to the transcript
+route; Ungwaru/Mutungamiri should review provider configuration and timeout
+policy before enabling live Meta calls.
