@@ -14,6 +14,8 @@ Updated 2026-10-30. Owner: Mutungamiri. Wave 2 active; persistence and first UI 
 | W2-INZWI-001 | Apo/Napo voice interaction adapter | Inzwi | `services/voice/` | W1-HWARO-001, W1-UNGWARU-001 | Foreground state machine and provider adapter mapping to sale endpoints, safe fallback tests |
 | W3-LIVE-TEAM-001 | Live local team activity feed | Hwaro + Runako | `services/api/` team monitor route and `apps/web/` polling UI | W2 handoffs | Team page polls repository-derived activity; mock fallback is clearly marked only when API unavailable |
 | W3-VOICE-INPUT-001 | Browser voice input MVP | Runako + Inzwi + Hwaro + Ungwaru | Mic capture, transcript boundary, Meta understanding, Apo/Napo confirmation | W2 voice/API contracts | One confirmed voice sale path with safe fallback and tests |
+| W4-SOCIAL-001 | Product-to-social update workflow | Runako + Ungwaru + Chiono | Shop image upload, product selection, 40-second brief, Meta-generated draft, editable export handoff | Live catalogue/product data | Drafted social update with explicit provider status |
+| W4-PROFIT-001 | Monthly profitability analysis | Verengai + Chiono + Ungwaru | Revenue, COGS, gross profit, margin, cash summary, and recommendations | Ledger and cost data | Reconciled month analysis with transparent inputs and assumptions |
 
 ## Done
 
