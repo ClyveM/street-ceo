@@ -20,5 +20,13 @@
 
 No tasks assigned yet. Initialized 2026-10-29.
 
+### W3-VOICE-INPUT-001D — Meta understanding review — assigned 2026-10-30
+
+- Review the Meta Llama transcript-to-intent prompt/schema for short noisy-shop
+  commands, injection resistance, and structured output failures.
+- Propose test utterances and acceptance criteria for Apo/Napo understanding.
+- Scope: `services/ai/` and Meta-owned docs/tests only; do not modify voice or API
+  implementation files.
+
 Task assignments from Mutungamiri will appear here under an
 "Assigned by Mutungamiri" section.

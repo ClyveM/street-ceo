@@ -18,6 +18,15 @@ is recorded in `current-state.md` and `lessons.md`.
 
 No tasks assigned yet. Initialized 2026-10-29.
 
+### W3-VOICE-INPUT-001C — Voice transport endpoint — assigned 2026-10-30
+
+- Define a backend-local voice transcript/audio request boundary for the web
+  microphone flow. Keep credentials server-side and return bounded status/error
+  shapes only.
+- Integrate the existing Meta Llama interpreter without allowing model output to
+  post a sale directly. Preserve shop scope and idempotency.
+- Scope: `services/api/` only, with API contract updates and tests.
+
 Task assignments from Mutungamiri will appear here under an
 "Assigned by Mutungamiri" section.
 

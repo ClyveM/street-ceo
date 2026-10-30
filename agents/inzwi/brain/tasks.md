@@ -2,6 +2,14 @@
 
 No tasks assigned yet. Initialized 2026-10-29.
 
+### W3-VOICE-INPUT-001B — Apo/Napo audio adapter — assigned 2026-10-30
+
+- Define the audio-to-transcript adapter contract and connect its transcript to
+  the existing `VoiceSession` state machine.
+- Preserve confirmation-before-posting, safe retry idempotency, and text/push-
+  to-talk fallback. Document the chosen speech-to-text seam and limitations.
+- Scope: `services/voice/` and voice-owned docs/tests only.
+
 Task assignments from Mutungamiri will appear here under an
 "Assigned by Mutungamiri" section.
 

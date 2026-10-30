@@ -13,6 +13,7 @@ Updated 2026-10-30. Owner: Mutungamiri. Wave 2 active; persistence and first UI 
 | W2-FAMBAI-001 | Offline queue and sync contract | Fambai | offline layer inside `apps/web/` only | W1-HWARO-001, W2-RUNAKO-001 states | IndexedDB queue, visible sync states, idempotent replay contract, tests |
 | W2-INZWI-001 | Apo/Napo voice interaction adapter | Inzwi | `services/voice/` | W1-HWARO-001, W1-UNGWARU-001 | Foreground state machine and provider adapter mapping to sale endpoints, safe fallback tests |
 | W3-LIVE-TEAM-001 | Live local team activity feed | Hwaro + Runako | `services/api/` team monitor route and `apps/web/` polling UI | W2 handoffs | Team page polls repository-derived activity; mock fallback is clearly marked only when API unavailable |
+| W3-VOICE-INPUT-001 | Browser voice input MVP | Runako + Inzwi + Hwaro + Ungwaru | Mic capture, transcript boundary, Meta understanding, Apo/Napo confirmation | W2 voice/API contracts | One confirmed voice sale path with safe fallback and tests |
 
 ## Done
 

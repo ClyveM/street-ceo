@@ -2,6 +2,15 @@
 
 No tasks assigned yet. Initialized 2026-10-29.
 
+### W3-VOICE-INPUT-001A — Browser microphone capture — assigned 2026-10-30
+
+- Add a visible microphone/push-to-talk control in the web app.
+- Capture audio with the browser MediaRecorder API and show listening, recorded,
+  transcribing, confirmation, success, and failure states.
+- Do not place provider keys in the browser. Hand off a bounded audio request to
+  Hwaro's backend contract; keep text fallback available.
+- Scope: `apps/web/` voice UI only. Add focused tests or a manual verification note.
+
 Task assignments from Mutungamiri will appear here under an
 "Assigned by Mutungamiri" section.
 
