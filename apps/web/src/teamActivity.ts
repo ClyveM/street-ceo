@@ -8,6 +8,10 @@ export type AgentActivity = {
   files: string[]
   lastActivity: string
   accent: string
+  progress?: string
+  nextAction?: string
+  blockers?: string
+  eta?: string
 }
 
 export type TeamStats = {
@@ -73,6 +77,10 @@ function parseRepositoryActivity(body: Record<string, unknown>): TeamSnapshot {
       name: name.charAt(0).toUpperCase() + name.slice(1), role: ROLE_LABELS[slug] ?? 'Project Team', status,
       task: typeof owned?.task === 'string' ? owned.task : 'Monitoring project activity', files,
       lastActivity: relativeTime(agent.last_activity_at), accent: fallbackTeamSnapshot.agents[index % fallbackTeamSnapshot.agents.length]?.accent ?? '#0b8f83',
+      progress: typeof agent.progress === 'string' ? agent.progress : undefined,
+      nextAction: typeof agent.next_action === 'string' ? agent.next_action : undefined,
+      blockers: typeof agent.blockers === 'string' ? agent.blockers : undefined,
+      eta: typeof agent.eta === 'string' ? agent.eta : undefined,
     }
   })
   const passed = evidence.reduce((sum, item) => sum + (typeof item.passed === 'number' ? item.passed : 0), 0)

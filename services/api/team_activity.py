@@ -36,6 +36,10 @@ class AgentActivity(TeamActivityModel):
     current_state_at: datetime | None = None
     handoff_at: datetime | None = None
     last_activity_at: datetime | None = None
+    progress: str | None = None
+    next_action: str | None = None
+    blockers: str | None = None
+    eta: str | None = None
 
 
 class TestEvidence(TeamActivityModel):
@@ -172,7 +176,15 @@ def _agent_snapshot(root: Path) -> tuple[list[AgentActivity], list[TestEvidence]
         handoff_at = _utc_timestamp(handoffs) if handoffs.is_file() else None
         last = max((stamp for stamp in (current_at, handoff_at) if stamp), default=None)
         if current_at or handoff_at:
-            agents.append(AgentActivity(agent=agent_dir.name, current_state_at=current_at, handoff_at=handoff_at, last_activity_at=last))
+            current_text = current.read_text(encoding="utf-8", errors="replace") if current.is_file() else ""
+            blockers = _state_section(current_text, "known blockers") or _state_section(current_text, "w2 known limitations")
+            agents.append(AgentActivity(
+                agent=agent_dir.name, current_state_at=current_at, handoff_at=handoff_at, last_activity_at=last,
+                progress=_state_section(current_text, "work in progress") or _state_section(current_text, "status"),
+                next_action=_state_section(current_text, "next immediate action") or _state_section(current_text, "next action"),
+                blockers=blockers,
+                eta=_state_value(current_text, ("eta", "expected finish", "expected completion")),
+            ))
         if handoffs.is_file():
             text = handoffs.read_text(encoding="utf-8", errors="replace")
             matches = _TEST_RESULT.findall(text)
@@ -180,6 +192,34 @@ def _agent_snapshot(root: Path) -> tuple[list[AgentActivity], list[TestEvidence]
                 passed = sum(int(match[0]) for match in matches)
                 evidence.append(TestEvidence(agent=agent_dir.name, passed=passed, source=f"agents/{agent_dir.name}/brain/handoffs.md", observed_at=handoff_at or _utc_timestamp(handoffs)))
     return agents, evidence
+
+
+def _state_section(text: str, heading: str) -> str | None:
+    lines = text.splitlines()
+    wanted = heading.lower()
+    for index, line in enumerate(lines):
+        if line.strip().lstrip("#").strip().lower() != wanted:
+            continue
+        values: list[str] = []
+        for candidate in lines[index + 1:]:
+            if candidate.strip().startswith("#"):
+                break
+            value = candidate.strip().lstrip("-*").strip()
+            if value:
+                values.append(value)
+        if values:
+            return " ".join(values)[:500]
+    return None
+
+
+def _state_value(text: str, labels: tuple[str, ...]) -> str | None:
+    for line in text.splitlines():
+        lowered = line.strip().lower()
+        if any(lowered.startswith(label + ":") for label in labels):
+            value = line.split(":", 1)[1].strip()
+            if value:
+                return value[:160]
+    return None
 
 
 def build_team_activity(root: Path, enabled: bool) -> TeamActivity:
