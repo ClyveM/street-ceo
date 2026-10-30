@@ -19,7 +19,8 @@ export type TeamStats = {
   warnings: string[]
 }
 
-export type TeamSnapshot = { agents: AgentActivity[]; stats: TeamStats }
+export type ActivityEvent = { kind: 'commit' | 'file' | 'task' | 'test'; actor: string; text: string; time: string; detail?: string }
+export type TeamSnapshot = { agents: AgentActivity[]; stats: TeamStats; activity: ActivityEvent[] }
 
 export const fallbackTeamSnapshot: TeamSnapshot = {
   agents: [
@@ -31,6 +32,7 @@ export const fallbackTeamSnapshot: TeamSnapshot = {
     { name: 'Inzwi', role: 'Voice AI', status: 'Working', task: 'Apo/Napo interaction adapter', files: ['services/voice/state_machine.py'], lastActivity: '6 min ago', accent: '#d49a29' },
   ],
   stats: { completedTasks: 7, activeTasks: 6, commits: 12, totalUnitTests: 40, passingUnitTests: 40, warnings: ['npm registry unavailable for frontend build', 'Fambai offline queue awaiting integration'] },
+  activity: [{ kind: 'task', actor: 'System', text: 'Waiting for live repository activity', time: 'Not connected', detail: 'Fallback snapshot' }],
 }
 
 const ACTIVITY_URL = import.meta.env.VITE_TEAM_ACTIVITY_URL ?? ''
@@ -74,6 +76,11 @@ function parseRepositoryActivity(body: Record<string, unknown>): TeamSnapshot {
     }
   })
   const passed = evidence.reduce((sum, item) => sum + (typeof item.passed === 'number' ? item.passed : 0), 0)
+  const activity: ActivityEvent[] = []
+  if (typeof commits.latest_subject === 'string') activity.push({ kind: 'commit', actor: 'Git', text: commits.latest_subject, time: 'Latest commit', detail: typeof commits.latest_hash === 'string' ? commits.latest_hash : undefined })
+  changedFiles.slice(0, 6).forEach((file) => activity.push({ kind: 'file', actor: 'Git', text: String(file.path ?? 'Changed file'), time: String(file.status ?? 'changed') }))
+  tasks.filter((task) => task.status === 'active').slice(0, 5).forEach((task) => activity.push({ kind: 'task', actor: String(task.owner ?? 'Team'), text: String(task.task ?? 'Active task'), time: 'Active task', detail: String(task.id ?? '') }))
+  evidence.slice(0, 4).forEach((item) => activity.push({ kind: 'test', actor: String(item.agent ?? 'QA'), text: `${String(item.passed ?? 0)} tests passed`, time: 'Recorded evidence', detail: String(item.source ?? '') }))
   return {
     agents: agentActivities,
     stats: {
@@ -83,6 +90,7 @@ function parseRepositoryActivity(body: Record<string, unknown>): TeamSnapshot {
       totalUnitTests: passed, passingUnitTests: passed,
       warnings: Array.isArray(body.warnings) ? body.warnings.filter((warning): warning is string => typeof warning === 'string') : [],
     },
+    activity,
   }
 }
 
@@ -99,7 +107,7 @@ export function parseTeamSnapshot(payload: unknown): TeamSnapshot {
   })
   const stats = body.stats
   if (!Array.isArray(stats.warnings) || stats.warnings.some((warning) => typeof warning !== 'string')) throw new Error('Invalid team activity warnings')
-  return { agents, stats: { completedTasks: requiredNumber(stats.completedTasks, 'stats.completedTasks'), activeTasks: requiredNumber(stats.activeTasks, 'stats.activeTasks'), commits: requiredNumber(stats.commits, 'stats.commits'), totalUnitTests: requiredNumber(stats.totalUnitTests, 'stats.totalUnitTests'), passingUnitTests: requiredNumber(stats.passingUnitTests, 'stats.passingUnitTests'), warnings: stats.warnings as string[] } }
+  return { agents, stats: { completedTasks: requiredNumber(stats.completedTasks, 'stats.completedTasks'), activeTasks: requiredNumber(stats.activeTasks, 'stats.activeTasks'), commits: requiredNumber(stats.commits, 'stats.commits'), totalUnitTests: requiredNumber(stats.totalUnitTests, 'stats.totalUnitTests'), passingUnitTests: requiredNumber(stats.passingUnitTests, 'stats.passingUnitTests'), warnings: stats.warnings as string[] }, activity: [] }
 }
 
 export async function fetchTeamSnapshot(signal?: AbortSignal): Promise<TeamSnapshot> {
