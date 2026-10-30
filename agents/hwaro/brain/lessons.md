@@ -40,3 +40,13 @@ No lessons recorded yet. Initialized 2026-10-29; no work performed.
   free, while production reads Meta settings only inside the server process.
 - Idempotency applies to interpretation requests too: replay the bounded
   response for an exact payload and reject changed payloads with `409`.
+
+## 2026-10-30 — PostgreSQL runtime slice
+
+- Keeping API-facing record objects while refreshing them from PostgreSQL makes
+  the migration incremental, but every mutating route must delegate explicitly
+  or it will accidentally mutate only a cache.
+- `FOR UPDATE` must cover every product row before any sale stock check; the
+  transaction then keeps validation and decrement atomic under concurrent sales.
+- Readiness should check the migration marker/table as well as `SELECT 1`; a
+  reachable but uninitialized database is not ready for traffic.

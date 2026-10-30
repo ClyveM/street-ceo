@@ -13,7 +13,14 @@ from uuid import UUID, uuid4
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from services.api.persistence import Settings, build_repository
+from services.api.persistence import (
+    RepositoryConflict,
+    RepositoryIdempotencyConflict,
+    RepositoryInsufficientStock,
+    RepositoryNotFound,
+    Settings,
+    build_repository,
+)
 from services.api.team_activity import TeamActivity, build_team_activity
 from services.api.voice_boundary import (
     VoiceAudioRequest,
@@ -148,6 +155,50 @@ class InMemoryStore:
         self.shops[shop.id] = _ShopRecord(shop=shop)
         return shop
 
+    def get_shop_record(self, shop_id: UUID) -> _ShopRecord:
+        record = self.shops.get(shop_id)
+        if record is None:
+            raise RepositoryNotFound("shop not found")
+        return record
+
+    def create_product(self, record: _ShopRecord, request: ProductCreate) -> Product:
+        if any(product.sku == request.sku for product in record.products.values()):
+            raise RepositoryConflict("sku already exists")
+        product = Product(
+            id=uuid4(), shop_id=record.shop.id, sku=request.sku, name=request.name,
+            unit_price_cents=request.unit_price_cents, stock_qty=request.opening_stock_qty,
+        )
+        record.products[product.id] = product
+        return product
+
+    def list_products(self, record: _ShopRecord) -> list[Product]:
+        return list(record.products.values())
+
+    def create_sale(self, record: _ShopRecord, request: SaleCreate, fingerprint: str, key: str) -> Sale:
+        previous = record.idempotent_sales.get(key)
+        if previous:
+            old_fingerprint, old_sale = previous
+            if old_fingerprint != fingerprint:
+                raise RepositoryIdempotencyConflict("idempotency key payload mismatch")
+            return old_sale
+        products: list[Product] = []
+        for line in request.lines:
+            product = record.products.get(line.product_id)
+            if product is None:
+                raise RepositoryNotFound("product not found")
+            if product.stock_qty < line.quantity:
+                raise RepositoryInsufficientStock("insufficient stock")
+            products.append(product)
+        total_cents = sum(product.unit_price_cents * line.quantity for product, line in zip(products, request.lines))
+        sale = Sale(
+            id=uuid4(), shop_id=record.shop.id, lines=request.lines, tender=request.tender,
+            total_cents=total_cents, created_at=datetime.now(timezone.utc),
+        )
+        for product, line in zip(products, request.lines):
+            product.stock_qty -= line.quantity
+        record.idempotent_sales[key] = (fingerprint, sale)
+        return sale
+
     def seed_demo_shop(self) -> UUID:
         """Create the stable local catalogue used by the browser demo."""
         shop_id = UUID("00000000-0000-0000-0000-000000000001")
@@ -197,7 +248,10 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
 
     @app.get("/readyz")
     def readyz() -> dict[str, str]:
-        store.check_ready()
+        try:
+            store.check_ready()
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
         return {"status": "ready"}
 
     @app.get("/api/v1/team/activity", response_model=TeamActivity)
@@ -212,10 +266,12 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
     ) -> _ShopRecord:
         if x_shop_id != shop_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="shop scope mismatch")
-        record = store.shops.get(shop_id)
-        if record is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="shop not found")
-        return record
+        try:
+            return store.get_shop_record(shop_id)
+        except RepositoryNotFound as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
 
     def voice_disabled() -> None:
         if not settings.voice_enabled:
@@ -291,7 +347,10 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
 
     @app.post("/shops", response_model=Shop, status_code=status.HTTP_201_CREATED)
     def create_shop(request: ShopCreate) -> Shop:
-        return store.create_shop(request)
+        try:
+            return store.create_shop(request)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
 
     @app.get("/shops/{shop_id}", response_model=Shop)
     def get_shop(record: _ShopRecord = Depends(shop_scope)) -> Shop:
@@ -316,18 +375,19 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
         request: ProductCreate,
         record: _ShopRecord = Depends(shop_scope),
     ) -> Product:
-        if any(product.sku == request.sku for product in record.products.values()):
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="sku already exists")
-        product = Product(
-            id=uuid4(), shop_id=record.shop.id, sku=request.sku, name=request.name,
-            unit_price_cents=request.unit_price_cents, stock_qty=request.opening_stock_qty,
-        )
-        record.products[product.id] = product
-        return product
+        try:
+            return store.create_product(record, request)
+        except RepositoryConflict as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
 
     @app.get("/shops/{shop_id}/products", response_model=list[Product])
     def list_products(record: _ShopRecord = Depends(shop_scope)) -> list[Product]:
-        return list(record.products.values())
+        try:
+            return store.list_products(record)
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
 
     @app.post("/shops/{shop_id}/sales", response_model=Sale, status_code=status.HTTP_201_CREATED)
     def create_sale(
@@ -339,31 +399,16 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Idempotency-Key is required")
         key = idempotency_key.strip()
         fingerprint = _payload_fingerprint(request)
-        previous = record.idempotent_sales.get(key)
-        if previous:
-            old_fingerprint, old_sale = previous
-            if old_fingerprint != fingerprint:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="idempotency key payload mismatch")
-            return old_sale
-
-        products: list[Product] = []
-        for line in request.lines:
-            product = record.products.get(line.product_id)
-            if product is None:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="product not found")
-            if product.stock_qty < line.quantity:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="insufficient stock")
-            products.append(product)
-
-        total_cents = sum(product.unit_price_cents * line.quantity for product, line in zip(products, request.lines))
-        sale = Sale(
-            id=uuid4(), shop_id=record.shop.id, lines=request.lines, tender=request.tender,
-            total_cents=total_cents, created_at=datetime.now(timezone.utc),
-        )
-        for product, line in zip(products, request.lines):
-            product.stock_qty -= line.quantity
-        record.idempotent_sales[key] = (fingerprint, sale)
-        return sale
+        try:
+            return store.create_sale(record, request, fingerprint, key)
+        except RepositoryIdempotencyConflict as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        except RepositoryNotFound as exc:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+        except RepositoryInsufficientStock as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
+        except RuntimeError as exc:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
 
     return app
 

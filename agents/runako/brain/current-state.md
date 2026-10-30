@@ -1,6 +1,6 @@
 # Runako — Current State
 
-Updated 2026-10-30 (W2 shell, 3D/live Team Monitor, and W3 voice input).
+Updated 2026-10-30 (W2 shell, Team Monitor, W3 voice input, and PWA/tools slice).
 
 ## Status
 
@@ -11,11 +11,13 @@ W3 adds optional 10-second polling through `VITE_TEAM_ACTIVITY_URL`; both Team
 views consume the same typed snapshot and visibly report live/fallback state.
 W3 voice input adds provider-neutral browser capture on Sell with an explicit
 server boundary and text fallback.
+The priority PWA slice adds install metadata/prompt and registration of the
+existing worker without changing Fambai's sale integration. Today now exposes
+Social Update and Profitability Analysis pending-state entry points.
 
 ## Work in progress
 
-- No application blocker. npm registry resolution (`ENOTFOUND`) prevented
-  installing dependencies, so `npm run build` could not execute in-session.
+- No application blocker. The latest production build completed successfully.
 
 ## Latest verified results
 
@@ -38,6 +40,10 @@ server boundary and text fallback.
   UI, clear capture/transcription/confirmation/failure states, optional
   `VITE_VOICE_INPUT_URL` multipart boundary, no browser provider keys, and text
   fallback. `npm run build` passed with 24 modules transformed.
+- 2026-10-30 (priority PWA/tools wave): added manifest/icon/install metadata,
+  install prompt, existing-worker registration, explicit offline wording, and
+  Social Update/Profitability Analysis UI entry points. `npm run build` passed
+  with 26 modules transformed and emitted manifest/icon assets.
 - 2026-10-29 (TEST-MEMORY-001): loaded AGENTS.md, role.md, all six brain files,
   docs/architecture.md, docs/product-requirements.md. Confirmed scope: exclusive
   writer of `apps/web/` except offline layer (Fambai) plus `agents/runako/`;

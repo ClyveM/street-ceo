@@ -46,3 +46,14 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
   without persisting bytes.
 - `LLAMA_API_KEY` and `LLAMA_MODEL` are read by the server-side adapter only;
   no credentials are part of API request/response models.
+
+## 2026-10-30 — PostgreSQL runtime slice verified facts
+
+- `build_repository(Settings(store_backend="postgres", ...))` selects
+  `PostgresRepository`; invalid non-PostgreSQL URLs fail instead of falling
+  back to memory.
+- Existing shop/product/sale routes delegate to repository methods. PostgreSQL
+  sale writes use one transaction and row locks, with idempotency persisted in
+  `sales`.
+- `GET /readyz` maps repository runtime failures to `503`; schema absence is
+  reported as not ready.

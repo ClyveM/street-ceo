@@ -79,6 +79,18 @@ Task assignments from Mutungamiri will appear here under an
 - Build evidence: `npm run build` passed; Vite transformed 24 modules and
   emitted the production bundle.
 
+### Priority wave — PWA install slice and tool entry points — complete 2026-10-30
+
+- Added `manifest.webmanifest`, branded `icon.svg`, install metadata, service
+  worker registration for the existing Fambai-owned worker, and an install
+  prompt. No worker sale integration was changed.
+- Added Today entry points and safe pending states for Social Update and
+  Profitability Analysis; no undocumented tool endpoints were invented.
+- Updated offline wording to describe local screen availability without
+  claiming sale queue/sync behavior in Runako-owned code.
+- Build evidence: `npm run build` passed; Vite transformed 26 modules and
+  emitted manifest/icon assets plus the production bundle.
+
 ## Assigned by Mutungamiri
 
 ### TEST-MEMORY-001: summarize agreed React PWA frontend architecture — assigned 2026-10-29

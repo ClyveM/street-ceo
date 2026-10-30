@@ -60,3 +60,17 @@ no provider key. If the URL is absent, permission is denied, or transcription
 fails, the UI exposes a text-command fallback. The confirmed voice command is
 passed to the existing manual sale review path; the existing Hwaro sale client
 remains the only business transaction writer.
+
+## PWA install and shop tools
+
+The app now includes `manifest.webmanifest`, branded install metadata, and a
+small install prompt when the browser exposes the install event. `src/main.tsx`
+registers the existing `/service-worker.js`; its caching, sale queue, and sync
+behavior remain owned by Fambai and were not changed here. Offline wording in
+the shell says that local screens remain available without promising sale
+sync.
+
+Today includes entry points for `Social Update` and `Profitability Analysis`.
+They currently show safe service-pending states and do not call undocumented
+endpoints. The eventual content/finance integrations can attach behind these
+UI boundaries.

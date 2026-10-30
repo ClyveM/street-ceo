@@ -2,6 +2,49 @@
 
 Handoff history initialized 2026-10-29.
 
+## 2026-10-30 — Priority wave: PWA install slice and tool entry points
+
+### Assignment summary
+
+Implement the installable PWA shell and add presentation entry points for
+Social Update and Profitability Analysis, while staying out of Fambai's
+service-worker sale integration.
+
+### Files changed
+
+- `apps/web/manifest.webmanifest`, `apps/web/icon.svg`, `apps/web/index.html` —
+  Street CEO install manifest, branded icon, and browser/mobile metadata.
+- `apps/web/src/main.tsx`, `apps/web/src/InstallPrompt.tsx`, `pwa.css` —
+  registration of the existing `/service-worker.js` and browser install prompt.
+- `apps/web/src/App.tsx`, `apps/web/src/pwa.css` — offline status wording and
+  Social Update/Profitability Analysis Today entry points with safe pending
+  states.
+- `apps/web/README.md` — install, ownership, offline wording, and tool notes.
+- Runako brain files — task/state/handoff evidence.
+
+### Verified results
+
+- `npm run build` passed: TypeScript completed and Vite transformed 26 modules,
+  emitting the production bundle plus manifest/icon assets.
+- Source inspection confirms `navigator.serviceWorker.register('/service-worker.js')`
+  is the only worker action added; `apps/web/service-worker.js` itself and its
+  sale/caching behavior were not modified by Runako.
+- Manifest includes Street CEO name, standalone display, portrait orientation,
+  theme/background colors, and the branded SVG icon.
+- Install prompt is event-driven and safely absent when the browser does not
+  offer installation. Social Update and Profitability Analysis are reachable
+  from Today and display service-pending states without invented API calls.
+- Offline copy says local screens remain available and avoids claiming sale
+  queue/sync behavior owned by Fambai.
+
+### Outstanding issues
+
+- Browser install prompts require HTTPS or localhost plus browser PWA
+  criteria; direct file-open previews cannot register a worker.
+- Fambai remains responsible for service-worker sale integration and sync.
+- Social/content and finance/analytics services still need to define their
+  contracts before the two UI entry points become functional tools.
+
 ## 2026-10-30 — W3-VOICE-INPUT-001A: browser microphone capture UI
 
 ### Assignment summary

@@ -88,3 +88,22 @@ shop scope, and atomic stock behavior.
   accepts and fingerprints audio without storing it or posting a sale.
 - HTTP-level smoke testing remains for Chengetai because of the existing host
   ASGI transport limitation.
+
+## PostgreSQL runtime slice checkpoint — 2026-10-30
+
+- `STREET_CEO_STORE=postgres` now builds `PostgresRepository` and routes shop,
+  product, and sale operations through database-backed methods; it never
+  selects `InMemoryStore` in PostgreSQL mode.
+- Sale writes use a PostgreSQL transaction with idempotency lookup, `FOR
+  UPDATE` product locks, stock validation, sale/line inserts, and stock
+  decrement. Shop/product reads are rebuilt from persisted rows.
+- `/readyz` returns `503` with a safe error for unavailable databases or an
+  unapplied schema. No live database service is available in this host.
+- Verified `python -m pytest services/api -q --basetemp .pytest-basetemp`:
+  20 passed; `python -m compileall -q services/api`: exit 0.
+
+## PostgreSQL runtime limitation
+
+- The live PostgreSQL migration and multi-process persistence smoke test remain
+  for Chengetai/deployment because no database service or credentials are
+  available locally.

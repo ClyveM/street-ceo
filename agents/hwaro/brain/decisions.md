@@ -48,3 +48,14 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
   bounded error codes; raw model output and credentials never cross the API.
 - Keep audio intake JSON/base64 and bounded to 5 MiB until the voice-owned
   speech-to-text adapter selects a provider. Do not store audio in the API.
+
+## 2026-10-30 — PostgreSQL runtime slice
+
+- Preserve the existing API record view as a per-request compatibility object,
+  but make PostgreSQL repository methods the source of truth when
+  `STREET_CEO_STORE=postgres`.
+- Use database uniqueness plus a transaction/row locks for sale idempotency
+  and stock safety. Repository/database failures surface as safe `503` errors;
+  no memory fallback is permitted.
+- Readiness checks both connectivity and the presence of the migrated
+  `public.shops` table so an unmigrated deployment cannot appear ready.

@@ -6,5 +6,13 @@ import './monitor.css'
 import './command-room.css'
 import './room-overrides.css'
 import './voice.css'
+import './pwa.css'
+import { InstallPrompt } from './InstallPrompt'
 
-createRoot(document.getElementById('root')!).render(<StrictMode><App /></StrictMode>)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/service-worker.js').catch(() => undefined)
+  })
+}
+
+createRoot(document.getElementById('root')!).render(<StrictMode><App /><InstallPrompt /></StrictMode>)

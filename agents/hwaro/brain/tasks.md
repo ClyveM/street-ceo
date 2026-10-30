@@ -76,3 +76,15 @@ Task assignments from Mutungamiri will appear here under an
 - Tests cover bounded transcript intent, confirmation, no sale mutation,
   transcript replay/conflict, audio validation/unavailable response, audio
   replay/conflict, and disabled behavior.
+
+### PostgreSQL runtime priority slice evidence — 2026-10-30
+
+- Expanded `services/api/persistence.py` with transactional PostgreSQL shop,
+  product, and sale operations; updated `services/api/app.py` to delegate all
+  existing mutating/read routes through the repository boundary.
+- Added `services/api/PERSISTENCE_RUNTIME.md` and no-service readiness tests in
+  `services/api/test_persistence.py`.
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **20 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- No PostgreSQL credentials or live service were present; no live migration
+  claim is made.

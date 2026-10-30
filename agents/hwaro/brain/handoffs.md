@@ -169,3 +169,40 @@ Runako should send transcript JSON or bounded audio JSON using the documented
 routes. Inzwi should connect its audio-to-transcript adapter to the transcript
 route; Ungwaru/Mutungamiri should review provider configuration and timeout
 policy before enabling live Meta calls.
+
+## 2026-10-30 — Handoff: PostgreSQL runtime priority slice
+
+### Assignment summary
+
+Activated PostgreSQL as the runtime repository when
+`STREET_CEO_STORE=postgres`. Existing shop, product, and sale routes now use
+transactional PostgreSQL operations while local mode remains explicitly
+in-memory. No fallback occurs when PostgreSQL is selected.
+
+### Files changed
+
+- `services/api/persistence.py`
+- `services/api/app.py`
+- `services/api/test_persistence.py`
+- `services/api/PERSISTENCE_RUNTIME.md`
+
+### Tests and results
+
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **20 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- `git diff --check` — no whitespace errors.
+
+### Runtime behavior
+
+- PostgreSQL shop/product reads and writes are repository-backed.
+- Sale transaction locks product rows, validates stock, persists sale lines,
+  decrements stock, and stores the scoped idempotency fingerprint atomically.
+- Invalid backend URLs do not downgrade to memory.
+- Unavailable/unmigrated PostgreSQL produces a safe readiness `503`.
+
+### Outstanding issues
+
+- A live PostgreSQL migration and multi-process/concurrency smoke test could
+  not run because no local database service or credentials were available.
+- Chengetai should apply `services/api/migrations/0001_initial.sql`, run the
+  deployed HTTP smoke tests, and verify concurrent sale behavior before release.
