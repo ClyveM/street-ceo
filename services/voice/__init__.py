@@ -9,6 +9,7 @@ from .state_machine import (
     VoiceEvent,
     VoiceSession,
 )
+from .meta_llama import MetaLlamaInterpreter, MetaLlamaSettings, build_meta_llama_interpreter
 
 __all__ = [
     "BasketLine",
@@ -18,4 +19,7 @@ __all__ = [
     "SessionState",
     "VoiceEvent",
     "VoiceSession",
+    "MetaLlamaInterpreter",
+    "MetaLlamaSettings",
+    "build_meta_llama_interpreter",
 ]
