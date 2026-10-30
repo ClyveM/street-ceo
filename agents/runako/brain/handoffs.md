@@ -2,6 +2,54 @@
 
 Handoff history initialized 2026-10-29.
 
+## 2026-10-30 — W3-LIVE-TEAM-001B: live Team Monitor client
+
+### Assignment summary
+
+Poll a configured local team activity endpoint, make live/fallback state
+visible, and feed the existing 2D Team Monitor and simulated 3D Command Room
+from one typed snapshot without implying private agent streams.
+
+### Files changed
+
+- `apps/web/src/teamActivity.ts` — shared `TeamSnapshot`/agent/stat types,
+  deterministic fallback dataset, strict response parsing, configured endpoint
+  fetcher, and Vite URL detection.
+- `apps/web/src/App.tsx` — 10-second polling lifecycle, abort/cleanup, visible
+  live/fallback/error/last-refresh metadata, and shared snapshot props for both
+  Team views.
+- `apps/web/src/room-overrides.css` — live/fallback badge and refresh/error
+  styling.
+- `apps/web/README.md` — `VITE_TEAM_ACTIVITY_URL`, polling cadence, response
+  shape, and fallback behavior.
+- Runako brain files — task/state/handoff evidence updated.
+
+### Verified results
+
+- Source inspection confirms `VITE_TEAM_ACTIVITY_URL` is the only live activity
+  configuration, initial fetch plus 10-second polling are implemented, and
+  abort/interval cleanup is present.
+- Invalid HTTP responses, malformed payloads, and fetch errors visibly switch
+  to the deterministic fallback with an error message and refresh timestamp.
+- No URL keeps the app working in clearly labeled `Local fallback` mode.
+- Both 2D and 3D views receive the same `TeamSnapshot` and activity metadata
+  from `App`; the 3D wall and desk planners therefore update with the same
+  live/fallback snapshot as the 2D lanes.
+- UI copy continues to describe task metadata as a simulation boundary and
+  explicitly rejects private thoughts and line-by-line generation claims.
+- `npm run build` passed after the change: Vite transformed 21 modules and
+  emitted the production bundle under `apps/web/dist/`.
+- The build left a newline-only change in tracked `apps/web/tsconfig.tsbuildinfo`.
+  A targeted Git restore was attempted but blocked by a workspace `.git/index.lock`
+  permission error; this generated metadata change has no source semantics.
+
+### Outstanding issues
+
+- Re-run `npm install` and `npm run build` once npm certificate/registry access
+  is repaired.
+- The local activity producer must expose the documented `TeamSnapshot` JSON
+  shape at the configured URL for live mode.
+
 ## 2026-10-30 — W2-RUNAKO-001 extension: dependency-free design preview
 
 ### Assignment summary

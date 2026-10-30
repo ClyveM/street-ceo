@@ -1,47 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { apiClient, demoProducts, formatMoney, Product, Tender } from './api'
+import { fallbackTeamSnapshot, fetchTeamSnapshot, hasLiveActivityUrl, type AgentActivity, type TeamSnapshot } from './teamActivity'
 
 type View = 'today' | 'sell' | 'stock' | 'monitor'
 type Basket = Record<number, number>
-
-type AgentActivity = {
-  name: string
-  role: string
-  status: 'Working' | 'Ready' | 'Review'
-  task: string
-  files: string[]
-  lastActivity: string
-  accent: string
-}
-
-type TeamStats = {
-  completedTasks: number
-  activeTasks: number
-  commits: number
-  totalUnitTests: number
-  passingUnitTests: number
-  warnings: string[]
-}
-
-type TeamSnapshot = { agents: AgentActivity[]; stats: TeamStats }
-
-const fallbackTeamSnapshot: TeamSnapshot = {
-  agents: [
-  { name: 'Hwaro', role: 'Backend & Database', status: 'Working', task: 'Persistence adapter', files: ['services/api/persistence.py', 'services/api/app.py'], lastActivity: '2 min ago', accent: '#8a6de9' },
-  { name: 'Verengai', role: 'Financial Systems', status: 'Review', task: 'MVP ledger and cash movements', files: ['services/finance/ledger.py'], lastActivity: '8 min ago', accent: '#e1843d' },
-  { name: 'Dura', role: 'Inventory & Retail', status: 'Working', task: 'Weighted-average stock costs', files: ['services/inventory/movements.py', 'services/inventory/test_movements.py'], lastActivity: '4 min ago', accent: '#d05c8b' },
-  { name: 'Runako', role: 'Frontend & UX', status: 'Working', task: 'Mobile-first web shell', files: ['apps/web/src/App.tsx', 'apps/web/src/styles.css', 'apps/web/src/api.ts'], lastActivity: 'Just now', accent: '#0b8f83' },
-  { name: 'Fambai', role: 'Mobile & Offline', status: 'Ready', task: 'Offline queue and sync contract', files: ['apps/web/service-worker.js'], lastActivity: '12 min ago', accent: '#3d91c7' },
-  { name: 'Inzwi', role: 'Voice AI', status: 'Working', task: 'Apo/Napo interaction adapter', files: ['services/voice/state_machine.py'], lastActivity: '6 min ago', accent: '#d49a29' },
-  ],
-  stats: { completedTasks: 7, activeTasks: 6, commits: 12, totalUnitTests: 40, passingUnitTests: 40, warnings: ['npm registry unavailable for frontend build', 'Fambai offline queue awaiting integration'] },
-}
-
-declare global { interface Window { __STREET_CEO_TEAM_ACTIVITY__?: TeamSnapshot } }
-
-function getTeamSnapshot(): TeamSnapshot {
-  return typeof window !== 'undefined' && window.__STREET_CEO_TEAM_ACTIVITY__ ? window.__STREET_CEO_TEAM_ACTIVITY__ : fallbackTeamSnapshot
-}
 
 function Logo() {
   return <div className="brand-mark" aria-label="Street CEO logo"><span>SC</span></div>
@@ -58,6 +20,10 @@ function App() {
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [online, setOnline] = useState(navigator.onLine)
   const [monitorMode, setMonitorMode] = useState<'2d' | '3d'>('2d')
+  const [teamSnapshot, setTeamSnapshot] = useState<TeamSnapshot>(fallbackTeamSnapshot)
+  const [teamSource, setTeamSource] = useState<'live' | 'fallback'>('fallback')
+  const [teamError, setTeamError] = useState<string | null>(hasLiveActivityUrl() ? 'Waiting for the local activity endpoint…' : null)
+  const [teamLastRefresh, setTeamLastRefresh] = useState<Date | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -72,6 +38,33 @@ function App() {
     window.addEventListener('online', update)
     window.addEventListener('offline', update)
     return () => { window.removeEventListener('online', update); window.removeEventListener('offline', update) }
+  }, [])
+
+  useEffect(() => {
+    if (!hasLiveActivityUrl()) return
+    let cancelled = false
+    let controller: AbortController | undefined
+    const poll = async () => {
+      controller?.abort()
+      controller = new AbortController()
+      try {
+        const snapshot = await fetchTeamSnapshot(controller.signal)
+        if (cancelled) return
+        setTeamSnapshot(snapshot)
+        setTeamSource('live')
+        setTeamError(null)
+        setTeamLastRefresh(new Date())
+      } catch (error) {
+        if (cancelled || (error instanceof DOMException && error.name === 'AbortError')) return
+        setTeamSnapshot(fallbackTeamSnapshot)
+        setTeamSource('fallback')
+        setTeamError(error instanceof Error ? error.message : 'Local activity endpoint unavailable')
+        setTeamLastRefresh(new Date())
+      }
+    }
+    void poll()
+    const timer = window.setInterval(() => { void poll() }, 10000)
+    return () => { cancelled = true; controller?.abort(); window.clearInterval(timer) }
   }, [])
 
   const filteredProducts = useMemo(() => products.filter((product) => product.name.toLowerCase().includes(query.toLowerCase()) || product.sku.toLowerCase().includes(query.toLowerCase())), [products, query])
@@ -107,7 +100,7 @@ function App() {
       {view === 'today' && <Today onSell={() => setView('sell')} />}
       {view === 'sell' && <Sell products={filteredProducts} allProducts={products} query={query} setQuery={setQuery} basketItems={basketItems} total={total} itemCount={itemCount} tender={tender} setTender={setTender} addToBasket={addToBasket} removeFromBasket={removeFromBasket} submitSale={submitSale} isLoading={isLoading} />}
       {view === 'stock' && <Stock products={products} />}
-      {view === 'monitor' && (monitorMode === '2d' ? <TeamMonitor onOpenCommandRoom={() => setMonitorMode('3d')} /> : <CommandRoom onBack={() => setMonitorMode('2d')} />)}
+      {view === 'monitor' && (monitorMode === '2d' ? <TeamMonitor snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onOpenCommandRoom={() => setMonitorMode('3d')} /> : <CommandRoom snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onBack={() => setMonitorMode('2d')} />)}
     </main>
 
     <nav className="bottom-nav" aria-label="Main navigation">{([['today', '⌂', 'Today'], ['sell', '+', 'Sell'], ['stock', '▥', 'Stock'], ['monitor', '◌', 'Team']] as const).map(([key, icon, label]) => <button key={key} className={view === key ? 'active' : ''} onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined}><span className="nav-icon">{icon}</span>{label}{key === 'sell' && itemCount > 0 && <b className="basket-badge">{itemCount}</b>}</button>)}</nav>
@@ -123,18 +116,21 @@ function ProductRow({ product, quantity, add, remove }: { product: Product; quan
 
 function Stock({ products }: { products: Product[] }) { return <><section className="section-head"><div><p className="eyebrow">INVENTORY</p><h2>Stock at a glance</h2></div><span className="counter">{products.length} products</span></section><div className="stock-summary"><div><span>ON HAND</span><strong>{products.reduce((sum, product) => sum + product.stock_qty, 0)}</strong><small>units across catalogue</small></div><div><span>LOW STOCK</span><strong className="orange">{products.filter((product) => product.stock_qty < 8).length}</strong><small>under 8 units</small></div></div><section className="stock-list">{products.map((product) => <div className="stock-row" key={product.id}><div className="product-avatar">{product.name.slice(0, 1)}</div><div><strong>{product.name}</strong><span>{product.sku}</span></div><b className={product.stock_qty < 8 ? 'low' : ''}>{product.stock_qty}<small> units</small></b></div>)}</section><div className="placeholder subtle"><strong>Stock actions coming next</strong><span>Purchases and adjustments will appear here as the inventory service lands.</span></div></> }
 
-function TeamMonitor({ onOpenCommandRoom }: { onOpenCommandRoom: () => void }) {
-  const snapshot = getTeamSnapshot()
+function ActivityBadge({ source, error, lastRefresh }: { source: 'live' | 'fallback'; error: string | null; lastRefresh: Date | null }) {
+  const refreshText = lastRefresh ? `Last refresh ${lastRefresh.toLocaleTimeString()}` : 'Not refreshed yet'
+  return <div className="activity-status"><span className={`activity-badge ${source}`}>{source === 'live' ? '● Live' : hasLiveActivityUrl() ? '○ Fallback' : '○ Local fallback'}</span><span className="refresh-time">{refreshText}</span>{error && <span className="activity-error">{error}</span>}</div>
+}
+
+function TeamMonitor({ snapshot, source, error, lastRefresh, onOpenCommandRoom }: { snapshot: TeamSnapshot; source: 'live' | 'fallback'; error: string | null; lastRefresh: Date | null; onOpenCommandRoom: () => void }) {
   const [line, setLine] = useState(0)
   const simulatedLines = ['→ coordinating the next handoff…', '  checking acceptance criteria', '  updating local activity model', '✓ ready for the next review']
   useEffect(() => { const timer = window.setInterval(() => setLine((current) => (current + 1) % simulatedLines.length), 2200); return () => window.clearInterval(timer) }, [])
-  return <><section className="section-head monitor-heading"><div><p className="eyebrow">LOCAL TEAM MONITOR</p><h2>Everyone in the loop.</h2><p className="muted">A quick view of the Street CEO build lanes.</p></div><div className="monitor-actions"><span className="live-chip"><i /> local</span><button className="room-button" onClick={onOpenCommandRoom}>Open 3D room →</button></div></section><div className="simulation-banner"><span>◎</span><span><strong>Simulation</strong> · Activity below is a local mock preview, not a real line-by-line subagent stream.</span></div><section className="team-lanes">{snapshot.agents.map((agent) => <article className="agent-lane" key={agent.name}><div className="agent-avatar" style={{ background: agent.accent }}>{agent.name.slice(0, 1)}</div><div className="agent-main"><div className="agent-title"><strong>{agent.name}</strong><span>{agent.role}</span><b className={`agent-status ${agent.status.toLowerCase()}`}>{agent.status}</b></div><p>{agent.task}</p><div className="agent-meta"><span>{agent.files.length} changed file{agent.files.length === 1 ? '' : 's'}</span><span>·</span><span>{agent.lastActivity}</span></div><details><summary>View changed files</summary><ul>{agent.files.map((file) => <li key={file}><code>{file}</code></li>)}</ul></details></div></article>)}</section><section className="activity-panel"><div className="activity-panel-head"><div><p className="eyebrow">CODE ACTIVITY PREVIEW</p><h3>Simulated handoff feed</h3></div><span className="sim-tag">SIMULATION</span></div><div className="terminal"><div className="terminal-dots"><i /><i /><i /><span>team-monitor.local</span></div><p><b>runako@street-ceo</b> <span>~</span> $ watch --demo-activity</p><p className="typing-line">{simulatedLines[line]}<em>▋</em></p><small>Local preview only · no live agent stream connected</small></div></section></>
+  return <><section className="section-head monitor-heading"><div><p className="eyebrow">LOCAL TEAM MONITOR</p><h2>Everyone in the loop.</h2><p className="muted">A quick view of the Street CEO build lanes.</p><ActivityBadge source={source} error={error} lastRefresh={lastRefresh} /></div><div className="monitor-actions"><button className="room-button" onClick={onOpenCommandRoom}>Open 3D room →</button></div></section><div className="simulation-banner"><span>◎</span><span><strong>Simulation boundary</strong> · The activity snapshot shows task metadata only, never private thoughts or a line-by-line generation stream.</span></div><section className="team-lanes">{snapshot.agents.map((agent) => <article className="agent-lane" key={agent.name}><div className="agent-avatar" style={{ background: agent.accent }}>{agent.name.slice(0, 1)}</div><div className="agent-main"><div className="agent-title"><strong>{agent.name}</strong><span>{agent.role}</span><b className={`agent-status ${agent.status.toLowerCase()}`}>{agent.status}</b></div><p>{agent.task}</p><div className="agent-meta"><span>{agent.files.length} changed file{agent.files.length === 1 ? '' : 's'}</span><span>·</span><span>{agent.lastActivity}</span></div><details><summary>View changed files</summary><ul>{agent.files.map((file) => <li key={file}><code>{file}</code></li>)}</ul></details></div></article>)}</section><section className="activity-panel"><div className="activity-panel-head"><div><p className="eyebrow">CODE ACTIVITY PREVIEW</p><h3>Simulated handoff feed</h3></div><span className="sim-tag">SIMULATION</span></div><div className="terminal"><div className="terminal-dots"><i /><i /><i /><span>team-monitor.local</span></div><p><b>runako@street-ceo</b> <span>~</span> $ watch --demo-activity</p><p className="typing-line">{simulatedLines[line]}<em>▋</em></p><small>Preview only · no live agent stream connected</small></div></section></>
 }
 
-function CommandRoom({ onBack }: { onBack: () => void }) {
-  const snapshot = getTeamSnapshot()
+function CommandRoom({ snapshot, source, error, lastRefresh, onBack }: { snapshot: TeamSnapshot; source: 'live' | 'fallback'; error: string | null; lastRefresh: Date | null; onBack: () => void }) {
   const desks = [{ name: 'Mutungamiri', role: 'CTO & Lead Orchestrator', status: 'Working' as const, task: 'Integrating the Wave 2 lanes', lastActivity: 'Just now', accent: '#102a43' }, ...snapshot.agents]
-  return <section className="command-room"><div className="room-heading"><div><p className="eyebrow">SIMULATED COMMAND ROOM</p><h2>Street CEO control floor.</h2><p className="muted">A CSS 3D preview of the team workspace. Scene and activity are simulated.</p></div><button className="room-button" onClick={onBack}>← Back to 2D monitor</button></div><div className="wall-board"><div className="wall-title"><span>STREET CEO / WAVE 2</span><b>SHARED WALL BOARD</b></div><div className="wall-stats"><div><strong>{snapshot.stats.completedTasks}</strong><span>COMPLETED TASKS</span></div><div><strong>{snapshot.stats.activeTasks}</strong><span>ACTIVE TASKS</span></div><div><strong>{snapshot.stats.commits}</strong><span>COMMITS</span></div><div><strong>{snapshot.stats.passingUnitTests}/{snapshot.stats.totalUnitTests}</strong><span>PASSING / TOTAL UNIT TESTS</span></div><div className="warning-stat"><strong>{snapshot.stats.warnings.length}</strong><span>WARNINGS / BLOCKED</span></div></div><div className="wall-warnings">{snapshot.stats.warnings.map((warning) => <span key={warning}>! {warning}</span>)}</div></div><div className="room-legend"><span>◎ simulated scene</span><span>◌ local activity snapshot</span></div><div className="room-stage" aria-label="Simulated 3D Street CEO command room"><div className="room-ceiling" /><div className="room-floor"><div className="cto-zone"><RoomDesk desk={desks[0]} isCto /></div><div className="specialist-zone">{desks.slice(1).map((desk) => <RoomDesk key={desk.name} desk={desk} />)}</div></div></div><div className="room-warning"><strong>Simulation only.</strong> This view uses local activity data when injected and a deterministic preview fallback. It does not expose private agent thoughts or a real line-by-line generation stream.</div></section>
+  return <section className="command-room"><div className="room-heading"><div><p className="eyebrow">SIMULATED COMMAND ROOM</p><h2>Street CEO control floor.</h2><p className="muted">A CSS 3D preview of the team workspace. Scene and activity are simulated.</p><ActivityBadge source={source} error={error} lastRefresh={lastRefresh} /></div><button className="room-button" onClick={onBack}>← Back to 2D monitor</button></div><div className="wall-board"><div className="wall-title"><span>STREET CEO / WAVE 2</span><b>SHARED WALL BOARD</b></div><div className="wall-stats"><div><strong>{snapshot.stats.completedTasks}</strong><span>COMPLETED TASKS</span></div><div><strong>{snapshot.stats.activeTasks}</strong><span>ACTIVE TASKS</span></div><div><strong>{snapshot.stats.commits}</strong><span>COMMITS</span></div><div><strong>{snapshot.stats.passingUnitTests}/{snapshot.stats.totalUnitTests}</strong><span>PASSING / TOTAL UNIT TESTS</span></div><div className="warning-stat"><strong>{snapshot.stats.warnings.length}</strong><span>WARNINGS / BLOCKED</span></div></div><div className="wall-warnings">{snapshot.stats.warnings.map((warning) => <span key={warning}>! {warning}</span>)}</div></div><div className="room-legend"><span>◎ simulated scene</span><span>◌ same activity snapshot as 2D</span></div><div className="room-stage" aria-label="Simulated 3D Street CEO command room"><div className="room-ceiling" /><div className="room-floor"><div className="cto-zone"><RoomDesk desk={desks[0]} isCto /></div><div className="specialist-zone">{desks.slice(1).map((desk) => <RoomDesk key={desk.name} desk={desk} />)}</div></div></div><div className="room-warning"><strong>Simulation only.</strong> This view uses the same task metadata snapshot as 2D. It does not expose private agent thoughts or a real line-by-line generation stream.</div></section>
 }
 
 function RoomDesk({ desk, isCto = false }: { desk: { name: string; role: string; status: AgentActivity['status']; task: string; lastActivity: string; accent: string }; isCto?: boolean }) { return <article className={`room-desk ${isCto ? 'cto-desk' : ''}`}><div className="desk-top" style={{ '--desk-accent': desk.accent } as CSSProperties}><div className="desk-monitor"><span>{isCto ? 'CEO' : desk.name.slice(0, 2).toUpperCase()}</span><i /></div><div className="desk-lamp" /><div className="desk-paper" /></div><div className="desk-label"><div className="room-avatar" style={{ background: desk.accent }}>{desk.name.slice(0, 1)}</div><div><strong>{desk.name}</strong><span>{desk.role}</span></div></div><div className="planner-card"><div><span className="planner-kicker">PLANNER / TASK</span><b className={`planner-status ${desk.status.toLowerCase()}`}>{desk.status}</b></div><strong>{desk.task}</strong><small>Last activity · {desk.lastActivity}</small></div></article> }

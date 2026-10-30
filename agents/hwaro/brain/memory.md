@@ -24,3 +24,13 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
   scope, non-negative stock, sale-line integrity, and scoped idempotency keys.
 - Local mode remains credential-free and the W1 API tests continue to pass.
 - Live PostgreSQL migration and domain CRUD adapter wiring are not yet verified.
+
+## 2026-10-30 — W3-LIVE-TEAM-001A verified facts
+
+- `GET /api/v1/team/activity` is implemented in `services/api/app.py` and
+  `services/api/team_activity.py`.
+- `STREET_CEO_REPOSITORY_ROOT` configures the read-only source; team activity
+  defaults on for local memory mode and off for PostgreSQL mode.
+- The response exposes only structured summaries and timestamps. Disabled mode
+  returns 404; a missing configured root returns `available=false` with a safe
+  error string.

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Protocol
 
 
@@ -18,6 +19,8 @@ class Settings:
 
     store_backend: str = "memory"
     database_url: str | None = None
+    repository_root: Path = Path.cwd()
+    team_activity_enabled: bool = True
 
     def __post_init__(self) -> None:
         if self.store_backend not in {"memory", "postgres"}:
@@ -29,9 +32,12 @@ class Settings:
     def from_env(cls) -> "Settings":
         backend = os.getenv("STREET_CEO_STORE", "memory").strip().lower()
         database_url = os.getenv("STREET_CEO_DATABASE_URL")
+        repository_root = Path(os.getenv("STREET_CEO_REPOSITORY_ROOT", str(Path.cwd())))
+        enabled_value = os.getenv("STREET_CEO_TEAM_ACTIVITY_ENABLED")
+        enabled = (backend == "memory") if enabled_value is None else enabled_value.strip().lower() in {"1", "true", "yes", "on"}
         if backend not in {"memory", "postgres"}:
             raise ValueError("STREET_CEO_STORE must be 'memory' or 'postgres'")
-        return cls(store_backend=backend, database_url=database_url)
+        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled)
 
 
 class Repository(Protocol):

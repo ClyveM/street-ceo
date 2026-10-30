@@ -1,12 +1,14 @@
 # Runako — Current State
 
-Updated 2026-10-30 (W2-RUNAKO-001 implementation, Team Monitor, and 3D command room extension).
+Updated 2026-10-30 (W2-RUNAKO-001, 3D command room, and W3 live Team Monitor client).
 
 ## Status
 
-W2-RUNAKO-001 implementation complete pending dependency-backed build. The
+W2-RUNAKO-001 implementation complete. The
 mobile-first web shell, 2D Team Monitor, and CSS/HTML 3D command room are in
 `apps/web/`.
+W3 adds optional 10-second polling through `VITE_TEAM_ACTIVITY_URL`; both Team
+views consume the same typed snapshot and visibly report live/fallback state.
 
 ## Work in progress
 
@@ -26,6 +28,10 @@ mobile-first web shell, 2D Team Monitor, and CSS/HTML 3D command room are in
   deterministic fallback activity, and optional `window`-injected local
   activity snapshot. Kept 2D monitor as the default/fallback and disclosed
   simulation boundaries in the UI and README.
+- 2026-10-30 (W3-LIVE-TEAM-001B): added typed activity response validation,
+  10-second polling, live/fallback badge, last refresh, explicit endpoint error
+  state, and shared snapshot props for 2D and 3D Team views. No private-stream
+  semantics were added. `npm run build` passed with 21 modules transformed.
 - 2026-10-29 (TEST-MEMORY-001): loaded AGENTS.md, role.md, all six brain files,
   docs/architecture.md, docs/product-requirements.md. Confirmed scope: exclusive
   writer of `apps/web/` except offline layer (Fambai) plus `agents/runako/`;
@@ -36,11 +42,11 @@ mobile-first web shell, 2D Team Monitor, and CSS/HTML 3D command room are in
 
 ## Known blockers
 
-- Production build verification is blocked until npm registry access is
-  available (`ENOTFOUND` while installing declared dependencies). UI work is
-  otherwise within scope and uses the documented Hwaro API contract.
+- No active implementation blocker. The successful build generated a tracked
+  `tsconfig.tsbuildinfo` newline-only change because the workspace Git index
+  lock could not be acquired during cleanup; it has no source semantics.
 
 ## Next immediate action
 
-Next action: rerun `npm install` and `npm run build` when registry access is
-available; then hand off to Chengetai/Fambai for quality and offline-layer work.
+Next action: hand off to Chengetai/Fambai for quality and offline-layer work;
+the live activity producer still needs to expose the documented JSON shape.

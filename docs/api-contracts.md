@@ -23,6 +23,22 @@ rely on the documented request/response rules, not the storage choice.
 `GET /healthz` returns `{"status":"ok"}`. `GET /readyz` returns
 `{"status":"ready"}` when the API dependencies are available.
 
+## Local team activity
+
+`GET /api/v1/team/activity` is a read-only, local-development-only snapshot
+for the Team page. It is enabled by `STREET_CEO_TEAM_ACTIVITY_ENABLED` and
+reads only the configured `STREET_CEO_REPOSITORY_ROOT` (defaulting to the
+working repository in local mode). The response includes task IDs/statuses
+from `tasks/master-board.md`, a Git commit count and latest short subject,
+safe changed-file summaries, agent brain-file timestamps, and numeric test
+evidence parsed from handoffs. It never returns file contents, repository
+paths, secrets, private prompts, or arbitrary request-supplied paths.
+
+The response has `{enabled, available, generated_at, tasks, commits,
+changed_files, agents, test_evidence, warnings, error}`. When disabled the
+route returns `404`; when the configured root is absent it returns a clear
+unavailable state. Neither case affects production API behavior.
+
 ## Shops
 
 `POST /shops` accepts `{name, currency?, timezone?}` and returns `201` with

@@ -49,3 +49,21 @@ Chengetai should run HTTP-level smoke/security checks and a live PostgreSQL
 migration/readiness check before production wiring. The next Hwaro slice should
 wire domain CRUD through the repository protocol while preserving W1 replay,
 shop scope, and atomic stock behavior.
+
+## W3-LIVE-TEAM-001A checkpoint — 2026-10-30
+
+- Added local-only `GET /api/v1/team/activity` with configurable repository
+  root and production-safe disabled behavior.
+- Snapshot derives task statuses, recent Git commit count, safe changed-file
+  summaries, agent brain timestamps, and numeric test evidence without exposing
+  file contents, secrets, prompts, or arbitrary request paths.
+- Verified `python -m pytest services/api -q --basetemp .pytest-basetemp`:
+  12 passed.
+- Verified `python -m compileall -q services/api`: exit 0.
+
+## W3 known limitations
+
+- This host's default pytest temporary allocator failed before fixture setup;
+  the same suite passed using the repository-local `.pytest-basetemp` base.
+- No HTTP transport smoke test was added because the existing host limitation
+  affects synchronous ASGI transport; route handler and fixture coverage pass.

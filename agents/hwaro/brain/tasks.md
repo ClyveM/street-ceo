@@ -29,6 +29,13 @@ Task assignments from Mutungamiri will appear here under an
 - Do not implement finance, inventory, UI, offline, or voice-owned code.
 - Acceptance: persistence boundary explicit, no secrets committed, tests cover replay and shop scope, and handoff states what still requires a live PostgreSQL service.
 
+### W3-LIVE-TEAM-001A — Local team activity API — active 2026-10-30
+
+- Scope: `services/api/` only.
+- Add a local-development-only `GET /api/v1/team/activity` route that derives a safe activity snapshot from the configured repository root: master-board task statuses, recent Git commit count, changed-file summaries, agent current-state/handoff timestamps, and available test evidence. Keep the route read-only and never expose secrets, file contents, private prompts, or arbitrary filesystem paths.
+- Make the repository root configurable and test with a temporary fixture; return a clear unavailable/error state when the local root is absent. Preserve production behavior when the monitor is disabled.
+- Acceptance: response schema is documented, tests cover parsing and unavailable state, and the frontend can poll it without authentication in local mode only.
+
 #### Evidence checkpoint — 2026-10-30
 
 - Added `services/api/persistence.py`, `services/api/migrations/0001_initial.sql`,
@@ -38,3 +45,13 @@ Task assignments from Mutungamiri will appear here under an
 - `python -m pytest services/api -q` — **9 passed**.
 - `python -m compileall -q services/api` — **exit 0**.
 - No secrets committed. Live PostgreSQL execution remains outstanding.
+
+### W3-LIVE-TEAM-001A evidence — 2026-10-30
+
+- Added `services/api/team_activity.py` and `services/api/test_team_activity.py`.
+- Updated `services/api/app.py`, `services/api/persistence.py`, and
+  `docs/api-contracts.md` within scope.
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **12 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- Fixture tests cover board parsing, timestamps/test evidence, safe content
+  omission, missing-root unavailable state, and disabled production behavior.

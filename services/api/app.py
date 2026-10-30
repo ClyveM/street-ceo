@@ -10,8 +10,10 @@ from typing import Annotated
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from services.api.persistence import Settings, build_repository
+from services.api.team_activity import TeamActivity, build_team_activity
 
 
 class ApiModel(BaseModel):
@@ -134,8 +136,19 @@ def _payload_fingerprint(request: SaleCreate) -> str:
 
 
 def create_app(store: InMemoryStore | None = None, settings: Settings | None = None) -> FastAPI:
+    settings = settings or Settings.from_env()
     store = store or build_repository(settings)
     app = FastAPI(title="Street CEO API", version="0.1.0")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://192.168.10.213:5173",
+        ],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["*"],
+    )
     app.state.store = store
 
     @app.get("/healthz")
@@ -146,6 +159,12 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
     def readyz() -> dict[str, str]:
         store.check_ready()
         return {"status": "ready"}
+
+    @app.get("/api/v1/team/activity", response_model=TeamActivity)
+    def team_activity() -> TeamActivity:
+        if not settings.team_activity_enabled:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="team activity is disabled")
+        return build_team_activity(settings.repository_root, settings.team_activity_enabled)
 
     @app.post("/shops", response_model=Shop, status_code=status.HTTP_201_CREATED)
     def create_shop(request: ShopCreate) -> Shop:

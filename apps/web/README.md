@@ -36,10 +36,14 @@ shared wall board with task, commit, unit-test, and warning stats. Choose
 `Back to 2D monitor` at any time to use the original 2D view as a fallback.
 
 The preview uses the deterministic local dataset in `src/App.tsx`. A host that
-has real local activity can inject a `window.__STREET_CEO_TEAM_ACTIVITY__`
-snapshot before the app loads; the UI uses that snapshot when present and falls
-back to the deterministic dataset otherwise. Neither source exposes private
-agent thoughts or a line-by-line generation stream.
+has real local activity can set `VITE_TEAM_ACTIVITY_URL` before starting Vite.
+The React Team page polls that JSON endpoint every 10 seconds and feeds the
+same typed snapshot to both the 2D monitor and simulated 3D room. Without the
+variable, or when the endpoint is unavailable or malformed, the UI shows a
+clearly labelled local fallback and the refresh/error state. The expected
+response is `{ agents: [...], stats: {...} }`, matching the `TeamSnapshot` type
+in `src/teamActivity.ts`. Neither source exposes private agent thoughts or a
+line-by-line generation stream.
 
 The service worker, IndexedDB, and sync queue are intentionally not included;
 those belong to Fambai's offline layer.

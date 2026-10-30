@@ -26,3 +26,14 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
   work remains approval-gated.
 - Keep PostgreSQL connection/readiness wiring separate from the W1 endpoint
   handler contract until the full domain repository adapter is implemented.
+
+## 2026-10-30 — W3-LIVE-TEAM-001A
+
+- Enable team activity by default only for the credential-free local memory
+  mode; PostgreSQL mode defaults it off unless explicitly enabled. Disabled
+  production requests return `404`.
+- Accept repository root only through server configuration, never through a
+  request parameter. Summaries are allowlisted and content-free; private path
+  markers and unsafe relative paths are omitted.
+- Use a bounded recent Git count (20 commits) and numeric test evidence parsed
+  from handoff records rather than exposing raw repository documents.

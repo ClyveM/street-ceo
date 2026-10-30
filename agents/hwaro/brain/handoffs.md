@@ -76,3 +76,47 @@ local API behavior.
 Chengetai should run the HTTP-level smoke/security checks and a live PostgreSQL
 startup/migration check. Hwaro should then wire CRUD and transactional sale
 operations through the repository seam, preserving the documented W1 contract.
+
+## 2026-10-30 — Handoff: W3-LIVE-TEAM-001A
+
+### Assignment summary
+
+Added the local-development-only Team activity API route. It reads a configured
+repository root and returns safe structured summaries for the Team page: board
+statuses, bounded recent Git activity, changed-file summaries, agent brain-file
+timestamps, and numeric test evidence.
+
+### Files changed
+
+- `services/api/team_activity.py`
+- `services/api/test_team_activity.py`
+- `services/api/app.py`
+- `services/api/persistence.py`
+- `docs/api-contracts.md`
+
+### Tests and results
+
+- `python -m pytest services/api -q --basetemp .pytest-basetemp` — **12 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- `git diff --check` — no whitespace errors.
+
+### Safety and behavior
+
+- No request-supplied paths, file contents, private prompts, secrets, or
+  credentials are returned.
+- Local memory mode enables the monitor by default; PostgreSQL mode disables it
+  by default. Disabled requests return `404`.
+- Missing configured roots return a structured unavailable response.
+
+### Outstanding issues
+
+- The default pytest temp allocator failed before setup on this host; the
+  repository-local basetemp run passed all 12 tests.
+- HTTP-level smoke testing remains for Chengetai because of the existing host
+  ASGI transport limitation.
+
+### Next-session instructions
+
+Run the API in local mode with `STREET_CEO_REPOSITORY_ROOT` pointed at the
+workspace and have Runako poll `/api/v1/team/activity`. Keep any UI fallback
+clearly labeled when the endpoint is disabled or unavailable.

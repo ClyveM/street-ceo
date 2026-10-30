@@ -44,6 +44,20 @@ Task assignments from Mutungamiri will appear here under an
 - Display task/status/last activity per desk and board metrics for completed/active tasks, commits, total tests, passing tests, and warnings. Use real repository-derived values when available and deterministic preview data otherwise.
 - Keep the existing 2D Team Monitor available as a fallback. Label the 3D room and simulated code activity clearly; never imply private agent thoughts or a true hidden-generation stream.
 
+### W3-LIVE-TEAM-001B — Live Team Monitor client — complete 2026-10-30
+
+- Scope: `apps/web/` excluding Fambai's offline layer.
+- Replace the hardcoded Team Monitor snapshot with polling of the local activity endpoint when `VITE_TEAM_ACTIVITY_URL` is configured. Display a live/local badge, last refresh time, and an explicit unavailable state; use the current deterministic snapshot only as a clearly labelled fallback.
+- Keep the 2D monitor and simulated 3D room, but feed both from the same typed live snapshot. Do not claim live agent private streams or line-by-line generation.
+- Acceptance: polling updates agents/stats, endpoint failure falls back visibly, no API configuration keeps demo preview working, and the build passes.
+
+- Implementation evidence: `src/teamActivity.ts` owns the typed snapshot,
+  response validation, deterministic fallback, and endpoint client. `App.tsx`
+  polls every 10 seconds and passes one snapshot/meta state to both Team views.
+  Live/fallback status, last refresh, and endpoint errors are visible.
+- Build evidence: `npm run build` passed; Vite transformed 21 modules and
+  emitted the production bundle under `apps/web/dist/`.
+
 ## Assigned by Mutungamiri
 
 ### TEST-MEMORY-001: summarize agreed React PWA frontend architecture — assigned 2026-10-29
