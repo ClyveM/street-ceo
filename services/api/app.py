@@ -1,9 +1,4 @@
-"""Minimal Street CEO API foundation.
-
-The in-memory store is deliberately a development boundary for Wave 1. Its
-public schemas and transaction rules are stable so a PostgreSQL repository can
-replace it without changing clients.
-"""
+"""Street CEO API foundation with an explicit persistence boundary."""
 
 from __future__ import annotations
 
@@ -16,6 +11,7 @@ from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from services.api.persistence import Settings, build_repository
 
 
 class ApiModel(BaseModel):
@@ -122,6 +118,10 @@ class InMemoryStore:
     def __init__(self) -> None:
         self.shops: dict[UUID, _ShopRecord] = {}
 
+    def check_ready(self) -> None:
+        """Local mode has no external dependency to probe."""
+        return None
+
     def create_shop(self, request: ShopCreate) -> Shop:
         shop = Shop(id=uuid4(), **request.model_dump())
         self.shops[shop.id] = _ShopRecord(shop=shop)
@@ -133,8 +133,8 @@ def _payload_fingerprint(request: SaleCreate) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
-def create_app(store: InMemoryStore | None = None) -> FastAPI:
-    store = store or InMemoryStore()
+def create_app(store: InMemoryStore | None = None, settings: Settings | None = None) -> FastAPI:
+    store = store or build_repository(settings)
     app = FastAPI(title="Street CEO API", version="0.1.0")
     app.state.store = store
 
@@ -144,6 +144,7 @@ def create_app(store: InMemoryStore | None = None) -> FastAPI:
 
     @app.get("/readyz")
     def readyz() -> dict[str, str]:
+        store.check_ready()
         return {"status": "ready"}
 
     @app.post("/shops", response_model=Shop, status_code=status.HTTP_201_CREATED)

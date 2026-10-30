@@ -24,7 +24,28 @@ W1-HWARO-001 implementation complete within the assigned backend/API scope.
   tests therefore exercise the actual endpoint handlers and store boundary
   directly. A normal deployed HTTP smoke test remains for Chengetai.
 
+## W2-HWARO-001 checkpoint — 2026-10-30
+
+- Added `services/api/persistence.py` with explicit `memory`/`postgres` settings,
+  a repository readiness seam, and a PostgreSQL adapter connection boundary.
+- Added additive schema starting point at
+  `services/api/migrations/0001_initial.sql` with shop scope, product SKU
+  uniqueness, non-negative stock, sale lines, and scoped idempotency keys.
+- Updated API contract documentation and kept local mode credential-free.
+- Verified `python -m pytest services/api -q`: 9 passed.
+- Verified `python -m compileall -q services/api`: exit 0.
+
+## Known W2 limitations
+
+- No live PostgreSQL service or credentials were available; connection probing
+  and migration execution remain for Chengetai/deployment verification.
+- The W2 adapter currently establishes the PostgreSQL boundary and readiness
+  check; domain CRUD wiring remains a follow-up slice and must not silently
+  fall back to memory.
+
 ## Next immediate action
 
-Next: Chengetai should run HTTP-level smoke/security checks, and PostgreSQL
-persistence can replace the in-memory repository while preserving the contract.
+Chengetai should run HTTP-level smoke/security checks and a live PostgreSQL
+migration/readiness check before production wiring. The next Hwaro slice should
+wire domain CRUD through the repository protocol while preserving W1 replay,
+shop scope, and atomic stock behavior.

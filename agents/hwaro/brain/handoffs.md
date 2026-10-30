@@ -37,3 +37,42 @@ negative stock.
 Chengetai should run HTTP-level and security checks. Dura/Verengai/Fambai can
 consume the documented contracts; any breaking changes must update
 `docs/api-contracts.md` first and preserve idempotency and atomic stock rules.
+
+## 2026-10-30 — Handoff: W2-HWARO-001
+
+### Assignment summary
+
+Replaced the documented in-memory-only limitation with an explicit persistence
+configuration/repository boundary, PostgreSQL readiness adapter, additive
+schema/migration starting point, and regression tests while preserving the W1
+local API behavior.
+
+### Files changed
+
+- `services/api/persistence.py`
+- `services/api/migrations/0001_initial.sql`
+- `services/api/test_persistence.py`
+- `services/api/app.py`
+- `services/api/requirements.txt`
+- `docs/api-contracts.md`
+
+### Tests and results
+
+- `python -m pytest services/api -q` — **9 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- Existing replay, changed-payload rejection, shop scope representation, and
+  no-negative-stock tests remain passing.
+
+### Outstanding issues
+
+- No live PostgreSQL instance or credentials were available, so migration
+  application and real connection readiness were not run.
+- The adapter currently owns configuration/connection/readiness and schema
+  boundary; full domain CRUD wiring is the next backend slice. It must not
+  silently fall back to memory.
+
+### Next-session instructions
+
+Chengetai should run the HTTP-level smoke/security checks and a live PostgreSQL
+startup/migration check. Hwaro should then wire CRUD and transactional sale
+operations through the repository seam, preserving the documented W1 contract.

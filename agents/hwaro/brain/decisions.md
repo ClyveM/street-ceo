@@ -15,3 +15,14 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
 - Pin FastAPI to `<0.116` in requirements after the newest available release
   blocked the local synchronous/ASGI test transport. This is a verified local
   compatibility constraint, not an API behavior decision.
+
+## 2026-10-30 — W2-HWARO-001
+
+- Keep `memory` as an explicit local/test backend and select PostgreSQL only
+  with `STREET_CEO_STORE=postgres` plus `STREET_CEO_DATABASE_URL`; never
+  silently downgrade a configured PostgreSQL deployment.
+- Use an additive SQL starting point with PostgreSQL-enforced shop/SKU scope,
+  non-negative stock, and scoped idempotency uniqueness. Destructive migration
+  work remains approval-gated.
+- Keep PostgreSQL connection/readiness wiring separate from the W1 endpoint
+  handler contract until the full domain repository adapter is implemented.

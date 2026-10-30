@@ -1,16 +1,17 @@
 # Mutungamiri — Current State
 
-Updated 2026-10-30 after Wave 1 activation.
+Updated 2026-10-30 after Wave 2 activation.
 
 ## Status
 
-Migrated to standard Git repo at C:\Users\clyve\source\repos\street-ceo (main, commit 3c4e244). No application code before Wave 1. Wave 1 assignments are now active for Hwaro, Chengetai, Ungwaru and Ruzivo.
+Migrated to standard Git repo at C:\Users\clyve\source\repos\street-ceo (main; Wave 1 commit 58548ff pushed to origin). Wave 2 assignments are active for persistence, finance, inventory, web, offline, and voice.
 
 ## Work in progress
 
 - SETUP-001..007, TEST-MEMORY-001, and MIGRATE-001 done and verified.
 - Wave 1 task records and working product defaults were appended on 2026-10-30.
 - W1-RUZIVO-001, W1-CHENGETAI-001, W1-UNGWARU-001, and W1-HWARO-001 completed with persisted handoffs and verified evidence. Hwaro's persistence is intentionally in-memory for the first slice; PostgreSQL integration remains next work.
+- W2-HWARO-001, W2-VERENGAI-001, W2-DURA-001, W2-RUNAKO-001, W2-FAMBAI-001, and W2-INZWI-001 were assigned on 2026-10-30 with disjoint file scopes.
 
 ## Latest verified results
 
@@ -34,8 +35,6 @@ Migrated to standard Git repo at C:\Users\clyve\source\repos\street-ceo (main, c
 
 ## Next immediate action
 
-Run the full backend test path in Chengetai's dependency-complete environment,
-then integrate only tested changes and activate the next
-disjoint slice: Verengai/Dura for ledger and inventory, Runako for the web shell,
-and Fambai for offline contracts. Keep the demo path manual-first while Inzwi and
-Ungwaru validate the Apo/Napo provider path.
+Review Wave 2 handoffs, run the full test path, and open the first local web
+preview as soon as Runako provides a runnable entry point. Keep the demo path
+manual-first while persistence and ledger/inventory integration are stabilized.

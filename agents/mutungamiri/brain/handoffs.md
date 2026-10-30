@@ -55,3 +55,11 @@
 - Tests run: repository read-only inspection; no application tests existed before activation.
 - Outstanding issues: live Meta/Llama capabilities and final demo currency require evidence/owner confirmation; they must not be claimed from configuration alone.
 - Next action: review four specialist handoffs, then sequence finance/inventory/UI/offline work without overlapping writers.
+
+## 2026-10-30 — WAVE-2: persistence and product slices activated
+
+- Assignment: start the next implementation wave after W1 evidence review and push the verified baseline to GitHub.
+- Files changed: `tasks/master-board.md`; task assignment sections in Hwaro, Verengai, Dura, Runako, Fambai, and Inzwi brain task files; this current-state and handoff record.
+- Tests/run evidence before activation: W1 quality checks remained green; W1 commit `58548ff` pushed to `origin/main`.
+- Outstanding issues: local Git push initially hit certificate validation, then succeeded with Windows certificate validation. W2 still needs live PostgreSQL/environment setup and the first runnable web preview.
+- Next action: review W2 handoffs, run the web app locally, and integrate only tested interfaces.

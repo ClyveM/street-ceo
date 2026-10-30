@@ -1,12 +1,17 @@
 # Street CEO — Master Task Board
 
-Updated 2026-10-30. Owner: Mutungamiri. Wave 1 active; application scaffolding is beginning.
+Updated 2026-10-30. Owner: Mutungamiri. Wave 2 active; persistence and first UI slice are underway.
 
 ## In progress
 
 | ID | Task | Owner | Scope | Depends on | Exit condition |
 |----|------|-------|-------|------------|----------------|
-| None currently | Next wave awaits review and sequencing | Mutungamiri | Ledger/inventory, web, offline and voice slices | Wave 1 review | New assignments issued only after contracts and quality evidence are accepted |
+| W2-HWARO-001 | PostgreSQL persistence adapter | Hwaro | `services/api/` and backend-owned persistence docs | W1-HWARO-001 | Persistence boundary, schema/config, migration-safe repository interface, tests, no behavior regression |
+| W2-VERENGAI-001 | MVP ledger and cash movement service | Verengai | `services/finance/` | W1-HWARO-001, W1-RUZIVO-001 | Balanced sale/return/cash/expense/drawing entries and reproducible tests |
+| W2-DURA-001 | Inventory movements and weighted-average cost | Dura | `services/inventory/` | W1-HWARO-001, W1-RUZIVO-001 | Receipt, sale, return and adjustment movement rules with cost tests |
+| W2-RUNAKO-001 | Mobile-first web shell and manual sale UI | Runako | `apps/web/` excluding offline layer | W1-HWARO-001 | Runnable Today/Sell/Stock shell, manual sale path against API shape, demo branding, responsive preview |
+| W2-FAMBAI-001 | Offline queue and sync contract | Fambai | offline layer inside `apps/web/` only | W1-HWARO-001, W2-RUNAKO-001 states | IndexedDB queue, visible sync states, idempotent replay contract, tests |
+| W2-INZWI-001 | Apo/Napo voice interaction adapter | Inzwi | `services/voice/` | W1-HWARO-001, W1-UNGWARU-001 | Foreground state machine and provider adapter mapping to sale endpoints, safe fallback tests |
 
 ## Done
 

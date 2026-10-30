@@ -1,8 +1,9 @@
 # Street CEO — API Contracts (v0, 2026-10-30)
 
-Status: Wave 1 foundation. The current development implementation uses an
-in-memory repository; PostgreSQL is the production persistence target. Clients
-must rely on the documented request/response rules, not the storage choice.
+Status: Wave 2 persistence boundary. Local/test mode uses an explicit
+credential-free in-memory repository; deployment mode uses PostgreSQL selected
+with `STREET_CEO_STORE=postgres` and `STREET_CEO_DATABASE_URL`. Clients must
+rely on the documented request/response rules, not the storage choice.
 
 ## Conventions
 
@@ -51,8 +52,11 @@ with `201` and does not decrement stock again. Reusing a key with a different
 request returns `409` (`idempotency key payload mismatch`). The key is scoped
 to the shop.
 
-## Future persistence boundary
+## Persistence boundary
 
-The in-memory repository is only a runnable foundation. PostgreSQL adoption
-must preserve shop scoping, canonical idempotency fingerprints, auditable sale
-timestamps, and atomic stock validation/decrement semantics.
+The API's repository seam is in `services/api/persistence.py`. PostgreSQL
+schema starting point `services/api/migrations/0001_initial.sql` stores shops,
+shop-scoped products, sales, sale lines, and the canonical idempotency
+fingerprint. PostgreSQL implementations must preserve shop scoping, auditable
+sale timestamps, and atomic stock validation/decrement semantics. PostgreSQL
+mode never silently falls back to memory; `/readyz` checks the selected store.

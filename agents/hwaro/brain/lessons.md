@@ -10,3 +10,13 @@ No lessons recorded yet. Initialized 2026-10-29; no work performed.
   repeated in Chengetai's deployment/test environment.
 - Validate all sale lines before mutating any product stock so insufficient
   stock leaves the entire attempted sale unchanged.
+
+## 2026-10-30 — W2-HWARO-001
+
+- Readiness must be a repository capability: local mode reports ready without
+  an external dependency, while PostgreSQL mode probes the selected database.
+- Configuration tests should assert the absence of credentials in local mode
+  and reject incomplete PostgreSQL settings before any connection is created.
+- A schema starting point is useful only when constraints encode the existing
+  contract; preserve shop scope and idempotency in database uniqueness, not only
+  in application memory.

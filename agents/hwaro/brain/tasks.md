@@ -20,3 +20,21 @@ No tasks assigned yet. Initialized 2026-10-29.
 
 Task assignments from Mutungamiri will appear here under an
 "Assigned by Mutungamiri" section.
+
+### W2-HWARO-001 — PostgreSQL persistence adapter — active 2026-10-30
+
+- Scope: `services/api/` and backend-owned persistence documentation only.
+- Read the latest W1 handoff, `docs/api-contracts.md`, and Ruzivo's accounting memo before changing persistence.
+- Replace the in-memory-only limitation with a clear PostgreSQL-ready repository boundary, environment configuration, schema/migration starting point, and tests. Preserve API behavior and idempotency. Keep local development runnable without credentials through an explicit test store or local mode.
+- Do not implement finance, inventory, UI, offline, or voice-owned code.
+- Acceptance: persistence boundary explicit, no secrets committed, tests cover replay and shop scope, and handoff states what still requires a live PostgreSQL service.
+
+#### Evidence checkpoint — 2026-10-30
+
+- Added `services/api/persistence.py`, `services/api/migrations/0001_initial.sql`,
+  and `services/api/test_persistence.py`.
+- Updated `services/api/app.py`, `services/api/requirements.txt`, and
+  `docs/api-contracts.md` within backend ownership.
+- `python -m pytest services/api -q` — **9 passed**.
+- `python -m compileall -q services/api` — **exit 0**.
+- No secrets committed. Live PostgreSQL execution remains outstanding.
