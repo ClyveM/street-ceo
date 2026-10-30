@@ -1,10 +1,10 @@
 # Ruzivo — Current State
 
-Updated 2026-10-29 at initialization.
+Updated 2026-10-30 after W1-RUZIVO-001.
 
 ## Status
 
-Initialized. Awaiting first review request from Mutungamiri. Nothing reviewed.
+W1-RUZIVO-001 completed: MVP accounting policy memo prepared for Verengai's implementation review.
 
 ## Work in progress
 
@@ -12,13 +12,16 @@ Initialized. Awaiting first review request from Mutungamiri. Nothing reviewed.
 
 ## Latest verified results
 
-- None yet.
+- Memo verified on 2026-10-30 with a repository check for all required policy sections,
+  advisory disclaimer, and WAC treatment.
 
 ## Known blockers
 
-- None. Note: first deliverable expected is accounting-rules v0 input for
-  `docs/accounting-rules.md` once Mutungamiri schedules it.
+- Production/tax treatment remains unresolved by design; the memo lists the questions.
+- Implementation dependencies: Verengai must encode the policy; Dura must expose
+  receipt/stock movement data sufficient for WAC and COGS linkage.
 
 ## Next immediate action
 
-Await task assignment; on activation, load brain per `AGENTS.md` and confirm scope.
+Await Mutungamiri review and Verengai implementation questions. Any financial
+feature review must read the relevant implementation before issuing a verdict.

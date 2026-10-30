@@ -2,6 +2,10 @@
 
 Status: draft scope for the hackathon MVP. Deadline: November 4, 2026.
 
+## Wave 1 working defaults
+
+These defaults make implementation concrete without expanding the MVP: the demo is a Zimbabwean tuckshop with one shop per account, one configured trading currency and timezone, and packaged goods sold in whole base units. The first demo may use a fixed seed catalogue and an owner-configured currency; it must show the currency explicitly. Tender recording is operational only: cash and bank are recorded, but no bank or wallet settlement is verified. Weighted-average cost is the initial stock valuation method. Apo/Napo recognition is foreground-only, with push-to-talk, touch and text fallbacks. These defaults remain changeable before demo freeze if the Project Owner supplies a different pilot context.
+
 ## Users
 
 Street vendors and micro-retailers, primarily on low-cost Android phones,

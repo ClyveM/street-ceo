@@ -1,14 +1,16 @@
 # Mutungamiri — Current State
 
-Updated 2026-10-29 during initial team setup.
+Updated 2026-10-30 after Wave 1 activation.
 
 ## Status
 
-Migration plan presented 2026-10-29; awaiting Owner approval. No application code. No agents currently active.
+Migrated to standard Git repo at C:\Users\clyve\source\repos\street-ceo (main, commit 3c4e244). No application code before Wave 1. Wave 1 assignments are now active for Hwaro, Chengetai, Ungwaru and Ruzivo.
 
 ## Work in progress
 
-- None. SETUP-001..007 and TEST-MEMORY-001 done and verified.
+- SETUP-001..007, TEST-MEMORY-001, and MIGRATE-001 done and verified.
+- Wave 1 task records and working product defaults were appended on 2026-10-30.
+- W1-RUZIVO-001, W1-CHENGETAI-001, W1-UNGWARU-001, and W1-HWARO-001 completed with persisted handoffs and verified evidence. Hwaro's persistence is intentionally in-memory for the first slice; PostgreSQL integration remains next work.
 
 ## Latest verified results
 
@@ -22,14 +24,18 @@ Migration plan presented 2026-10-29; awaiting Owner approval. No application cod
 - Pre-flight 2026-10-29: 85 files intact; .eden/.sl/.hg/.muse/.agents all
   EMPTY (no history to lose); root is a plain directory; git 2.43.0 present;
   no gh CLI.
+- MIGRATE-001 done 2026-10-29: manifest/backup/copy all 85/85 hash-identical;
+  new repo committed (3c4e244, 87 files); secrets scan clean; worktree probe
+  passed; old directory byte-identical to manifest (fallback preserved).
 
 ## Known blockers
 
-- None. Pending Owner inputs after setup: Git-vs-Sapling direction for
-  branching/worktrees, Wave 1 activation scope.
+- None for the current Wave 1 slice. External Meta provider availability and final demo currency remain evidence-based decisions, not assumed capabilities.
 
 ## Next immediate action
 
-After MIGRATE-001 approval: execute migration, verify hashes, update board,
-record tuckshop decisions in product-requirements, then activate Wave 1
-(Hwaro + Chengetai) per docs/development-plan.md.
+Run the full backend test path in Chengetai's dependency-complete environment,
+then integrate only tested changes and activate the next
+disjoint slice: Verengai/Dura for ledger and inventory, Runako for the web shell,
+and Fambai for offline contracts. Keep the demo path manual-first while Inzwi and
+Ungwaru validate the Apo/Napo provider path.

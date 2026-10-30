@@ -1,31 +1,58 @@
-# Street CEO — API Contracts (v0, 2026-10-29)
+# Street CEO — API Contracts (v0, 2026-10-30)
 
-Status: conventions only. No endpoints implemented; no code exists yet.
-Owner in practice: Hwaro, with Mutungamiri.
+Status: Wave 1 foundation. The current development implementation uses an
+in-memory repository; PostgreSQL is the production persistence target. Clients
+must rely on the documented request/response rules, not the storage choice.
 
-## Conventions (binding once endpoints are added)
+## Conventions
 
-- Base path, versioning, and error envelope to be fixed at backend scaffolding.
-- Every endpoint documented here BEFORE any client (UI, offline sync, voice,
-  AI) depends on it.
-- Every mutating endpoint: authentication, per-shop authorization, request
-  validation, and tests.
-- Money and stock writes: auditable (actor, timestamp, source); reversible
-  through proper reversals.
-- Sync endpoints: idempotency keys, replay ordering, deterministic conflict
-  responses (agreed with Fambai).
+- Base URL is local deployment root; JSON endpoints use the paths below.
+- Validation errors use FastAPI's standard `422` response. Resource conflicts
+  use `409`; missing shop/product uses `404`; a missing or mismatched
+  `X-Shop-ID` scope uses `403`.
+- Every shop-scoped endpoint requires `X-Shop-ID` equal to the `{shop_id}` path
+  parameter. This is the Wave 1 tenant boundary.
+- Money is integer minor units (`*_cents`); product quantities are positive
+  whole base units. Currency defaults to USD in the development fixture and is
+  returned on the shop.
+- Mutating sale requests require a non-blank `Idempotency-Key` header.
 
-## Planned resource areas (names not final)
+## Health
 
-- Auth: login, session, per-shop scope.
-- Sales: create sale (idempotent), void/reversal, list.
-- Inventory: products, purchases, receiving, adjustments, counts, stock levels.
-- Finance: payments, expenses, reconciliations, P&L, cashflow reports.
-- Sync: offline queue replay, conflict fetch/resolve.
-- AI: insight requests with structured responses.
+`GET /healthz` returns `{"status":"ok"}`. `GET /readyz` returns
+`{"status":"ready"}` when the API dependencies are available.
 
-## Change rule
+## Shops
 
-Contract changes require updating this file first, then affected clients in
-dependency order, sequenced by Mutungamiri. Breaking changes need Owner
-awareness before the demo freeze.
+`POST /shops` accepts `{name, currency?, timezone?}` and returns `201` with
+`{id, name, currency, timezone}`. `GET /shops/{shop_id}` returns the same shape
+and requires the shop scope header.
+
+## Products
+
+`POST /shops/{shop_id}/products` requires scope and accepts
+`{sku, name, unit_price_cents, opening_stock_qty?}`. It returns `201` with
+`{id, shop_id, sku, name, unit_price_cents, stock_qty}`. SKU uniqueness is
+per-shop. `GET /shops/{shop_id}/products` returns the shop's product list.
+
+## Sales
+
+`POST /shops/{shop_id}/sales` requires scope and `Idempotency-Key`. It accepts
+`{lines: [{product_id, quantity}], tender?}`. Each product may appear once,
+quantity is a positive whole number, and `tender` defaults to `cash`.
+
+On success it returns `201` with `{id, shop_id, lines, tender, total_cents,
+created_at}` and decrements stock in the same operation. If any line lacks
+sufficient stock, the request returns `409` and no stock is changed; negative
+stock is never silently created.
+
+Reusing a key with the exact same canonical request returns the original sale
+with `201` and does not decrement stock again. Reusing a key with a different
+request returns `409` (`idempotency key payload mismatch`). The key is scoped
+to the shop.
+
+## Future persistence boundary
+
+The in-memory repository is only a runnable foundation. PostgreSQL adoption
+must preserve shop scoping, canonical idempotency fingerprints, auditable sale
+timestamps, and atomic stock validation/decrement semantics.

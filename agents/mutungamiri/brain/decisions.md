@@ -24,3 +24,9 @@
   Meta insights; no native app; demo-first sequencing.
 - Approval: setup directive section 7.
 - Consequences: recorded in `docs/architecture.md`; binding on scaffolding tasks.
+
+## 2026-10-30 — Wave 1 sequencing and AI boundary
+
+- Decision: build the deterministic, shop-scoped transaction foundation before voice or model-dependent features; activate backend, QA, Meta capability, and accounting-policy work in parallel because their write scopes are disjoint.
+- Rationale: the same sale/stock/cash rules must serve touch, text, offline replay, and Apo/Napo. AI availability is still an evidence question, while the end-to-end demo must remain usable during provider failure.
+- Consequences: AI returns schema-validated intent or explanations only; authorized domain services validate and commit. Voice and insight agents integrate after the contracts and accounting memo are reviewed.

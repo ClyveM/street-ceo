@@ -49,10 +49,14 @@
   subagent sessions; session-2 recovery matched disk verbatim; session 1
   touched only its 3 brain files.
 
-## MIGRATE-001: migrate to standard Git repo + worktrees — awaiting approval
+## MIGRATE-001: migrate to standard Git repo + worktrees — done 2026-10-29
 
-- Description: hash-manifest + backup the 85 agent files, git init in place,
-  commit tracked files only, prove worktree nesting, optionally connect GitHub.
+- Description: hash-manifest + backup the source files, copy to
+  C:\Users\clyve\source\repos\street-ceo, verify hashes, git init on main,
+  secrets scan, initial commit, worktree probe. Old directory preserved
+  untouched as fallback.
 - Acceptance: manifest hashes match post-migration; git log shows initial
   commit; status clean; legacy metadata untouched; worktree probe passes.
-- Evidence: plan presented 2026-10-29; NOT executed pending Owner approval.
+- Evidence: manifest 85/85 + backup 85/85 + new-dir 85/85 hashes identical;
+  commit 3c4e24438c5e44b494b5a0289adabcd26c1cec94 (87 files); secrets scan
+  clean; worktree probe created/removed cleanly; old dir re-hash identical.

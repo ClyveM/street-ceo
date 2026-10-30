@@ -1,0 +1,1 @@
+"""Street CEO quality checks."""

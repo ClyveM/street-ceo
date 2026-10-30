@@ -32,3 +32,26 @@
   demo shop profile, deployment target).
 - Next session: read this brain + board; collect Owner decisions; issue Wave 1
   build tasks per docs/development-plan.md.
+
+## 2026-10-29 — MIGRATE-001: Git migration complete
+
+- Assignment: migrate to a clean standard Git repo (Option B) with safeguards.
+- Files changed: new repo C:\Users\clyve\source\repos\street-ceo — 85 files
+  copied hash-identical, plus .gitignore and README.md (87 in initial commit
+  3c4e24438c5e44b494b5a0289adabcd26c1cec94); this brain + tasks/master-board.md
+  (migration record, uncommitted pending Owner approval). Old directory untouched.
+- Tests run: SHA-256 manifest/backup/copy comparisons (85/85, zero diffs);
+  secrets scan (no sensitive filenames, no secret values); worktree probe
+  (create/list/remove, branch deleted, temp gone, tree clean).
+- Outstanding issues: none for migration. Wave 1 awaits Owner approval.
+  No GitHub remote yet (separate approval required for push).
+- Next session: open in the new repo directory; verify git log/status; record
+  tuckshop decisions in docs/product-requirements.md; activate Wave 1 on approval.
+
+## 2026-10-30 — WAVE-1: foundation assignments activated
+
+- Assignment: activate the first independent implementation and policy slice after repository recovery.
+- Files changed: `tasks/master-board.md`, `docs/product-requirements.md`, and assigned task sections in `agents/hwaro/brain/tasks.md`, `agents/chengetai/brain/tasks.md`, `agents/ungwaru/brain/tasks.md`, and `agents/ruzivo/brain/tasks.md`.
+- Tests run: repository read-only inspection; no application tests existed before activation.
+- Outstanding issues: live Meta/Llama capabilities and final demo currency require evidence/owner confirmation; they must not be claimed from configuration alone.
+- Next action: review four specialist handoffs, then sequence finance/inventory/UI/offline work without overlapping writers.
