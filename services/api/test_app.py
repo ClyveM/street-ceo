@@ -71,3 +71,12 @@ def test_validation_is_deterministic_and_rejects_duplicate_lines() -> None:
     _, _, product = setup_product()
     with pytest.raises(ValueError, match="product_id may appear only once"):
         SaleCreate(lines=[SaleLine(product_id=product.id, quantity=1), SaleLine(product_id=product.id, quantity=1)])
+
+
+def test_shop_summary_reports_live_sales_and_stock_alerts() -> None:
+    app, record, product = setup_product(stock=3)
+    summary = endpoint(app, "/shops/{shop_id}/summary")(record)
+    assert summary.sales_total_cents == 0
+    assert summary.transaction_count == 0
+    assert summary.low_stock_count == 1
+    assert "Coke 500ml" in summary.insight

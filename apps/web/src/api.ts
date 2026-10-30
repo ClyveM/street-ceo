@@ -20,6 +20,14 @@ export type Sale = SaleRequest & {
   created_at: string
 }
 
+export type ShopSummary = {
+  sales_total_cents: number
+  transaction_count: number
+  low_stock_count: number
+  sales_change_percent: number | null
+  insight: string
+}
+
 export const demoProducts: Product[] = [
   { id: '00000000-0000-0000-0000-000000000001', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'COKE-300', name: 'Coca-Cola 300ml', unit_price_cents: 150, stock_qty: 18 },
   { id: '00000000-0000-0000-0000-000000000002', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'BREAD-700', name: 'Bread loaf', unit_price_cents: 180, stock_qty: 11 },
@@ -57,6 +65,10 @@ export const apiClient = {
       headers: { 'Idempotency-Key': `web-${Date.now()}-${Math.random().toString(16).slice(2)}` },
       body: JSON.stringify(payload),
     })
+  },
+  async getSummary(): Promise<ShopSummary | null> {
+    if (!API_BASE_URL) return null
+    try { return await request<ShopSummary>(`/shops/${SHOP_ID}/summary`) } catch { return null }
   },
 }
 

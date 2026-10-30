@@ -106,6 +106,14 @@ class Sale(ApiModel):
     created_at: datetime
 
 
+class ShopSummary(ApiModel):
+    sales_total_cents: int = Field(ge=0)
+    transaction_count: int = Field(ge=0)
+    low_stock_count: int = Field(ge=0)
+    sales_change_percent: float | None = None
+    insight: str
+
+
 class ErrorResponse(ApiModel):
     detail: str
 
@@ -205,6 +213,20 @@ def create_app(store: InMemoryStore | None = None, settings: Settings | None = N
     @app.get("/shops/{shop_id}", response_model=Shop)
     def get_shop(record: _ShopRecord = Depends(shop_scope)) -> Shop:
         return record.shop
+
+    @app.get("/shops/{shop_id}/summary", response_model=ShopSummary)
+    def get_summary(record: _ShopRecord = Depends(shop_scope)) -> ShopSummary:
+        today = datetime.now(timezone.utc).date()
+        todays_sales = [sale for _, sale in record.idempotent_sales.values() if sale.created_at.date() == today]
+        total = sum(sale.total_cents for sale in todays_sales)
+        low_stock = sum(1 for product in record.products.values() if product.stock_qty < 8)
+        fastest = min(record.products.values(), key=lambda product: product.stock_qty, default=None)
+        insight = (
+            f"{fastest.name} is running low at {fastest.stock_qty} units. Review stock before the next rush."
+            if fastest and fastest.stock_qty < 8 else
+            "Stock is holding steady. Keep recording sales to build today’s live picture."
+        )
+        return ShopSummary(sales_total_cents=total, transaction_count=len(todays_sales), low_stock_count=low_stock, sales_change_percent=None, insight=insight)
 
     @app.post("/shops/{shop_id}/products", response_model=Product, status_code=status.HTTP_201_CREATED)
     def create_product(

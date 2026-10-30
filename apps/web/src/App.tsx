@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { apiClient, demoProducts, formatMoney, Product, Tender } from './api'
+import { apiClient, demoProducts, formatMoney, Product, ShopSummary, Tender } from './api'
 import { fallbackTeamSnapshot, fetchTeamSnapshot, hasLiveActivityUrl, type AgentActivity, type TeamSnapshot } from './teamActivity'
 
 type View = 'today' | 'sell' | 'stock' | 'monitor'
@@ -13,6 +13,7 @@ function App() {
   const [view, setView] = useState<View>('today')
   const [products, setProducts] = useState<Product[]>(demoProducts)
   const [isDemo, setIsDemo] = useState(true)
+  const [shopSummary, setShopSummary] = useState<ShopSummary | null>(null)
   const [basket, setBasket] = useState<Basket>({})
   const [tender, setTender] = useState<Tender>('cash')
   const [query, setQuery] = useState('')
@@ -28,9 +29,10 @@ function App() {
   useEffect(() => {
     const load = async () => {
       setIsLoading(true)
-      const result = await apiClient.listProducts()
+      const [result, summary] = await Promise.all([apiClient.listProducts(), apiClient.getSummary()])
       setProducts(result.products)
       setIsDemo(result.isDemo)
+      setShopSummary(summary)
       setIsLoading(false)
     }
     void load()
@@ -80,6 +82,7 @@ function App() {
     try {
       const sale = await apiClient.createSale({ lines: basketItems.map(({ id, quantity }) => ({ product_id: id, quantity })), tender })
       setBasket({})
+      setShopSummary(await apiClient.getSummary())
       setNotice({ type: 'success', text: `Sale ${sale.id} recorded · ${formatMoney(total)} via ${tender}` })
     } catch {
       setNotice({ type: 'error', text: online ? 'Could not record sale. Check the API and try again.' : 'You are offline. Sale queue will be added by Fambai.' })
@@ -97,7 +100,7 @@ function App() {
       {isDemo && <div className="demo-banner"><span>✦</span><span><strong>Demo mode</strong> · Showing starter catalogue data. Connect the API to use live shop data.</span></div>}
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
 
-      {view === 'today' && <Today onSell={() => setView('sell')} />}
+      {view === 'today' && <Today summary={shopSummary} onSell={() => setView('sell')} />}
       {view === 'sell' && <Sell products={filteredProducts} allProducts={products} query={query} setQuery={setQuery} basketItems={basketItems} total={total} itemCount={itemCount} tender={tender} setTender={setTender} addToBasket={addToBasket} removeFromBasket={removeFromBasket} submitSale={submitSale} isLoading={isLoading} />}
       {view === 'stock' && <Stock products={products} />}
       {view === 'monitor' && (monitorMode === '2d' ? <TeamMonitor snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onOpenCommandRoom={() => setMonitorMode('3d')} /> : <CommandRoom snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onBack={() => setMonitorMode('2d')} />)}
@@ -107,7 +110,7 @@ function App() {
   </div>
 }
 
-function Today({ onSell }: { onSell: () => void }) { return <><section className="hero-card"><div><span className="card-kicker">TODAY’S SALES</span><strong className="hero-amount">$42.80</strong><span className="hero-meta"><span className="up">↑ 12%</span> from yesterday</span></div><div className="sparkline" aria-label="Sales trending up"><i /><i /><i /><i /><i /><i /><i /></div></section><section className="stat-grid"><div className="stat-card"><span>SALES</span><strong>18</strong><small>transactions</small></div><div className="stat-card"><span>STOCK ALERTS</span><strong className="orange">3</strong><small>need attention</small></div></section><section className="section-head"><div><p className="eyebrow">QUICK ACTION</p><h2>Keep the tills moving.</h2></div></section><button className="primary-action full" onClick={onSell}><span className="action-icon">+</span>Record a sale<span className="arrow">→</span></button><div className="insight-card"><span className="insight-icon">✦</span><div><p className="eyebrow">STREET CEO INSIGHT</p><p>Cold drinks are moving fast today. Check your Coca-Cola stock before lunch.</p></div></div></> }
+function Today({ summary, onSell }: { summary: ShopSummary | null; onSell: () => void }) { const total = summary ? formatMoney(summary.sales_total_cents) : '—'; const change = summary?.sales_change_percent == null ? 'No prior-day comparison' : `↑ ${summary.sales_change_percent}%`; return <><section className="hero-card"><div><span className="card-kicker">TODAY’S SALES</span><strong className="hero-amount">{total}</strong><span className="hero-meta"><span className={summary?.sales_change_percent == null ? '' : 'up'}>{change}</span></span></div><div className="sparkline" aria-label="Live sales summary"><i /><i /><i /><i /><i /><i /><i /></div></section><section className="stat-grid"><div className="stat-card"><span>SALES</span><strong>{summary?.transaction_count ?? '—'}</strong><small>transactions</small></div><div className="stat-card"><span>STOCK ALERTS</span><strong className="orange">{summary?.low_stock_count ?? '—'}</strong><small>need attention</small></div></section><section className="section-head"><div><p className="eyebrow">QUICK ACTION</p><h2>Keep the tills moving.</h2></div></section><button className="primary-action full" onClick={onSell}><span className="action-icon">+</span>Record a sale<span className="arrow">→</span></button><div className="insight-card"><span className="insight-icon">✦</span><div><p className="eyebrow">STREET CEO INSIGHT</p><p>{summary?.insight ?? 'Connect the API to see a live shop insight.'}</p></div></div></> }
 
 type SellProps = { products: Product[]; allProducts: Product[]; query: string; setQuery: (value: string) => void; basketItems: (Product & { quantity: number })[]; total: number; itemCount: number; tender: Tender; setTender: (value: Tender) => void; addToBasket: (product: Product) => void; removeFromBasket: (product: Product) => void; submitSale: () => void; isLoading: boolean }
 function Sell({ products, allProducts, query, setQuery, basketItems, total, itemCount, tender, setTender, addToBasket, removeFromBasket, submitSale, isLoading }: SellProps) { return <><section className="section-head sell-heading"><div><p className="eyebrow">NEW SALE</p><h2>What did you sell?</h2></div><span className="counter">{itemCount} items</span></section><label className="search-box"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search catalogue" aria-label="Search catalogue" /><kbd>⌘ K</kbd></label><div className="product-list">{isLoading ? <div className="placeholder">Loading your catalogue…</div> : products.length ? products.map((product) => <ProductRow key={product.id} product={product} quantity={basketItems.find((item) => item.id === product.id)?.quantity ?? 0} add={addToBasket} remove={removeFromBasket} />) : <div className="placeholder"><strong>No products found</strong><span>Try a different search term.</span></div>}</div><section className="basket-panel"><div className="section-head"><div><p className="eyebrow">CURRENT BASKET</p><h2>{itemCount ? `${itemCount} item${itemCount === 1 ? '' : 's'}` : 'Basket is empty'}</h2></div><strong className="basket-total">{formatMoney(total)}</strong></div>{!itemCount && <p className="muted">Tap a product above to start a sale.</p>}{basketItems.map((item) => <div className="basket-line" key={item.id}><span>{item.name} × {item.quantity}</span><strong>{formatMoney(item.unit_price_cents * item.quantity)}</strong></div>)}<div className="tender-label">PAYMENT METHOD</div><div className="tender-toggle" role="group" aria-label="Payment method"><button className={tender === 'cash' ? 'selected' : ''} onClick={() => setTender('cash')}>◉ Cash</button><button className={tender === 'bank' ? 'selected' : ''} onClick={() => setTender('bank')}>▣ Bank</button></div><button className="primary-action full" disabled={!itemCount} onClick={submitSale}>Complete sale <span className="arrow">→</span></button><p className="offline-note">{navigator.onLine ? '✓ Ready to record' : '○ Offline queue coming soon'}</p></section></> }

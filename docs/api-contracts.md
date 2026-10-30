@@ -52,6 +52,13 @@ and requires the shop scope header.
 `{id, shop_id, sku, name, unit_price_cents, stock_qty}`. SKU uniqueness is
 per-shop. `GET /shops/{shop_id}/products` returns the shop's product list.
 
+## Shop summary
+
+`GET /shops/{shop_id}/summary` returns live local metrics for the Today screen:
+`{sales_total_cents, transaction_count, low_stock_count,
+sales_change_percent, insight}`. A missing prior-day comparison is returned as
+`null`; the client must not invent a percentage.
+
 ## Sales
 
 `POST /shops/{shop_id}/sales` requires scope and `Idempotency-Key`. It accepts
