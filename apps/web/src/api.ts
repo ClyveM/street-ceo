@@ -37,13 +37,28 @@ export const demoProducts: Product[] = [
   { id: '00000000-0000-0000-0000-000000000006', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'SOAP-175', name: 'Bath soap', unit_price_cents: 220, stock_qty: 5 },
 ]
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
-const SHOP_ID = import.meta.env.VITE_SHOP_ID ?? '00000000-0000-0000-0000-000000000001'
+const DEFAULT_SHOP_ID = import.meta.env.VITE_SHOP_ID ?? '00000000-0000-0000-0000-000000000001'
+const CONFIG_KEY = 'street-ceo-api-config'
+
+export type ApiConfig = { baseUrl: string; shopId: string }
+
+export function getApiConfig(): ApiConfig {
+  const fallback = { baseUrl: import.meta.env.VITE_API_BASE_URL ?? '', shopId: DEFAULT_SHOP_ID }
+  try {
+    const stored = JSON.parse(localStorage.getItem(CONFIG_KEY) ?? 'null') as Partial<ApiConfig> | null
+    return { baseUrl: stored?.baseUrl ?? fallback.baseUrl, shopId: stored?.shopId ?? fallback.shopId }
+  } catch { return fallback }
+}
+
+export function saveApiConfig(config: ApiConfig): void {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify({ baseUrl: config.baseUrl.replace(/\/$/, ''), shopId: config.shopId.trim() }))
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const config = getApiConfig()
+  const response = await fetch(`${config.baseUrl}${path}`, {
     ...init,
-    headers: { 'Content-Type': 'application/json', 'X-Shop-ID': String(SHOP_ID), ...(init?.headers ?? {}) },
+    headers: { 'Content-Type': 'application/json', 'X-Shop-ID': config.shopId, ...(init?.headers ?? {}) },
   })
   if (!response.ok) throw new Error(`API request failed (${response.status})`)
   return response.json() as Promise<T>
@@ -52,23 +67,26 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 /** The only network boundary used by screens. Fambai can later decorate this with sync. */
 export const apiClient = {
   async listProducts(): Promise<{ products: Product[]; isDemo: boolean }> {
-    if (!API_BASE_URL) return { products: demoProducts, isDemo: true }
+    const config = getApiConfig()
+    if (!config.baseUrl) return { products: demoProducts, isDemo: true }
     try {
-      return { products: await request<Product[]>(`/shops/${SHOP_ID}/products`), isDemo: false }
+      return { products: await request<Product[]>(`/shops/${config.shopId}/products`), isDemo: false }
     } catch {
       return { products: demoProducts, isDemo: true }
     }
   },
   async createSale(payload: SaleRequest): Promise<Sale> {
-    return request<Sale>(`/shops/${SHOP_ID}/sales`, {
+    const config = getApiConfig()
+    return request<Sale>(`/shops/${config.shopId}/sales`, {
       method: 'POST',
       headers: { 'Idempotency-Key': `web-${Date.now()}-${Math.random().toString(16).slice(2)}` },
       body: JSON.stringify(payload),
     })
   },
   async getSummary(): Promise<ShopSummary | null> {
-    if (!API_BASE_URL) return null
-    try { return await request<ShopSummary>(`/shops/${SHOP_ID}/summary`) } catch { return null }
+    const config = getApiConfig()
+    if (!config.baseUrl) return null
+    try { return await request<ShopSummary>(`/shops/${config.shopId}/summary`) } catch { return null }
   },
 }
 

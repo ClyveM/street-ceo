@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { apiClient, demoProducts, formatMoney, Product, ShopSummary, Tender } from './api'
+import { apiClient, demoProducts, formatMoney, getApiConfig, Product, saveApiConfig, ShopSummary, Tender } from './api'
 import { fallbackTeamSnapshot, fetchTeamSnapshot, hasLiveActivityUrl, type AgentActivity, type TeamSnapshot } from './teamActivity'
 import { VoiceCapture } from './VoiceCapture'
 
-type View = 'today' | 'sell' | 'stock' | 'monitor' | 'social' | 'profitability'
+type View = 'today' | 'sell' | 'stock' | 'monitor' | 'social' | 'profitability' | 'settings'
 type Basket = Record<string, number>
 
 function Logo() {
@@ -92,7 +92,7 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <div className="brand"><Logo /><div><strong>Street CEO</strong><span>Your shop, in control.</span></div></div>
+      <button className="brand brand-button" onClick={() => setView('today')} aria-label="Go to Street CEO home"><Logo /><div><strong>Street CEO</strong><span>Your shop, in control.</span></div></button>
       <div className={`connection-pill ${online ? 'online' : 'offline'}`} title={online ? 'Connected to the network' : 'Offline mode: local screens remain available'}><span className="status-dot" />{online ? 'Online' : 'Offline mode'}</div>
     </header>
 
@@ -102,12 +102,13 @@ function App() {
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
 
       {view === 'sell' && <VoiceCapture onConfirmed={(command) => setNotice({ type: 'success', text: `Voice command confirmed for sale review: ${command}` })} />}
-      {view === 'today' && <><Today summary={shopSummary} onSell={() => setView('sell')} /><ToolEntryPoints onSocial={() => setView('social')} onProfitability={() => setView('profitability')} /></>}
+      {view === 'today' && <><Today summary={shopSummary} onSell={() => setView('sell')} /><ToolEntryPoints onSocial={() => setView('social')} onProfitability={() => setView('profitability')} onSettings={() => setView('settings')} /></>}
       {view === 'sell' && <Sell products={filteredProducts} allProducts={products} query={query} setQuery={setQuery} basketItems={basketItems} total={total} itemCount={itemCount} tender={tender} setTender={setTender} addToBasket={addToBasket} removeFromBasket={removeFromBasket} submitSale={submitSale} isLoading={isLoading} />}
       {view === 'stock' && <Stock products={products} />}
       {view === 'monitor' && (monitorMode === '2d' ? <TeamMonitor snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onOpenCommandRoom={() => setMonitorMode('3d')} /> : <CommandRoom snapshot={teamSnapshot} source={teamSource} error={teamError} lastRefresh={teamLastRefresh} onBack={() => setMonitorMode('2d')} />)}
       {view === 'social' && <ToolPlaceholder kind="social" onBack={() => setView('today')} />}
-      {view === 'profitability' && <ToolPlaceholder kind="profitability" onBack={() => setView('today')} />}
+      {view === 'profitability' && <Profitability summary={shopSummary} onBack={() => setView('today')} />}
+      {view === 'settings' && <ApiSettings onBack={() => setView('today')} />}
     </main>
 
     <nav className="bottom-nav" aria-label="Main navigation">{([['today', '⌂', 'Today'], ['sell', '+', 'Sell'], ['stock', '▥', 'Stock'], ['monitor', '◌', 'Team']] as const).map(([key, icon, label]) => <button key={key} className={view === key ? 'active' : ''} onClick={() => setView(key)} aria-current={view === key ? 'page' : undefined}><span className="nav-icon">{icon}</span>{label}{key === 'sell' && itemCount > 0 && <b className="basket-badge">{itemCount}</b>}</button>)}</nav>
@@ -165,7 +166,27 @@ function AgentWorkbench({ agent, events }: { agent: AgentActivity; events: TeamS
 
 function RoomDesk({ desk, isCto = false, focused = false, onFocus }: { desk: { name: string; role: string; status: AgentActivity['status']; task: string; lastActivity: string; accent: string }; isCto?: boolean; focused?: boolean; onFocus: () => void }) { return <article className={`room-desk ${isCto ? 'cto-desk' : ''} ${focused ? 'focused-desk' : ''}`} onClick={onFocus} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onFocus() }} role="button" tabIndex={0} aria-label={`Go to ${desk.name}'s desk`}><div className="desk-top" style={{ '--desk-accent': desk.accent } as CSSProperties}><div className="desk-monitor"><span>{isCto ? 'CEO' : desk.name.slice(0, 2).toUpperCase()}</span><i /></div><div className="desk-lamp" /><div className="desk-paper" /></div><div className="desk-label"><div className="room-avatar" style={{ background: desk.accent }}>{desk.name.slice(0, 1)}</div><div><strong>{desk.name}</strong><span>{desk.role}</span></div></div><div className="planner-card"><div><span className="planner-kicker">PLANNER / TASK</span><b className={`planner-status ${desk.status.toLowerCase()}`}>{desk.status}</b></div><strong>{desk.task}</strong><small>Last activity · {desk.lastActivity}</small></div></article> }
 
-function ToolEntryPoints({ onSocial, onProfitability }: { onSocial: () => void; onProfitability: () => void }) { return <section className="tool-entry-section"><div className="section-head"><div><p className="eyebrow">SHOP TOOLS</p><h2>Turn today’s work into momentum.</h2></div></div><div className="tool-entry-grid"><button className="tool-entry social-tool" onClick={onSocial}><span className="tool-glyph">✣</span><span><strong>Social Update</strong><small>Turn a win into a post</small></span><b>→</b></button><button className="tool-entry profit-tool" onClick={onProfitability}><span className="tool-glyph">↗</span><span><strong>Profitability Analysis</strong><small>See what is earning its keep</small></span><b>→</b></button></div></section> }
+function ToolEntryPoints({ onSocial, onProfitability, onSettings }: { onSocial: () => void; onProfitability: () => void; onSettings: () => void }) { return <section className="tool-entry-section"><div className="section-head"><div><p className="eyebrow">SHOP TOOLS</p><h2>Turn today’s work into momentum.</h2></div></div><div className="tool-entry-grid"><button className="tool-entry social-tool" onClick={onSocial}><span className="tool-glyph">✣</span><span><strong>Social Update</strong><small>Turn a win into a post</small></span><b>→</b></button><button className="tool-entry profit-tool" onClick={onProfitability}><span className="tool-glyph">↗</span><span><strong>Profitability Analysis</strong><small>Ask: “What was my profit this month?”</small></span><b>→</b></button></div><button className="settings-link" onClick={onSettings}>API Settings · connect this shop to the backend →</button></section> }
+
+function Profitability({ summary, onBack }: { summary: ShopSummary | null; onBack: () => void }) {
+  const [revenue, setRevenue] = useState(summary ? (summary.sales_total_cents / 100).toFixed(2) : '')
+  const [cogs, setCogs] = useState('')
+  const [expenses, setExpenses] = useState('')
+  const [question, setQuestion] = useState('What was my profit this month?')
+  const revenueValue = Number(revenue) || 0
+  const gross = revenueValue - (Number(cogs) || 0)
+  const net = gross - (Number(expenses) || 0)
+  const margin = revenueValue > 0 ? (net / revenueValue) * 100 : 0
+  return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className="tool-hero profit-tool"><span className="tool-glyph">↗</span><p className="eyebrow">ASK MUSE</p><h2>Profitability Analysis</h2><p>Ask a question, then give Muse the month’s sales, cost of stock, and expenses.</p></div><div className="analysis-card"><label>Question<input value={question} onChange={(event) => setQuestion(event.target.value)} /></label><div className="analysis-fields"><label>Sales / revenue<input inputMode="decimal" value={revenue} onChange={(event) => setRevenue(event.target.value)} placeholder="0.00" /></label><label>Stock cost / COGS<input inputMode="decimal" value={cogs} onChange={(event) => setCogs(event.target.value)} placeholder="0.00" /></label><label>Other expenses<input inputMode="decimal" value={expenses} onChange={(event) => setExpenses(event.target.value)} placeholder="0.00" /></label></div><button className="primary-action full" onClick={() => undefined}>Analyse this month <span className="arrow">→</span></button><div className="analysis-result"><p className="eyebrow">TRANSPARENT SUMMARY</p><div><span>Gross profit</span><strong>{formatMoney(Math.round(gross * 100))}</strong></div><div><span>Net profit</span><strong>{formatMoney(Math.round(net * 100))}</strong></div><div><span>Net margin</span><strong>{margin.toFixed(1)}%</strong></div></div><p className="muted">This calculation uses the inputs above. Full Muse recommendations will be connected when the finance API supplies monthly COGS and expense records.</p></div></section>
+}
+
+function ApiSettings({ onBack }: { onBack: () => void }) {
+  const current = getApiConfig()
+  const [baseUrl, setBaseUrl] = useState(current.baseUrl)
+  const [shopId, setShopId] = useState(current.shopId)
+  const save = () => { saveApiConfig({ baseUrl, shopId }); window.location.reload() }
+  return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className="tool-hero social-tool"><span className="tool-glyph">⚙</span><p className="eyebrow">CONNECTION</p><h2>API Settings</h2><p>Connect this browser to the local Street CEO API. These values are saved only on this device.</p></div><div className="analysis-card"><label>API base URL<input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="http://localhost:8000" /></label><label>Shop ID<input value={shopId} onChange={(event) => setShopId(event.target.value)} /></label><button className="primary-action full" onClick={save}>Save connection <span className="arrow">→</span></button><p className="muted">Do not put Meta API keys here. Provider keys belong in the server environment, never in the browser.</p></div></section>
+}
 
 function ToolPlaceholder({ kind, onBack }: { kind: 'social' | 'profitability'; onBack: () => void }) { const social = kind === 'social'; return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className={`tool-hero ${social ? 'social-tool' : 'profit-tool'}`}><span className="tool-glyph">{social ? '✣' : '↗'}</span><p className="eyebrow">STREET CEO TOOL</p><h2>{social ? 'Social Update' : 'Profitability Analysis'}</h2><p>{social ? 'A ready-to-edit shop update will appear here once the content service is connected.' : 'Your product margin and sales mix will appear here once the finance and analytics services are connected.'}</p><span className="tool-status">UI entry point ready · service connection pending</span></div><div className="placeholder subtle"><strong>{social ? 'No post drafted yet' : 'No analysis available yet'}</strong><span>This is a presentation entry point only. No undocumented API call or fabricated business result is shown.</span></div></section> }
 
