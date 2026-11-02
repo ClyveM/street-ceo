@@ -291,3 +291,10 @@ Owner: screen prompts may remain full, spoken tender exactly Cash or bank?; spok
 SHORT-VOICE-TRAIN-001 sourcefrozen137testsPASS/build70modules shop-DKDHubvq.js; QA/packaging/physicalgate pending seehandoff.
 
 SHORT-VOICE-TRAIN-001 packaged7168817bytes SHA2562b85be34b5e9a3822f01e035db5f19bd76a1c4f247f68f140937d70fa9c5bfee; samev1/v2cert/7assets PASS; finalhandoffpersisted physicalgateOwner.
+
+## Assigned by Mutungamiri — 2026-11-02 REPORTS-POLISH-001
+Owner mobileReports confusing/embarrassing requests redesign. Runako apps/web Reports.tsx and reports-close.css reports-only selectors/newreporthelpers/tests/buildInfo; preserve EndDaystyles/no API/calculationchanges. Build brandedclean mobile320/390: compactheading/logocharacter, oneclearperiodselector activepill Today/20days/90days/Month/customdisclosure, prominent salestotalcard+transactions, simplecash/bankbreakdown, productlist rank/units/amount clearhierarchy. Defaultperiod intentionalexplicit, usermonth/datechanges validated/stalecontentnotmislabelled. Hide technicalcoverage/asof/COGSdetails in disclosure but missing/incomplete warningvisibleconcise, neverfake0profit. Monthly/dailydetails secondary; optionalmonthstockcount subordinate onlymonthreview intuitiveSkipcount preserved. Loading/error/empty intentional, accessible44pxcontrols nooverflow. Do not change reportsemantics/snapshots/reconciliation. FollowAGENTSactivation role6brains docsboard. Sourcebuild/tests thenfreezeQA; temporarygeneratedAndroidpackaging extension only afterrootgo, samekey/API8001 labelREPORTS-POLISH-001. Persisthandoff.
+
+REPORTS-POLISH-001 sourcefrozen141testsPASS/build71modules shop-BsA05o4-.js CSSshop-BzDVHsCO.css; QA/screens/rootGO pending.
+
+REPORTS-POLISH-001 software/packagecomplete7170003bytes SHA2564fc69bbee696e19e25d684eb9a43dbf6f74ffe60b940ddada29b7254fcd49345; samekey/7assetsPASS; physicalacceptanceOwner.
