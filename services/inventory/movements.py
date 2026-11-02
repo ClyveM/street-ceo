@@ -114,6 +114,10 @@ class InventoryBook:
     def __init__(self) -> None:
         self._stock: Dict[str, ProductStock] = {}
         self._movements: list[Movement] = []
+        # A source document may contain one movement per product (for example,
+        # a multi-line purchase), but replaying the same product line must not
+        # receive stock twice.
+        self._source_movements: Dict[tuple[str, str], Movement] = {}
 
     def stock(self, product_id: str) -> ProductStock:
         self._require_product_id(product_id)
@@ -161,6 +165,8 @@ class InventoryBook:
         self, product_id: str, quantity: int, source_reference: str, *,
         reason: str, actor: str, unit_cost: Decimal | int | str | None = None,
     ) -> Movement:
+        if isinstance(quantity, bool) or not isinstance(quantity, int):
+            raise InventoryError("adjustment quantity must be a whole number")
         if quantity == 0:
             raise InventoryError("adjustment quantity cannot be zero")
         if not reason or not reason.strip() or not actor or not actor.strip():
@@ -192,6 +198,18 @@ class InventoryBook:
         self._require_product_id(product_id)
         if not source_reference or not source_reference.strip():
             raise InventoryError("source_reference is required for every movement")
+        source_reference = source_reference.strip()
+        source_key = (source_reference, product_id)
+        previous = self._source_movements.get(source_key)
+        if previous is not None:
+            requested_unit_cost = unit_cost
+            if requested_unit_cost is None:
+                requested_unit_cost = previous.unit_cost
+            elif requested_unit_cost != previous.unit_cost:
+                raise InventoryError("source_reference was already used with different movement data")
+            if previous.movement_type is movement_type and previous.quantity == quantity:
+                return previous
+            raise InventoryError("source_reference was already used with different movement data")
         if quantity == 0:
             raise InventoryError("movement quantity cannot be zero")
         current = self._current_stock(product_id)
@@ -217,11 +235,12 @@ class InventoryBook:
         current.quantity = after
         current.average_unit_cost = new_average
         movement = Movement(
-            movement_type, product_id, quantity, source_reference.strip(), unit_cost,
+            movement_type, product_id, quantity, source_reference, unit_cost,
             unit_cost * abs(quantity), before, after, new_average, actor, reason,
             related_source_reference,
         )
         self._movements.append(movement)
+        self._source_movements[source_key] = movement
         return movement
 
     @staticmethod

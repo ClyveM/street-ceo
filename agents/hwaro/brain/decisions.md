@@ -59,3 +59,6 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
   no memory fallback is permitted.
 - Readiness checks both connectivity and the presence of the migrated
   `public.shops` table so an unmigrated deployment cannot appear ready.
+
+## 2026-11-02 — STARTER-COGS-001 provenance and scope
+Use canonical JSON six-product fixture and demo_seed cost audits for illustrative opening assumptions approvedRuzivo. Do not add mutable Productsourceflag that couldremainwrong afterrealpurchases/corrections. Exactdefaultidentity+Noneonly guard, preserveknownzero/anycostsource andallhistoricalreceipts; onlyfutureCOGS changes. Parent owns coordinatedactivation; no liveDBmutation bythisagent.

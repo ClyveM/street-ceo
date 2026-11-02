@@ -6,7 +6,8 @@ from .ledger import (
     JournalEntry,
     Ledger,
     Posting,
+    ProfitabilityReport,
     Tender,
 )
 
-__all__ = ["Account", "DailyClose", "JournalEntry", "Ledger", "Posting", "Tender"]
+__all__ = ["Account", "DailyClose", "JournalEntry", "Ledger", "Posting", "ProfitabilityReport", "Tender"]

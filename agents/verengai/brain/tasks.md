@@ -20,3 +20,15 @@ Task assignments from Mutungamiri will appear here under an
 - Compile check: `python -m compileall -q services/finance` → passed.
 - Integration check: `python tests/run_checks.py` → `5 passed, 1 error` from the existing backend smoke import context (`ModuleNotFoundError: services`); not modified because it is outside finance ownership.
 - Status: implementation complete pending Ruzivo review and cross-agent integration.
+
+## W6-DEMO-FINANCE-001 — 2026-10-31
+Explicit assignment received: validate demo finance without frontend work. Review complete, 30 focused tests passed; integration blockers remain. See handoffs.md for commands, source findings, limits and next owners.
+
+### W6 expanded completion — 2026-10-31
+51 tests passed; documented reproducible highest-impact day-close opening defect and change/profit evidence in handoffs.md. No application edits; Hwaro correction and Ruzivo review needed.
+
+### W6 finance remediation — 2026-10-31
+- Scope honored: `services/finance/` and Verengai brain only.
+- Completed: change/tender metadata validation, damaged-return reclassification, duplicate reversal guard, ledger-derived profitability report, and full close movement handling for same-day openings/reversals/source warnings.
+- Evidence: `python -m pytest services/finance -q -p no:cacheprovider` → 8 passed; `python -m compileall -q services/finance` → passed; `git diff --check` → passed.
+- Remaining: API day-close opening/carry-forward, finance journal integration, persistence, invoice payment linkage, WAC/settlement rounding, and API warning propagation remain Hwaro/Dura/Chengetai integration work; Ruzivo re-review required.

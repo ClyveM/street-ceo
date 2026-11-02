@@ -34,3 +34,55 @@ opening balances, daily close, warnings, assumptions, and production/tax questio
   accounting baseline.
 - On implementation review, verify reversals, tender separation, WAC precision,
   returns, daily close, and visible incomplete-data warnings against code and tests.
+
+## 2026-10-31 — W6-DEMO-FINANCE-REVIEW-001
+- Completed current code review; verdict BLOCK financial sign-off. Details: docs/finance/review-W6-DEMO-FINANCE-REVIEW-001.md.
+- Changed: review memo, corrected 40.00 to 22.00 worked-example typo in prior policy memo, own brain checkpoint only. No product code or other agent records changed.
+- Fresh tests: focused finance/inventory/API costs/retail suite, 28 passed in 11.31s. No live database/browser/concurrency checks. Existing tests miss blockers and one asserts incorrect damaged-return inventory treatment.
+- Blockers: close carry-forward/opening/reversal handling; journal integration and PostgreSQL COGS; valuation/payment rounding; invoice atomicity/payment linkage; damaged returns; correction warnings and closed-period trail.
+- Next: Mutungamiri sequence owner fixes and Chengetai regressions; Ruzivo re-review actual changes before approval.
+
+## 2026-11-01 — DEMO-SALE-CASH-REVIEW-001
+- Loaded AGENTS, role, six brain files, current task/board, accounting rules and connected demo acceptance; confirmed read-only product scope, writes docs/finance and own brain only; prior handoff read.
+- Completed scoped code review; verdict APPROVE WITH CONDITIONS for single-worker connected SQLite catalogue/manual sale and voice sale/tender/change/stock/history/retry demonstration. Memo: docs/finance/review-DEMO-SALE-CASH-REVIEW-001.md.
+- Confirmed integer-cent total/change, insufficient cash rejection, bank zero-change/recorded-only settlement, complete stock prevalidation, pre-sale COGS snapshot/unknown preservation, review/key binding and atomic staged SQLite receipt/state persistence.
+- Condition: manual request has no cash-received amount/change calculator; use voice path for received/change demonstration. Fullledger/profit/dayclose/invoice/returns/security/phone acceptance remain separate; prior broad financial block not cleared.
+- Files changed: new finance review memo; own current-state, tasks, decisions and handoffs append only. No product code or other brains changed.
+- Tests: no fresh application tests or live mutations by Ruzivo. Evidence inspected and attributed: parent host181backend+independent tests passed; Runako114frontend/build passed; Chengetai focused voice QA report. Code/test arithmetic630total/1000received/370change verified by inspection.
+- Next: parent verify actual runtime/APK and phone repeat-sale behavior; re-review if pricing/tender/commit/receipt/persistence semantics change. No statutory certification or full release signoff.
+- Fresh documentation verification: review memo exists; scoped git diff --check passed (line-ending notices only). No additional application tests.
+
+## 2026-11-01 — SPRINT90-CASH-REVIEW-002
+- Reactivated from AGENTS, role, six brain files and latest assigned task/board/acceptance; prior handoff read. Scope app read-only, own finance memo and brain writes.
+- APPROVE WITH CONDITIONS new manual and voice cash-change demo. Added dated addendum to docs/finance/review-DEMO-SALE-CASH-REVIEW-001.md; supersedes prior manual-no-change condition for current UI only, preserving history.
+- Verified strict optional integer amount, server cash/bank validation before stock mutation, authoritative saved change, exact frontend cents/receipt checks, original frozen retry payload/config/key, exclude-none legacy fingerprint compatibility, real-file regression coverage by inspection.
+- Legacy omitted/null received remains unknown, not proof exactcash; bank remains recorded tender, not settlement. Single-worker modest catalogue demo only; no fullledger/profit/dayclose approval or physicalphone claim.
+- Evidence attributed: parent188 backend/acceptance passes and120 frontend passes before minor traceUI fix. No fresh application tests/live mutations by Ruzivo. Inspected relevant manual cash/replay/validation tests and code.
+- Files changed: finance memo addendum; own current-state/tasks/decisions/handoffs append only. Next parent package/current runtime/phone evidence; re-review semantic changes.
+- Fresh scoped documentation git diff --check passed; line-ending notices only.
+
+## 2026-11-01 — CATALOGUE-VOICE-REVIEW-001
+- Activation: latest AGENTS, role, six brain files, prior handoffs, assigned task, current demo acceptance and master-board checkpoints loaded. Scope app read-only; own docs/finance and brain writes only.
+- APPROVE WITH CONDITIONS narrow catalogue-grounded voice proposals and explicit match confirmation. No new financially material posting bypass found in inspected source. Memo docs/finance/review-CATALOGUE-VOICE-REVIEW-001.md.
+- Reviewed transcript-derived qty/slot coverage, known-ID and stock boundary, provider no-price authority, missingqty/unknown/incomplete nonactionability, strict defaultfalse approval gate, exact stored lines, UI explicitYes beforepayment, serverprice/change, legacyfalse fingerprint omission/replay.
+- Conditions: singleworker modestinteger demo; actualphone hear/readback/Yes remains unverified; clientapproval flag is operator assertion, not authenticated speech proof. Provider matching not semantic guarantee; bank recordedonly. No fullledger/profit/dayclose expansion or approval.
+- Tests: no new application runs/live/provider requests by Ruzivo. Parent reports215 broad backend plus18 independent confirmation tests,4 realprovider no-sale cases,136frontend passes. Relevant AI/API/client regressions inspected; results attributed.
+- Files changed: new scoped finance memo, own current-state/tasks/decisions/handoffs append only. No product source/otherbrain edits. Next parent packagecurrentAPK and physicalproposal/Yes/payment/receipt/stock/history acceptance; re-review semantic changes.
+- Fresh documentation verification: memo exists; scoped git diff --check passed, line-ending notices only.
+
+## 2026-11-02 — STARTER-COGS-REVIEW-001 policy handoff
+- Assignment: approve illustrative six startercosts and safe missing-only initialization treatment. Full current activation read; previous handoff confirmed. Scope own docsfinance/brain, productreadonly.
+- Verdict APPROVE WITH CONDITIONS policy/design only: USD Coke1.00/Bread1.20/Sugar1.80/Milk0.90/Chips0.60/Soap1.50 (1000000/1200000/1800000/900000/600000/1500000micros). Synthetic demo assumptions, not researched market/supplier prices. Exact values communicated Hwaro/Runako/root.
+- Hwaro intended guards confirmed: defaultdemo shopUUID/name/currency/timezone + productUUID/SKU/name/shopid, only nullcost; preserve knownzero/non-null, skipinvoice-linked or priorcost-audited deliberateunknown; qty0 demo_seed audit STARTER-COGS-001, no invoice/payment; atomic/idempotent startup, historicalCOGS/receipts/stock/prices unchanged. Design acceptable pending code/tests.
+- Files changed: docs/finance/review-STARTER-COGS-REVIEW-001.md and own current-state/decisions/tasks/handoffs append only. No productcode/otherbrains changed.
+- Tests: no applicationtests/live/provider/database mutations by Ruzivo. Reviewed current seed, pre-saleCOGS snapshot, missinghistoricalCOGS reportguard and startuptransaction by inspection. Implementation/regression evidence pending Hwaro/Chengetai; no fabricated pass or fullledger signoff.
+- Next: Hwaro implement and Chengetai validate freshcost/missing-only/knownzero/audits/restart/historicalunknown invariants. Parent may reactivate Ruzivo to inspect stable actualcode/tests before final implementation approval; keep demoassumption disclosure with futureCOGS.
+- Fresh documentation verification: memo exists; scoped git diff --check passed, line-ending notices only.
+
+## 2026-11-02 — STARTER-COGS-REVIEW-001 implementation review
+- Reactivated from persisted task/handoff; ownfinance/brain writes only, productreadonly. Actualcode inspected: app.seed_demo_shop/_backfill_demo_costs, canonicalJSON, demo_seed enum, SQLite startuptransaction, authoredstartertests, frontendfallbackparity.
+- APPROVE WITH CONDITIONS implementation: approvedsixvalues correct; fullshop+exactproductidentity/null-only guards and invoice/prioraudit skips preserve knownzero/knowncost/stock/prices/removedorcustomproducts; explicitdemo_seed qty0 audit noinvoice/payment; repeatedstartup idempotent; initializer never rewrites historicalsales/COGS/receipts/replaykeys. Future salecost snapshots continue existingbehavior.
+- Evidence: authoredbackend fresh/legacy/reopen/knownzero/unknownreceipt/prices/identity/audit tests inspected; parent/QA running tests, no backendpass claimed by Ruzivo. Runako reports141frontend/build includingcanonicalparity passed, attributed. No own application/live/provider tests or productedits.
+- Fileschanged: finance memo implementationaddendum; own current-state/tasks/decisions/handoffs append only. No otherbrains/productchanges. Conditions illustrativeassumptions disclosed, root/QA regression+saferuntimeactivation before delivery; no fullledger/retrospectiveprofit/physicalAPK approval.
+- Next: parent record regression/runtimeevidence; re-review fixture/guard/audit/historicaltreatment changes. Handoff complete.
+- Fresh scoped documentation git diff --check passed; line-ending notices only.

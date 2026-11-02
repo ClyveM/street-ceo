@@ -14,12 +14,36 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Protocol, Sequence
 
 from services.ai.boundary import validate_sale_intent
+from services.ai.tracing import traced_call
 
 from .state_machine import CommandIntent, Interpreter
 
 
 class ChatClient(Protocol):
     def create(self, *, messages: Sequence[Mapping[str, str]], model: str) -> Any: ...
+
+
+class _MetaModelChatClient:
+    """Small OpenAI-compatible client for Meta Model API chat completions."""
+
+    def __init__(self, api_key: str, http_client: Any) -> None:
+        self.api_key = api_key
+        self.http_client = http_client
+
+    def create(self, *, messages: Sequence[Mapping[str, str]], model: str) -> Mapping[str, Any]:
+        request = {"model": model, "messages": list(messages)}
+
+        def send() -> Mapping[str, Any]:
+            response = self.http_client.post(
+                "https://api.meta.ai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+                json=request,
+            )
+            response.raise_for_status()
+            return response.json()
+
+        return traced_call(operation="voice_intent", model=model, request=request,
+                           call=send, secret_values=(self.api_key,))
 
 
 @dataclass(frozen=True)
@@ -81,11 +105,17 @@ def build_meta_llama_interpreter(settings: MetaLlamaSettings | None = None) -> M
     if not settings.model:
         raise RuntimeError("LLAMA_MODEL is not configured")
     try:
-        from llama_api_client import LlamaAPIClient
+        import httpx
+        import truststore
     except ImportError as exc:  # pragma: no cover - depends on deployment extras
-        raise RuntimeError("Install the official llama-api-client package") from exc
-    client = LlamaAPIClient(api_key=settings.api_key)
-    return MetaLlamaInterpreter(client.chat.completions, settings.model)
+        raise RuntimeError("Install the truststore package for Windows certificate support") from exc
+    # Use the Windows certificate store while preserving normal TLS verification.
+    # This is needed on machines whose network adds a locally trusted certificate
+    # that is not present in certifi's bundled CA file.
+    tls_context = truststore.SSLContext()
+    http_client = httpx.Client(verify=tls_context)
+    client = _MetaModelChatClient(settings.api_key, http_client)
+    return MetaLlamaInterpreter(client, settings.model)
 
 
 def _response_json(response: Any) -> Mapping[str, Any]:
@@ -96,6 +126,12 @@ def _response_json(response: Any) -> Mapping[str, Any]:
     if content is None and isinstance(response, Mapping):
         message = response.get("completion_message") or response.get("message")
         content = message.get("content") if isinstance(message, Mapping) else None
+    if content is None and isinstance(response, Mapping):
+        choices = response.get("choices")
+        if isinstance(choices, list) and choices:
+            choice = choices[0]
+            message = choice.get("message") if isinstance(choice, Mapping) else None
+            content = message.get("content") if isinstance(message, Mapping) else None
     if isinstance(content, list):
         content = "".join(str(part.get("text", "")) if isinstance(part, Mapping) else str(part) for part in content)
     if not isinstance(content, str):

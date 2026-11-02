@@ -20,3 +20,17 @@ Task assignments from Mutungamiri will appear here under an
 - Focused inventory suite: 5 passed. Compilation: passed.
 - Whole-repository suite: blocked during collection by pre-existing top-level
   import failures in AI and voice test modules; see `current-state.md`.
+
+### W6-DEMO-INVENTORY-001 — 2026-10-31
+Validation complete with blocking invoice atomicity finding; 18 tests passed and failure/retry probe reproduced. See handoff. Backend fix belongs to Hwaro.
+
+W6 follow-up evidence: whole-unit adjustment guard and five regression cases added; focused suite 23 passed. API invoice atomicity fix remains outstanding.
+
+### W6 inventory replay follow-up — 2026-10-31
+
+- Fixed duplicate purchase-line replay at the inventory primitive boundary.
+- `InventoryBook` now keys source usage by `(source_reference, product_id)`;
+  exact retries replay the original movement, and changed retries fail before
+  mutation. Same source across distinct products is supported.
+- Evidence: `python -m pytest services/inventory/test_movements.py -q` — 12
+  passed; `python -m pytest services/inventory/test_movements.py services/api/test_retail_control.py services/api/test_costs.py -q` — 25 passed.

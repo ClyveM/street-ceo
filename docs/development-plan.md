@@ -3,6 +3,18 @@
 Deadline: November 4, 2026 (Meta Global AI Developer Hackathon).
 Rule: functioning end-to-end demo before advanced functionality.
 
+## Current scope — supersedes the historical phase status below (2026-11-01)
+
+Owner froze the connected APK MVP around catalogue, manual and hands-free Apo
+sales, stock and sales history. SQLite durability and correlated sanitized Muse
+request/response investigation are required. Offline sync, invoice/social demo
+work, forecasts and full finance expansion are deferred. Implementation tasks:
+DEMO-SQLITE-VOICE-001 (Hwaro), DEMO-APK-APO-001 (Runako),
+DEMO-MUSE-TRACE-001 (Ungwaru), DEMO-VOICE-TRACE-001 (Inzwi), and
+DEMO-APK-SQLITE-QA-001 (Chengetai). See `demo-mvp-acceptance.md` and
+`demo-runbook.md`. Completion requires persisted test evidence and an actual
+phone rehearsal; packaging alone does not establish voice acceptance.
+
 ## Phase 0 — Setup (in progress)
 
 - Team scaffolding: `AGENTS.md`, 11 roles + brains, docs, master board.

@@ -1,0 +1,12 @@
+.stock-list .stock-row { grid-template-columns: 48px minmax(0, 1fr) auto; }
+.product-thumbnail { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+.product-image-control { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 8px; font-size: 14px; line-height: 1.6; }
+.product-image-control summary { min-height: 48px; align-content: center; cursor: pointer; font-weight: 700; }
+.product-image-control label { display: block; font-size: 14px; }
+.product-image-control input { display: block; max-width: 100%; min-height: 48px; padding: 10px 0; margin-top: 8px; font-size: 16px; }
+.product-image-control button { min-height: 48px; padding: 10px 14px; background: #176f68; color: #fff; border: 0; border-radius: 8px; font: inherit; cursor: pointer; }
+.product-image-control button:disabled { opacity: .55; cursor: default; }
+.product-image-control figure { margin: 8px 0 14px; }
+.product-image-control figure img { display: block; width: min(100%, 240px); max-height: 240px; object-fit: contain; border: 1px solid var(--line); border-radius: 10px; }
+.product-image-control figcaption { overflow-wrap: anywhere; margin-top: 6px; }
+.product-image-control [role=alert] { color: #9a3c28; }

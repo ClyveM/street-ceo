@@ -1,0 +1,19 @@
+.social-workflow { font-size: 16px; line-height: 1.6; }
+.social-workflow h3 { font-size: 20px; }
+.social-workflow .analysis-card label { font: inherit; font-size: 15px; color: var(--ink); }
+.social-workflow textarea, .social-workflow select { width: 100%; font: inherit; font-size: 16px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-top: 6px; }
+.social-workflow button { min-height: 48px; padding: 10px 14px; border-radius: 8px; font: inherit; cursor: pointer; }
+.social-workflow button:disabled { cursor: default; opacity: .6; }
+.social-product-list { display: grid; gap: 12px; margin-bottom: 24px; }
+.social-product-list article { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.social-product-list article > label { display: flex; gap: 12px; align-items: center; min-height: 48px; margin: 0; }
+.social-product-list input[type=checkbox], .social-check input[type=checkbox] { width: 24px; height: 24px; flex-shrink: 0; margin: 0; }
+.social-product-list img { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; }
+.social-product-list strong, .social-product-list small { display: block; }
+.social-workflow .social-check { display: flex; gap: 12px; align-items: center; }
+.social-warning, .social-error { padding: 14px; border: 1px solid #dec99a; border-radius: 10px; background: #fff7e5; }
+.social-error { color: #9a3c28; background: #fff0ea; border-color: #dda692; }
+.shop-photo-preview { width: min(100%, 360px); max-height: 300px; object-fit: contain; border-radius: 10px; }
+.social-workflow figure { margin: 12px 0; }
+.social-workflow figcaption { font-size: 14px; }
+.generated-image-preview { display: grid; place-content: center; min-height: 180px; padding: 20px; border: 1px dashed #a7c9c1; border-radius: 10px; margin: 16px 0; background: #f4faf8; text-align: center; }

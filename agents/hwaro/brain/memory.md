@@ -57,3 +57,11 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
   `sales`.
 - `GET /readyz` maps repository runtime failures to `503`; schema absence is
   reported as not ready.
+
+## 2026-11-01 — Current approved demo facts
+- Updated AGENTS and docs/demo-mvp-acceptance.md supersede historical PostgreSQL/offline plans: connected Android APK, SQLite single-worker API, catalogue/manual+voice sales/stock/history, sanitized investigations. PostgreSQL/offline deferred.
+- SQLite aggregate and asset encoding is explicit/versioned, never pickle; operational traces are separate SQLite file. Runtime identity endpoint exposes basename/hash/PID, no full path.
+- Voice commit HTTP200 can mean needs_tender with a question, not a sale. Only a durable Sale receipt binds review/commits stock; missing-tender/amount questions must preserve review without posting. PHONE-RECOVERY-API-001 observed this distinction in read-only stored evidence.
+
+## 2026-11-02 — REPO-SHOP-API-001 delivery boundary
+DefaultshopAPIdoesnotrequireteam_activity/project_office/local_team modules. Optionalmachine-localapp mounts onlyexplicit STREET_CEO_LOCAL_TEAM_ENABLED=1 and itsfilesremainlocal, excludedfromdelivery. Coreentrypoint services.api.app:app unchanged; tzdata declaredforWindowsHarare. Keepagentbrains/docs tracked; rootcoordinatesGitindex/publication.

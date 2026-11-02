@@ -63,3 +63,301 @@
 - Tests/run evidence before activation: W1 quality checks remained green; W1 commit `58548ff` pushed to `origin/main`.
 - Outstanding issues: local Git push initially hit certificate validation, then succeeded with Windows certificate validation. W2 still needs live PostgreSQL/environment setup and the first runnable web preview.
 - Next action: review W2 handoffs, run the web app locally, and integrate only tested interfaces.
+
+## 2026-10-31 — INT-DEMO-001: focused demo integration run
+
+- Assignment: integrate supplier-invoice upload with the existing review-only AI invoice adapter; verify the actual LAN runtime; execute sale/stock/purchase-WAC/day-close/Muse/social checks; rebuild the online APK.
+- Files changed: `services/api/app.py`, `services/api/test_costs.py`; generated `apps/web/dist/`, `apps/android/web-assets/`, and the Android debug APK; this handoff, `brain/current-state.md`, and `tasks/master-board.md`.
+- Invoice route now accepts `invoice_ai`, calls `InvoiceImageRequest` with a bounded data URL and shop catalogue, and builds the complete review record before publishing it. Provider lines are review-only `ocr_provider` suggestions; unavailable extraction stays explicit. Adapter exceptions leave invoice maps unchanged.
+- Tests: `python -m pytest services/api/test_costs.py services/ai/test_invoice.py -q` — **15 passed**. `PYTHONPATH=. python tests/run_checks.py` — contract checks passed, security check failed only on existing `.env` and `apps/web/.env.local`. `npm run test:frontend` — **103 passed**. `npm run build` — **passed**, Vite 77 modules, shop and office entries.
+- Runtime: restarted in-memory API from this checkout on `0.0.0.0:8000` (PID 41628), resetting ephemeral records. LAN and localhost health/readiness passed; live OpenAPI includes invoice, purchases, day-close, Muse, social, and sales. Isolated live invoice upload returned **201**, `provider_unavailable`/`none`, zero lines, and stock remained **3**. Before restart, `demo_backend_smoke.py` and `w6_demo_qa.py` passed sale/idempotency/stock, WAC 1,500,000 micros, day-close zero variance, Muse, social brief/draft/image.
+- APK: `apps/android/android/app/build/outputs/apk/debug/app-debug.apk`; `copy-web-assets`, `sync`, and `gradlew.bat assembleDebug` passed. Timestamp **2026-10-31 22:55:44 +02:00**, size **7,172,104 bytes**, SHA-256 **FEB8CCC4218F9CC8FF0E9637576F5CD5E0C1FB5FAF6D0F8214ECDA363081D3BE**. Archive contains current `index.html`, `office.html`, and shop/office/styles bundles.
+- Remaining blockers: PostgreSQL durability is not proven; auth/tenant security and production HTTPS remain unfinished; physical phone install/runtime, microphone, file permissions, keyboard/viewport, and download/open checks are untested; real Meta invoice/social provider availability and generated-image/download evidence are unestablished; security gate remains red on local env files.
+
+## 2026-11-01 — MUSE-IMAGE-VERIFY-001
+
+### Assignment summary
+
+Ran the current social image-generation route from this checkout against a
+fresh LAN API listener, verified the returned preview format and actual PNG
+renderability, exercised the client-equivalent byte export path, and reviewed
+the current social parser/download implementation. No proven product defect
+was found, so no application source was changed.
+
+### Exact HTTP evidence
+
+- Backend listener: `0.0.0.0:8000`, LAN base `http://192.168.10.213:8000`.
+- `GET /healthz` — HTTP **200**, `{"status":"ok"}`.
+- `GET /readyz` — HTTP **200**, `{"status":"ready"}`.
+- `GET /shops/00000000-0000-0000-0000-000000000001/products` with matching
+  `X-Shop-ID` — returned seeded product `Coca-Cola 300ml`, ID
+  `00000000-0000-0000-0000-000000000001`.
+- `POST /api/v1/shops/{shop_id}/social/image-generation` with one product,
+  `aspect_ratio=1:1`, and a 104-character verified-facts brief — HTTP **200**;
+  measured latency **12,270 ms**; response `status=draft`,
+  `provider=meta_muse_image`, `model=muse-image-1.0`, `draft_only=true`, one
+  warning that the image is an unpublished editable draft.
+- First successful generation ID:
+  `1166eb20-308d-403b-964f-e6ef16152bba`; `GET
+  /api/v1/shops/{shop_id}/social/image-generation/{generation_id}` — HTTP
+  **200**, same ID.
+- Returned `output_url` and `image_refs[0]` were identical and formatted as
+  `data:image/png;base64,...`; URL length **3,017,382** characters; decoded
+  payload **2,263,020 bytes**.
+- A second independent POST also returned HTTP **200**, `draft`,
+  `meta_muse_image`, `muse-image-1.0`, and a valid PNG data URL.
+
+### Render/export evidence
+
+- PNG signature: `89 50 4E 47 0D 0A 1A 0A`; parsed dimensions **1600×1600**.
+- Visual inspection of the decoded file succeeded: the product image rendered
+  without corruption or missing pixels.
+- Client-equivalent export fetch accepted the data URL as `image/png`, wrote
+  `social-draft.png`, and preserved the exact decoded bytes: **2,050,749
+  bytes**, SHA-256
+  `1d92b38560c8efb3b1646f1f52ecfb1aa025940be0e42a6baf16dcd8f39e540b`.
+- The current UI code fetches the returned preview, requires HTTP success and
+  an allowed PNG/JPEG/WebP MIME, then downloads `social-draft.png` (or the
+  corresponding extension). Text/brief exports remain explicit local anchor
+  downloads; no publication route is called.
+- Browser-tab automation was unavailable in this thread (`IAB visibility is
+  not supported in a subagent thread`), so this is LAN HTTP + decoded visual
+  + client-equivalent export evidence, not a physical-phone/browser download
+  observation.
+
+### Tests
+
+- `python -m pytest services/api/test_social_data.py services/ai/test_image.py services/ai/test_social.py -q -p no:cacheprovider` — **25 passed** in 1.62s.
+- `npm run test:frontend -- --test-name-pattern='social|image'` — **103 passed**, 0 failed.
+- `npm run build` — **passed**, TypeScript/Vite build, 77 modules transformed.
+
+### Outcome and receiving-agent notes
+
+- No fix was warranted: the current route, parser contract, preview, and
+  export byte path all passed.
+- User action required: **none** for local demo verification. Production and
+  physical-device release evidence still require a real browser/phone download
+  observation, durable storage, auth/tenant controls, and CI/security closure.
+# 2026-11-01 — Muse OCR connectivity audit and smallest safe repair
+
+## Assignment
+
+Trace the live Muse invoice path across the machine network/certificate layer,
+the running backend, Meta model access, and response parsing. Run a real invoice
+smoke where possible; do not claim OCR success without evidence.
+
+## Verified environment and provider path
+
+- At audit start no backend listener was present on `:8000`; the prior runtime
+  logs were historical. The current source route does invoke
+  `build_invoice_vision_ai().invoice_extract(...)`.
+- `api.meta.ai` resolved to `102.132.104.21`; direct TCP 443 succeeded; Python
+  TLS negotiation succeeded with TLS 1.3 using `truststore.SSLContext()`; WinHTTP
+  reported direct access with no proxy.
+- Authenticated `GET https://api.meta.ai/v1/models` returned HTTP 200 and
+  included `muse-spark-1.3`. No DNS, proxy, certificate, or model-entitlement
+  blocker was observed. The key was never printed or persisted in the handoff.
+
+## Root cause found and repair
+
+- A real unreadable image request reached Meta and returned a valid HTTP 200
+  JSON response: `status=review_required`, `review_only=true`, zero lines, and
+  warning `Invoice image is not legible...`.
+- `services/ai/boundary.py` rejected that valid zero-line response because the
+  validator required 1–200 lines, then mapped it to
+  `invalid_or_unsafe_provider_response`. The API consequently reported
+  `provider_unavailable`, which was a response-validation classification, not a
+  connectivity failure.
+- `services/ai/boundary.py` now accepts 0–200 lines. `services/api/app.py` now
+  preserves any provider-backed `review_required` result as
+  `extraction_status=needs_review`, `extraction_source=ocr_provider`, including
+  zero-line unreadable cases, and no longer adds the contradictory
+  “No OCR provider is configured” warning to successful provider results.
+- Added a focused regression in `services/api/test_costs.py` for provider-backed
+  zero-line review preservation.
+
+## Smoke evidence
+
+- Focused tests: `python -m pytest services/ai/test_invoice.py services/api/test_costs.py -q -p no:cacheprovider --basetemp .pytest-basetemp-muse-ocr` — **16 passed**, 8 existing truststore/SSL deprecation warnings.
+- Patched local API smoke with a real in-memory text invoice PDF sent through the
+  API and Meta: HTTP 201, `extraction_source=ocr_provider`,
+  `extraction_status=needs_review`, one suggested `Coca-Cola 300ml` line,
+  quantity 2, line total 300, unit cost 150, and empty warnings. No review or
+  confirmation was called; no stock/cost mutation was claimed.
+- Patched unreadable-image smoke: HTTP 201, provider-backed `needs_review`, zero
+  lines, warning `invoice image not legible - human review required`; no fake OCR
+  line was created.
+
+## Outstanding / required machine action
+
+- No external machine action is required for DNS, proxy, certificate trust, or
+  Muse Spark model access based on this audit. The production/demo API must be
+  restarted from the patched source before users rely on the repair; the local
+  temporary listener used for smoke was stopped afterward.
+- Runtime remains in-memory and invoice records reset on restart. Durable
+  PostgreSQL persistence, auth/security, and release validation remain open.
+- The real PDF smoke proved connectivity and a review-only OCR result, not
+  automatic invoice confirmation. Human review remains mandatory.
+
+## 2026-11-01 — PM-TAKEOVER-001 status audit
+- Owner requested new PM, detailed status and a 90-minute finalisation plan; called target rlproject. Workspace identifies itself as Street CEO; target and external-agent identity clarification pending.
+- Fresh checks: npm run test:frontend PASS 104/104; python tests/run_checks.py FAIL (4 pass, 1 failure for local env-file policy, 1 services import error). No environment values inspected. No product changes.
+- Git inspection: 89 tracked files changed plus untracked application/test/artifact files. Preserve existing work. No listeners returned for ports 8000/5173 by read-only listener query; no startup or restart performed.
+- Historical evidence: focused LAN integration, APK packaging, provider OCR/image checks exist; durability, authentication, phone QA, CI and finance sign-off remain unresolved. Historical results are not fresh release approval.
+- Proposed next 90 minutes: 0-10 confirm target/agent and freeze demo scope; 10-25 repair test gates; 25-45 validate runtime/sale/stock/retry/finance; 45-60 exercise invoice/voice/AI; 60-75 phone/offline checks; 75-90 regression, package, handoff, go/no-go. Production completion is not promised within this timebox.
+- Next session: confirm project identity before implementation or delegation; assign disjoint scopes, obtain Chengetai validation and Ruzivo financial review. No agents activated by this audit.
+
+## 2026-11-01 — SQLITE-ASSESS coordination
+Owner requested team investigation. Assigned SQLITE-ASSESS-001 to Hwaro and SQLITE-ASSESS-QA-001 to Chengetai, read-only product scope with own-brain handoffs only. No implementation authorized by these assignments; online-only demo preference confirmed.
+
+## 2026-11-01 — SQLITE-ASSESS decision checkpoint
+- Owner explicitly requested team investigation and next-90-minute checklist. Hwaro and Chengetai activated in disjoint own-brain write scopes; both preliminary assessments support SQLite for online-only, single-backend demo.
+- Root verified Python sqlite3 3.50.4 and an in-memory integer transaction probe. This is capability evidence, not an implemented adapter or disk-restart test.
+- Confirmed source coupling: Settings accepts only memory/postgres; Postgres readiness/migrations/locking are specific to PostgreSQL. Numerous routes mutate _ShopRecord fields directly, bypassing repository writes. SQLite is feasible but not a connection-string switch.
+- Recommended sprint: 0-10 inventory/preserve and freeze supported slice; 10-20 define SQLite transaction/serialization contract; 20-45 implement core durable shop/catalogue/sale/stock/idempotency; 45-60 real-file restart/replay/rollback/concurrency tests; 60-75 integrate verified demo workflow and optional invoice/expense paths only if ready; 75-90 regression/build/rehearsal/package/handoff. At minute 45 re-scope if core not passing. Full accounting fixes and all auxiliary state not promised.
+- Online-only scope excludes offline queue/reconnect acceptance. Phone still requires reachable API; Meta features still require internet. Existing finance/security blockers remain independent of storage choice.
+- No application implementation or live restart performed in assessment. Specialist final findings/handoffs pending at this checkpoint.
+
+## 2026-11-01 — SQLITE-ASSESS final review
+- Reviewed final Hwaro SQLITE-ASSESS-001 and Chengetai SQLITE-ASSESS-QA-001 findings; structured handoffs verified on disk. Both recommend SQLite for connected local single-worker demo, with implementation and real-file tests required.
+- Hwaro estimate: 60-90 minutes narrow durable catalogue/manual-sale/COGS/idempotency slice; 2-4 hours broad shop workflows/assets. Estimates only. QA requires restart, retry/conflict, rollback, seed-preservation and no silent fallback evidence.
+- Investigation complete; no SQLite adapter implemented. Next action is narrow implementation sprint, followed by QA and separately scoped finance re-review. Project-office state remains separate and excluded from core persistence claim.
+
+## 2026-11-01 — Demo MVP implementation assignments
+Owner froze catalogue/manual + hands-free Apo sale/stock/history APK demo, correct missing-product/tender/change feedback, persistent Muse request/response investigation traces. Assigned DEMO-SQLITE-VOICE-001 Hwaro services/api; DEMO-APK-APO-001 Runako web (excluding offline) and temporary Android native ownership; DEMO-MUSE-TRACE-001 Ungwaru services/ai. Disjoint writers; voice changes sequenced through root. SQLite online-only accepted; actual phone QA remains required.
+
+2026-11-01 DEMO-VOICE-TRACE-001 assigned to Inzwi, services/voice plus own brain, after Ungwaru completed; integrate tracing wrappers without other-path writes.
+
+2026-11-01 DEMO-APK-SQLITE-QA-001 assigned Chengetai tests/infra/CI + own brain after Inzwi completion; independent product review, exact demo gates, baseline repairs, no live mutation or phone claims.
+
+2026-11-01 DEMO-SALE-CASH-REVIEW-001 assigned Ruzivo, docs/finance + own brain; narrowed approved demo sale/tender/change review, no fullledger signoff inference.
+
+## 2026-11-01 — Connected APK MVP software handoff
+- All specialist handoffs persisted and reviewed: Hwaro SQLite/API, Runako web/native, Ungwaru AI traces, Inzwi voice traces, Chengetai QA, Ruzivo scoped finance review.
+- Full host suite181passed/16SSLwarnings; frontend114passed; baseline8passed; targetedvoice28passed. Final root web build77modules; final Gradle assembleDebug offline SUCCESS. Signaturev1/v2 valid.12embeddedwebfiles match currentdist, ZIP integrity passed. APK7152064bytes SHA256520cc2c5f081a457187e52e9549d78804140db63a1b6f56c2a5333815fa3784b.
+- Final bundle shop-DWXIHER2.js contains192.168.10.213:8001. Existing port8000 runtime was discovered on host and preserved; first attempted new8000 process failed bind and did not replace it. New one-worker SQLite API started8001 and actually restarted; latest knownPID33552. State data/demo-mvp.sqlite3; provider/API traces data/muse-traces.sqlite3. Runbook updated.
+- Live syntheticshop6aff0fd6-75d7-4fef-9966-42c9375840f3: sale814d45d9-8c30-49f7-b143-224064a8839e total630,received1000,change370,stock9/8,history1. Exact retry and mixedunknown rejection passed; real server restart retained identicalreceipt/stock/retry. Defaultdemo sixproduct catalogue preserved.
+- Actual Meta smoke oneCoke returned record_sale/Coke/1; request+response saved correlation demo-provider-check-2b5577ce-3713-48ab-a094-95529d4b7ab5, no sale posted. Live API commit correlationde11bc96-df60-4431-9c21-a7fb13ae932c persisted3events.
+- Ruzivo approves with conditions scoped voice cash/change; manual sale does not collectreceived/change. Fullledger/profit/dayclose approval remains separate. Do not claim productionready or fullaccounting signedoff.
+- Physicalphone acceptance pending: no ADB device, browseruse disabled inWork settings. User phone availability question unanswered. Next: install exactAPK on sameLAN, acceptOSmicpermission, verify2successiveApo/Napo/tender/change cycles, unknown rejection, foregroundreturn. Existing saved connection may needone-timeport8001update. No more runtime resets needed.
+- User objected to repeated approval prompts. Subagent escalated calls had stalled pendingapproval; interrupted/resumed them, centralized privilegedchecks atroot. Use existing approved prefixes, avoid duplicate escalations. Sandbox-required prompts cannot be bypassed; no further approvals needed for handoff.
+- Durable evidence/docs: docs/demo-mvp-verification.md, docs/demo-runbook.md, docs/demo-mvp-acceptance.md; taskboard synchronized. No commit/push or message toexternalpeople performed.
+
+## 2026-11-01 — SPRINT90 improvement assignments
+Owner requested team work for next90minutes with visibleimprovement. Assigned Hwaro API manualcash/change and bounded shoptraces; Runako web/native visiblevoice/manualreceipt/investigation UI; Chengetai independentQA plus safe demo launcher. Disjointwrite scopes, root hostcommands to avoid duplicateapproval stalls. Existingwork preserved; no offline/invoice/social expansion.
+
+2026-11-01 SPRINT90-TRACE-003 assigned Ungwaru services/ai+ownbrain to retain sanitized shop/operation metadata on truncated trace payloads; no concurrent AIwriter.
+
+2026-11-01 SPRINT90-CASH-REVIEW-002 assigned Ruzivo docsfinance/ownbrain narrow manualreceived/change review after backend188pass; no fulljournalapproval inferred.
+
+## 2026-11-01 — SPRINT90-ORCH-001: software delivery and shutdown checkpoint
+
+- Assignment: coordinate Owner-requested demo improvement sprint; keep scope on catalogue, manual/hands-free sales, stock, history and request investigations.
+- Team handoffs reviewed on disk: Hwaro SPRINT90-API-002, Runako SPRINT90-UX-002 plus history/config follow-up, Chengetai SPRINT90-QA-002 plus launcher repairs, Ungwaru SPRINT90-TRACE-003, Ruzivo SPRINT90-CASH-REVIEW-002.
+- Delivered: visible Apo states; server-confirmed receipt/payment/change; manual cash entry; safe frozen uncertain-request recovery; expandable saved history; Profile sanitized shop-scoped investigations; truncated/unknown statuses explicit; narrow old native demo connection migration; repeatable launcher and APK-only download.
+- Tests: root host full backend/independent suite 190 passed, 16 existing SSL warnings; final trace-focused suite 8 passed after diagnostics metadata update; frontend 125 passed; final baseline 19 passed in 10.101s; final production build 82 modules. QA history/migration 14 focused tests and 8 launcher regressions passed.
+- Packaging: Gradle offline successful, v1/v2 signatures verify, all 12 dist files match APK and ZIP integrity passes. Final bundle shop-l6068vGv.js. APK 7,178,827 bytes; SHA-256 5ff29235d0e5a81edcddb28c4215b513767a7ed6984fbd7c50d4ea585182e91a.
+- Runtime: API http://192.168.10.213:8001, known PID 30460, SQLite data/demo-mvp.sqlite3; traces data/muse-traces.sqlite3. Repeated launcher verified same PID and database; unknown port 8000 listener preserved. Download http://192.168.10.213:8081/street-ceo.apk final bytes match signed local file.
+- Live synthetic manual sale ee596e4b-9248-4a89-b418-a0da7b99ba3b: total 150, received 500, change 350 cents; exact retry stable. Scoped trace readback and default-shop unknown-product rejection passed. No default-shop sale/stock mutation by this sprint; rejected review logs are present for investigation.
+- Significant finding/fix: Get-NetTCPConnection silently omitted occupied port; safe independent netstat inventory added. Host revealed numbered FIN_WAIT and CLOSED states; parser/regressions fixed. A duplicate start attempt exited on bind; original API/data remained intact throughout.
+- Root files changed: AGENTS, .gitignore, docs/demo-runbook.md, docs/demo-mvp-verification.md, task board and own brain. App/test/infra changes are listed in specialist handoffs. At QA's explicit handoff request, root appended final baseline evidence to infra/sprint90-qa-002.md after QA finished.
+- Remaining acceptance: no physical Android device attached; mic permission, pronunciation, real audio, visual layout, two no-click sale cycles and background return remain unverified. Full ledger/profit/day-close and production auth/HTTPS remain outside this scoped demo approval.
+- Next session: verify runtime PIDs/addresses rather than assume alive; install exact APK on same LAN and follow infra/phone-demo-checklist.md. No more software changes are pending from this sprint. Preserve existing SQLite files; do not reset prepared data. No push/commit or external messages performed.
+
+## 2026-11-01 — PHONE-RECOVERY investigation assignments
+Actual phone screenshots recognizedCoke butuncertain/no payment; Closewrap. Read-onlytraces current19:50UTC, latest18:51, no matching screenshot-time requests.5Gshown. Assigned Runako UIconnectivity/recovery/layout; Hwaro readonlyreviewbinding+HTTPquestion regressions; Chengetai independentQA. Usernetwork/latestAPKquestion pending. No confirmedrootcause orsaleoutcomeclaimedyet. Preservebasket/idempotency/data.
+
+2026-11-01 PHONE-RECOVERY narrow SWscope extension: QAfound cachedGETreadiness/shop can falselyreportfreshconnection. Authorized Runako solewriter apps/web/public/service-worker.js for API/no-store/crossorigin networkonly routing and cacheversion bump; nonceprobe safeguardsoldSW. No offlinefeatureexpansion, no activeFambaiwriter.
+
+## 2026-11-01 — PHONE-RECOVERY-001 software patch handoff
+- Input: three actual phone screenshots selected Coke1.50, no tender/received, uncertain recovery, Close wrapping. Viewed by Runako; do not claim actual speech or current connection from screenshots alone.
+- Assigned/reviewed handoffs: Runako frontend and narrow service-worker extension; Hwaro read-only DB/HTTP regression; Chengetai independent client/probe/launcher review. Temporary worker writer released after handoff.
+- Findings: last matching review381f947c-c95f-45d8-88ec-8553b2fbf491 has no bound sale; four saved200needs_tender responses18:51UTC. Screenshot clock~19:47/48UTC if phone+2; no matching inspected traces. 5G visible, but network/oldbuild cause not confirmed. User same-WiFi/latest-build question unanswered.
+- Fixed question-only failure classification (cannot submit a complete payment) with same-basket/key Retry/Cancel; paid uncertainty remains sticky, including recovery errors and malformed supplied cash amounts. Native audio functionality not newly claimed from source tests.
+- Fixed misleading Online status using fresh readiness+shop probe; endpoint/check time/build PHONE-RECOVERY-001 visible. Close nowrap. Old SW caching mitigated with nonce/no-store and worker v4 network-only API/crossorigin/no-store handling; no offline queue work.
+- Secondary launcher fixes: ignore CIM CLOSED rows, health-first trusted-recorded runtime reuse when inventory omits live listener. Root final host reuse passes unchanged API30460. Failed duplicate start attempts exited bind; original SQLite data preserved, no unknown processes killed.
+- Test evidence: root22SQLite acceptance passes4.31s; Runako132frontend passes/build84modules shop-Ct0WV7-I; QA24worker/probe/payment+9independentclient+10launcher cases pass; rootfinal baseline21passes13.171s. No backend product source modification or live review commit/replay/reset.
+- Final APK7205492bytes; SHA2568074a3a241380ae0679fc5a281414d05cca8a55d8c63b93d3c06f8ab584778e5. Gradle offline/signaturesv1v2 pass;12embeddedfiles equal currentdist; ZIP/buildlabel/API8001/worker4 verified. Download bytes match local signedAPK at http://192.168.10.213:8081/street-ceo.apk.
+- Root documentation/state files updated: docs/demo-mvp-verification.md, tasks/master-board.md and own brain. Specialist source/tests/infra paths listed in their handoffs. No commit/push/external messages.
+- Remaining: actual phone install of this labelled APK and fresh server-reachability/Retry/Cancel/cash-change/repeat/audio/layout retest. Physical acceptance remains blocked pending retest, not declared complete. User can continue supplying instructions while agents work.
+
+## 2026-11-01 — Catalogue-grounded voice assignments
+Owner reportslatestASRproductmatching/Musefailure. Logs confirm19:51-19:54UTC phrases earlyrejected provider_calledfalse. APIstrictparserfailure earlyreturn bypassesMusewithcataloguepresent. Assigned Hwaro APIgroundedresolution/confirmation; Ungwaru actualcatalogueMuse resolver; Runako handsfreeclarification/framehandling. Disjointwriters, noofflineSWchangesauthorizedthisassignment. No liveposts/reset; actualambiguousproposalsrequireexplicitconfirmation.
+
+2026-11-01 CATALOGUE-VOICE-QA-001 assigned Chengetai after AIhandoff freedslot. IndependentAIproposal/confirmation/missingqty/legacyreplay/frame safety and actualprovenance validation; no liveposts, no uncontrolledproviderunitcalls.
+
+2026-11-01 CATALOGUE-VOICE-REVIEW-001 assigned Ruzivo narrowreadonlyconfirmation/productqty/serverprice/control review afterAPI215tests; no fullfinancialexpansion.
+
+## 2026-11-01 — CATALOGUE-VOICE delivery and shutdown checkpoint
+- Owner request: inspect recent failed Apo/Napo attempts and make Muse reason over the catalogue when speech is imperfect.
+- Verified root cause: API returned product-not-found on strict parser failure whenever products existed, bypassing Muse. Actual recent phrases included bread glove number and coca-cola nabo marble, with provider_called false.
+- Team assignments/handoffs reviewed: Hwaro CATALOGUE-VOICE-API-001; Ungwaru CATALOGUE-VOICE-MUSE-001; Runako CATALOGUE-VOICE-UX-001; Chengetai CATALOGUE-VOICE-QA-001; Ruzivo CATALOGUE-VOICE-REVIEW-001. All write scopes disjoint; native biasing option deferred, no unsolicited native changes.
+- Implemented: exact matching fast path; actual catalogue-grounded Muse fallback; known IDs/source quantities/all-item validation; mandatory server match approval for proposals; hands-free Yes/No/Cancel and scoped missing-quantity context; honest provenance; terminal nabo stop alias without stripping ordinary noise; legacy paid replay fingerprints preserved.
+- Root tests: broad215passed/16existingSSLwarnings20.18s; independent18passed3.37s; baseline21passed12.037s. Runako136frontendpassed/build84modules. QA6catalogueclient and36framing/native focused cases passed. Ruzivo scoped approval with conditions; no fullledger approval.
+- Real provider smoke4cases from actual read-only catalogue passed, each with started/completed traces and no sale: noisybread=>Breadloaf1 proposal, noisyCoke=>Coke1 proposal, missingqty=>Howmany, mixedunicorn=>no actionable lines. Correlations catalogue-live-* in operational traceDB, not secrets.
+- Activated new API knownPID37764 on8001 after verifying/restarting own old30460 SQLite runtime; same data/demo-mvp.sqlite3 and traceDB preserved. Other/unknown listeners untouched.
+- Live isolated shop98b2760e-6ca9-42ea-a4eb-4c03acd1f4bf copied six catalogue labels/prices. Actual API/Muse Breadloaf proposal, missingapproval409, approved unpaid question200. Read-only audit:0sales/0bindings/all6stocks10. Smoke PowerShell array wrapper initially miscounted empty JSON[]; independent DB audit corrected verification, no product bug or sale found.
+- Final APK7207321bytes SHA256f37c4d234a9dd0da35e565187d2a49efea70f31f4ebbf1f11ed45990a2baa01f. OfflineGradle/signaturev1v2/ZIP/12embeddedfiles pass; buildCATALOGUE-VOICE-001 bundle shop-D3It--1w.js/API8001 confirmed. Download http://192.168.10.213:8081/street-ceo.apk bytes match signed file; repeatlauncher preserved newPID.
+- Root files changed: docs/demo-mvp-verification.md, masterboard and own brain. Source/test/docsfinance changes listed specialist handoffs. No live paid sale, default-shop sale/stock mutation, reset, push/commit or external message performed.
+- Remaining: install new labelled APK and physically test Apo/Napo, actual recognizer noise, spoken match confirmation, missingqty, tender/change and repeat cycles. Actual acoustic recognition cannot be inferred from test suites; Profile pronunciation aliases remain available. No backend product change pending from this assignment.
+
+## 2026-11-01 — COUNTER-POLISH assignments
+Owner reports actualpage working (cash100,total1.50,change98.50 screenshot), requests visualcleanup/brandcharacter onlyplus completedreceiptApoApple dismissandcontinuoushandsfree. Assigned Runako solewebwriter; Chengetai independentQA. Preservebackend/AI/contracts/data, showdiagnosticsondemand; no offline/nativechangesunlessnecessary. Physicalcore success observed inownerreport; newlayout/wakecycle needsretest.
+
+## 2026-11-01 — COUNTER-POLISH-001 delivered software checkpoint
+- Runako UI/session integration and Chengetai independent final source review PASS. Preserved backend/Muse/payment contracts; compact logo-inspired receipt, Total/Tendered/large Change, details collapsed; shared hands-free preference, typing pause and completed-receipt Apo/leadingApple dismissal retaining command body. Pending/uncertain safeguards preserved.
+- Evidence: Runako140frontend/build86modules shop-D1AJuhDJ.js; Chengetai6independent session/wake cases+integration review; root21baseline checks13.864s. Root final APK7208351bytes SHA2569da49d7cfc6f10c36657b6f68d9d9273fd4a5f9a6715b10a48f88e1c2103a7d1. OfflineGradle/v1v2signatures/ZIP/all12embeddedassets/buildlabel/API8001/download bytes PASS.
+- API37764/demo-mvp.sqlite3 preserved, no backend restart/live paid sale/stock mutation. Download http://192.168.10.213:8081/street-ceo.apk labelCOUNTER-POLISH-001. docs/demo-mvp-verification.md records exact artifact. Initial package superseded after final manual receipt-detail copy change; only final hash above is current.
+- Remaining: physical new-build layout/audio/two-sale ApoApple rehearsal; Owner earlier successfulsale photo is reported evidence for previous build. No physical acceptance invented. No commit/push or external message.
+Root final frozen-source frontend rerun:140/140 passed706.7265ms after final wording/manual receipt-details changes; no source modification followed.
+
+2026-11-02 STARTER-COGS: assigned Hwaro backend seeds/missing-only safe migration, Ruzivo financial advisory review; no live mutation authorized to agents. User requests starter products include costs for COGS. QA follows stable patch.
+
+STARTER-COGS-UX-001 assigned Runako narrow frontend starter-fixture parity/tests/build, no UI/session change. Root reserves Android generated packaging solewriter; no native source edits.
+
+STARTER-COGS-QA-001 assigned Chengetai independent seed/migration/COGS regression validation (readonlyproduct, tempDB), Ruzivo actualcode review requested.
+
+## 2026-11-02 — STARTER-COGS-001 delivered and activated
+- Owner asked starting product list include COGS costs. Hwaro canonical services/api/demo_catalogue.json+exact missing-only seed upgrade+demo_seed audit enum/tests; Runako six frontend fixture costs+parity; Ruzivo policy/actualcode review approvedconditions; Chengetai independent rollback/identity/history/COGS tests and handoff PASS. All specialist handoffs persisted.
+- Illustrative unit costs USD: Coke1.00/Bread1.20/Sugar1.80/Milk0.90/Chips0.60/Soap1.50; not supplier facts. Known costsincl0, prioraudit/invoice, renamed/custom identities preserved. Futurecostsnapshot only; historicalunknown remainsunknown, so oldprofit may needs_data.
+- Root regression58passed8existingSSLwarnings14.72s; frontend141passed/build86modules shop-D4hvSYIv.js; QA13combined+parity1 pass. Resetfixture updated for6freshdemoaudits; sandbox async attempt interrupted and host defaulttmp errors resolved via isolated workspace basetemp; finalrun green. Temporary fixtures ignored in .gitignore.
+- Root backedup live SQLite to ignored data/pre-starter-cogs-20261102.sqlite3, verified/restarted only own37764; new17232 same DBidentity/demo-mvp.sqlite3. Readonly full beforeafter comparison: only6missingcosts+6quantity0demoaudits changed; bothhistoricreceipts/allprices/stock/assets/othershops unchanged. No live sale made.
+- Final APK7184274bytes SHA256f22739d09aeca9b9549eeb893eb3ab25f24dc724754d78b14cbf4b06294bce8a; offlineGradle/v1v2/ZIP/12embeddedassets/API8001/downloadbytes pass. Visiblelabel remainsCOUNTER-POLISH-001; exactbundle shop-D4hvSYIv.js identifiescostpatch. Download http://192.168.10.213:8081/street-ceo.apk. Physicalphone acceptance stillpending; no native source/UI/session edits. No commit/push/external message.
+- Rootfiles: docs/starter-demo-costs.md, docs/demo-mvp-verification.md, .gitignore tempfixture exclusion, masterboard and ownbrain. Next: physicalcataloguecost/nextsale/manual+voice rehearsal; actualsuppliercosts via reviewedcorrection whenavailable. Softwaretask complete; historicalunknowns intentionallynotrewritten.
+
+2026-11-02 MUSE-OUTAGE-001 assigned Ungwaru AI provider/catalogue tracing investigation; screenshotconnectedbutMuseunavailable. Root runtime/traces checks. No product scope expansion beyond verifiedcause.
+
+MUSE-OUTAGE-QA-001 assigned Chengetai boundeddeadline/errorcopy/concurrency independentgate. Root approved AI24sdefault/max25 belowclient30, no addedframing/matchingsemantics.
+
+## 2026-11-02 — MUSE-OUTAGE-001 activated
+- Owner09:27 screenshot Shopconnected/Museunavailable traced to realcall e08ea619...: providerstart07:26:42UTC, API8.058s timeout07:26:50, actualprovidercompletion19.507s at07:27:01. This establishes deadline discard, not provideroutage. Transcript included ambiguous leading/trailingApple; no words silentlystripped or inventedmatches.
+- Ungwaru default24s/max25 vsfrontend30; distincttimeout/busy/config/errorcopy, same2capacity/noautoretry/quantity/allitems/confirmation. Chengetai21combinedtestPASS incl5independentblockedfuture/concurrencycases, ownfullAI69passed; root34targetedpassed1.71s. All handoffs persisted. No frontend/APK changes.
+- Root actualprovider smoke onebreadglovenumber=>Breadloaf1 proposed5.46s, correlationmuse-latency-fix-d75211a8-8076-45e0-b8bf-dfd24195339c tracesstored; no sale.
+- Verified/restarted only owned17232 sameSQLite. NewAPI13796 healthy command/databaseidentityverified. Launcher got through APIstart then failed8081multiplelistenerowners; allunknownownerspreserved. Independently verifiedexistingAPKmetadata hashf22739d09aeca9b9549eeb893eb3ab25f24dc724754d78b14cbf4b06294bce8a; repairedgeneratedlauncherstatewithverifiednewPID/identity/hash. Helperlistenerinventorydiagnostic remainsunresolved; currentHTTPmetadataworks, no APKhelperchanges/kills.
+- ActualnewAPI transcript smoke samebreadnoise=>needs_match_confirmation/provider_calledtrue/Breadloaf1,4.37s. Beforeafter sales+products exactlyequal; no sale/stock/costmutation. ExistingAPKusesbackendfix. App30s deadline stillhas~6smargin; providervariablelatency remainspossible, nowhonestfallback. Userphysicalphone retry/recognizerframing remainsrequired.
+- Rootfiles .gitignore temporarytestpath, docs/demo-mvp-verification.md and ownbrain/masterboard. Next: observe actualphone correctedclarification reply; investigate8081inventory separately if launchermaintenance needed. Softwarefix complete and live; no commit/push/externalmessage.
+
+2026-11-02 FAST-VOICE andANDROID-COUNTER-INSETS: Ungwaru AIlatencydesign/implementation; Runako explicittemporarynative mainJava/resources ownership pluswebUI safeareas, nooffline. Rootpackaging. Userrequiresfastfullhandsfreesale andswiperevealedAndroidcontrols. QAactivation follows stablecontracts.
+
+FAST-COUNTER-QA-001 assignedChengetai independentfastproposal/insets/handsfreegate; source readonly. RootADBhost0devices, no physicalacceptancepossibleyet.
+
+FAST-COUNTER-QA temporaryexplicitextension Chengetai services/api/test_catalogue_voice.py fixtureoptout only, since Hwaro inactive/no competingwriter; providercontracttests muststill actuallycallsyntheticprovider.
+
+## 2026-11-02 — FAST-COUNTER-001 delivered and activated
+- OwnerrequiresquickMuse selling+wholehandsfree flow andnativeAndroidnavclearance/swipereveal. Ungwaru AIfastpath exactuniquealiases+observedboundednoise only (nooneedit), everyqty/item/noise-productcollision guards, mandatoryspokenYes/localprovenance; realMusefallback6s/reusedclient/compactprompt/same2capacity/noautoretry. Runako explicitnativeMainActivityscope stableinsets+transientnavbars, IME/cutout/lifecycle/noWebViewdoublepadding; UIlocalprovenancelabel. No native speech/permissions/businesspricing/COGS/stock changes. Chengetai independentQA handoffs persisted.
+- Root integrated132passed14.90s afterfinalAIguard (fullAI/APIcatalogue/SQLite/fast/outage); frontend142pass/build86modules shop-CMFZxwB9.js; baseline21pass16.913s. QA45Python+12client pass. NativeofflineGradle/signv1v2/ZIP/12embeddedfiles/label/API8001/DEXnativepolicy/downloadbytes verified. Temporarytestdir ignored.
+- Final APK7184274bytes SHA256c3d13cd5a1e8e86b42430de7811cdf146601fc4149a8f895e4b8eea23a2a2132; FAST-COUNTER-001, http://192.168.10.213:8081/street-ceo.apk. CurrentAPI24704 sameDBidentity/demo-mvp.sqlite3. Livefastproposal79msbread and58msCoke, providerfalse/localcatalogue; approvalmissing409, approvedunpaidquestion, beforeafterproducts/salesexactequal. No livepaidsale.
+- Deployment firstlauncherfailedafterowned13796stopped; independentHTTPrefused+onlynonlistenerPID0netstatobserved, noCIMfailuretimecapture. QAaddednarrowcorroboratedPID0filter+13launcherregressionspass, preservesunknownnonzero/ambiguousPID0failclosed. Retryrestored24704; whetherretryusedpatchunknown, no causalclaim. ExistingAPKhelperindependentlyverified; no unknownlistenerkilled. GeneratedlauncherstateupdatedexactPID/hash.
+- RemainingphysicalSamsunggesture/3button/upwardswipe/IME/rotation/background and2voicecycles. HostADBnoattacheddevices, so newphoneacceptance notclaimed. Serverlatencies excludesASR/TTS; realMusevariable with6slimit. Fullhandsfreepriorflowpreserved regression/softwareevidence, actualacousticacceptanceawaitsOwnerphone.
+- Rootfiles docs/fast-counter-acceptance.md, docs/demo-mvp-verification.md, .gitignore testdir, masterboard/ownbrain. Reviewedallhandoffs; no commit/push/externalmessage. Next physicalinstall labelledAPK andobservedrehearsal. TemporaryQA APItestfixture scopeextension nowreleased; noactivewriters/sessions.
+
+2026-11-02 REPO-CLEAN: assignedRunako webteamseparation+explicitdocs/product-diagram scope, Hwaro optionalAPIteammount, Chengetai cleanup/setup/CIsecurity. Root.gitignore/staging/git/README/productbuilderdocs. Preservealllocalteamfilesandagentbrains, sourceonewriter. InitialremoteSSLtrustfailed; retryWindowsSchannel(noverificationdisable).
+
+REPO-CLEAN roottemporarydocumentation scope apps/android/README.md only: replaceobsolete8000/setupfailure guidance withcurrentincludedAndroidproject buildsteps. No native source changes.
+
+## 2026-11-02 — REPO-CLEAN / PRODUCT-DIAGRAM / BUILDER-DOCS integration checkpoint
+- Owneraskedallpushed, ignoredseparatedteamview, cleanrepo, easyclone, developerdiagram andAIbuilderdocs. Initialremote/main==localc0ff329 (Oct30), allrecentdemochangesuncommitted. FetchviaWindowsSchannelverifiedremotesame; defaultGitCAfailed, verificationneverdisabled.
+- Runako movedteamUI/tests/styles intoignoredapps/web/local-office, genericapiUrlshopmodule, indexonlyVite/TS/testsetup; localoffice26tests+44modulebuild retained. Hwaro defaultshopremovesunconditionalteamimports/routes; localteamexplicitflagandignoredmodules, tzdatadeclared. Localfilespreserved, agentbrains/tasks remaintracked. Rootuntrackedindexonly4oldtrackedgenerated/teamfiles; broadlogs/dbs/attachments/caches/builds/keystoresignored; wrapperJAR/locks/logo/envexample tracked. No localdatareset/deletion.
+- Chengetai setuphelperinfra/dev.py check/setup/api/web, stagedmanifestsecurity, Python+webCI, sourcechecks. Root README/envexample/repo-boundaries/AndroidREADME/currentproductrequirements+product-demo-builder+copyreadyAIbuilderprompt+readinessdoc. Productdiagram SVG/HTML/PDF/PNG rendered/reviewed, mobile390/320nooverflow. DefaultoptionalrendererWindowsArial/ReportLab/Poppler documented; noappdependency.
+- Cleanstagedsourceexport ownGitindex/freshvenv+pip+npmlock installsucceeded. Final255backendacceptance passed12.50s;29baseline10.630s;117frontend802ms+65moduleshopbuild;21independentclients313ms. FreshisolatedactualAPIready6costedproducts/nooffice-teamroutes. Firsttmpbasetemp parentissue/probeheader403root corrected;2staleretailauditassertionsHwaro repaired7testpass; finalsourceallgreen. Exactverification docs/repository-readiness.md andQAinfra/repo-clean-qa-001.md.
+- Rootpublicationnext: stagefinaldocs/artifacts, manifestaudit, commit/pushmain withSchannel thenverifyremotehead/worktree. RemoteCI notyetclaimed. GitHubconnectortoolunavailable, useGitCLI. No liveAPIrestart/APKrepackage; physicalphoneacceptance unchanged. No externalmessages orappdeployment.

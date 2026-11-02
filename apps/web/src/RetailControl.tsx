@@ -1,0 +1,12 @@
+import { useState } from 'react'
+import type { Product } from './api'
+import { PurchaseEntry } from './PurchaseEntry'
+import { StockTake } from './StockTake'
+import { DayClose } from './DayClose'
+import { ExpenseGuide } from './ExpenseGuide'
+import './costs.css'
+
+export function RetailControl({ products, isDemo, initialProductId, onBack, onChanged }: { products: Product[]; isDemo: boolean; initialProductId?: string; onBack: () => void; onChanged: () => Promise<void> }) {
+  const [tab, setTab] = useState<'purchase' | 'count' | 'close' | 'expense'>('purchase')
+  return <section className="costs-workspace"><button className="back-link" onClick={onBack}>← Back to Stock</button><p className="eyebrow">RETAIL CONTROL</p><h2>Receive, count, and close.</h2><p>Keep purchases, stock counts and cash/bank checks together. Review every change before confirmation.</p>{isDemo && <p className="cost-warning">Starter catalogue only. Connect a live shop to save records.</p>}<nav className="cost-tabs" aria-label="Retail workflows">{([['purchase', 'Receive a purchase'], ['count', 'Stock take'], ['close', 'Daily close'], ['expense', 'Operating expenses']] as const).map(([key, label]) => <button key={key} type="button" aria-pressed={tab === key} onClick={() => setTab(key)}>{label}</button>)}</nav><div hidden={tab !== 'purchase'}><PurchaseEntry products={products} disabled={isDemo} initialProductId={initialProductId} onChanged={onChanged} confirmReady={true} /></div><div hidden={tab !== 'count'}><StockTake products={products} disabled={isDemo} onChanged={onChanged} /></div><div hidden={tab !== 'close'}><DayClose disabled={isDemo} /></div><div hidden={tab !== 'expense'}><ExpenseGuide disabled={isDemo} /></div></section>
+}

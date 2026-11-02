@@ -27,3 +27,28 @@ Task assignments from Mutungamiri will appear here under an
 - Added `services/voice/test_state_machine.py` covering all listed scenarios,
   including insufficient stock (the API's available stock failure shape).
 - Focused suite: 7 passed. Repository checks: 6 passed and compilation passed.
+
+
+### W6-DEMO-VOICE-001 — completed voice-side fixes, 2026-10-31
+Direct Mutungamiri assignment: Quick Sale/tender/change/undo verification and fix.
+Scope services/voice/ and own brain. Voice 24 passed; API voice 12 passed.
+See handoff for integration dependencies and remaining device/demo validation.
+
+### W6-DEMO-VOICE-001 follow-up — completed 2026-10-31
+
+- Verified the existing Quick Sale, spoken tender, cash/change, and undo paths.
+- Fixed punctuated ASR tokens in `services/voice/state_machine.py`.
+- Added regression coverage in `services/voice/test_state_machine.py` for
+  `Apo.` automatic close and `Cash, 500.` amount parsing.
+- Evidence: pytest 25 passed; unittest discovery 22 passed; diff check clean.
+## W6-VOICE-COCA-COLA-001 — 2026-11-01
+
+Urgent integration fix completed. Exact segmented Apo/Napo flow now preserves
+`coca-cola` through web framing and resolves the seeded catalogue locally.
+Focused backend/frontend regressions passed; see handoff.
+
+## Assigned by Mutungamiri — 2026-11-01 — DEMO-VOICE-TRACE-001
+Implement provider trace wrappers in services/voice/ only plus own brain. Follow AGENTS full activation load. AI module services.ai.tracing is ready: traced_call(*,operation,model,request,call,secret_values=(),store=None), returns provider JSON mapping; trace_context propagation is in API. Wrap _MetaModelChatClient.create and MetaVoiceTranscriber.transcribe outgoing calls preserving behavior, statuses/errors/response JSON, excluding auth/audio from request trace. Use operation voice_intent / voice_transcription and request metadata/transcript messages as appropriate. Add focused tests verifying actual wrapper redaction/failure capture. No API/AI/UI changes or live calls/restarts. Fix existing voice test imports only if needed for normal root pytest. Persist structured handoff. Coordinate root; no other agents.
+
+### DEMO-VOICE-TRACE-001 — completed 2026-11-01
+Implemented provider wrappers and isolated disk-backed trace regression tests in services/voice. Evidence: 29 voice tests passed; compileall and scoped diff check passed. See handoff; no live provider/device claim.

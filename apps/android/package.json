@@ -1,0 +1,20 @@
+{
+  "name": "street-ceo-android",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Street CEO local Android shell",
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open": "npx cap open android",
+    "copy-web": "npm run copy-web-assets",
+    "copy-web-assets": "node scripts/copy-web-assets.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "typescript": "^7.0.2"
+  }
+}

@@ -7,6 +7,10 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+# Script invocation puts tests/, rather than the repository, on sys.path.
+# Use the same import root as `python -m ...` and CI.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 
 def main() -> int:

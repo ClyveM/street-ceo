@@ -70,3 +70,37 @@ def test_every_movement_requires_source_and_return_requires_cost():
     book.receive("rice", q(units=2), "purchase:PO-1", unit_cost="1")
     with pytest.raises(InventoryError):
         book.return_stock("rice", q(units=1), "return:R-1")
+
+
+@pytest.mark.parametrize("quantity", [True, False, 0.5, Decimal("1.5"), "2"])
+def test_adjustment_rejects_non_whole_quantities_without_mutation(quantity):
+    book = InventoryBook()
+    book.receive("rice", q(units=2), "purchase:whole", unit_cost="1")
+    before = book.movements()
+    with pytest.raises(InventoryError, match="whole number"):
+        book.adjust("rice", quantity, "adjustment:invalid", reason="count", actor="owner")
+    assert book.stock("rice").quantity == 2
+    assert book.movements() == before
+
+
+def test_replaying_same_purchase_line_is_idempotent_and_does_not_duplicate_stock():
+    book = InventoryBook()
+    first = book.receive("rice", q(units=5), "invoice:INV-1", unit_cost="1.25")
+
+    replay = book.receive("rice", q(units=5), "invoice:INV-1", unit_cost="1.25")
+
+    assert replay == first
+    assert book.stock("rice").quantity == 5
+    assert len(book.movements()) == 1
+
+
+def test_reusing_source_for_different_purchase_line_is_rejected_but_other_products_are_allowed():
+    book = InventoryBook()
+    book.receive("rice", q(units=5), "invoice:INV-2", unit_cost="1.25")
+
+    with pytest.raises(InventoryError, match="different movement data"):
+        book.receive("rice", q(units=6), "invoice:INV-2", unit_cost="1.25")
+
+    book.receive("oil", q(units=2), "invoice:INV-2", unit_cost="2.00")
+    assert book.stock("rice").quantity == 5
+    assert book.stock("oil").quantity == 2

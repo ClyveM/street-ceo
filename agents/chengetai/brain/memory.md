@@ -25,3 +25,6 @@ Initialized 2026-10-29; updated 2026-10-30 under W1-CHENGETAI-001.
 - Backend smoke import is intentionally skipped when FastAPI is unavailable;
   with backend dependencies installed it requires `services.api.main:app` or
   `services.api.app:app`.
+
+2026-11-02 STARTER-COGS-QA-001: starter costs are illustrative, exact-demo identity and None-only; preserve known0, invoice/audit provenance and historical COGS. Startup rollback independently verified after SQL writes. Evidence infra/starter-cogs-qa-001.md.
+

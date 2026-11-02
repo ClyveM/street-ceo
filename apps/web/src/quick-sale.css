@@ -1,0 +1,54 @@
+.quick-sale { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin: 18px 0; line-height: 1.6; }
+.quick-heading, .quick-modal header { display: flex; gap: 12px; align-items: start; justify-content: space-between; }
+.quick-modal header > div { flex: 1 1 auto; min-width: 0; }
+.quick-modal header > button { flex: 0 0 auto; min-width: 72px; white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.quick-heading h3 { margin: 3px 0; font-size: 22px; }
+.quick-heading > span { background: #e3f4ec; color: #176f68; border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+.quick-sale button, .quick-modal button { min-height: 48px; font: inherit; border: 1px solid #91b9ad; border-radius: 9px; padding: 10px 14px; background: #fff; color: var(--ink); cursor: pointer; margin: 5px 4px 5px 0; }
+.quick-sale button:disabled, .quick-modal button:disabled { opacity: .5; cursor: default; }
+.quick-sale label, .quick-modal label { display: block; margin: 14px 0; }
+.quick-sale textarea, .quick-modal input { width: 100%; min-width: 0; min-height: 48px; display: block; font: inherit; font-size: 16px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; margin-top: 6px; background: #fff; color: var(--ink); }
+.analysis-card select { display: block; width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; margin: 8px 0; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); }
+.quick-sale .quick-talk, .quick-modal .quick-talk, .quick-modal .quick-primary { background: #176f68; color: #fff; width: 100%; touch-action: none; }
+.quick-modal-backdrop { position: fixed; inset: 0; z-index: 150; display: flex; align-items: center; justify-content: center; padding: 12px; background: #05282ac4; }
+.quick-modal { width: min(620px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; min-width: 0; border-radius: 18px; padding: 22px; background: #fff; color: var(--ink); line-height: 1.6; overflow-wrap: anywhere; box-shadow: 0 20px 80px #002b3855; }
+.quick-modal h2 { font-size: 24px; margin: 4px 0; }
+.quick-modal h3 { font-size: 20px; }
+.quick-lines { padding: 0; list-style: none; }
+.quick-lines li { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.quick-lines li span { flex-shrink: 0; }
+.quick-totals { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding: 16px; border-radius: 12px; background: #edf7f2; }
+.quick-totals dt { color: #516961; }
+.quick-totals dd { margin: 0; font-weight: 700; text-align: right; }
+.quick-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-speech { font-size: 14px; color: #516961; }
+.quick-modal :focus-visible, .quick-sale :focus-visible { outline: 3px solid #b77b24; outline-offset: 3px; }
+@media(max-width: 450px) { .quick-heading { flex-wrap: wrap; } .quick-modal { padding: 16px; } .quick-modal-backdrop { padding: 8px; } .quick-modal { max-height: calc(100dvh - 16px); } .quick-actions button { flex: 1 1 100%; } }
+
+/* Compact Sell voice control and separate Profile pronunciation setup. */
+.quick-sale { padding: 16px; }
+.quick-sale > p { margin: 8px 0; color: var(--muted); }
+.quick-heading h3 { font-size: 20px; }
+.quick-heading > span { font-size: 11px; padding: 4px 7px; }
+.voice-status { margin: 4px 0 8px; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.quick-sale .quick-talk { margin: 4px 0; }
+.voice-fallback { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 4px; }
+.voice-fallback > summary, .voice-error summary, .pronunciation-setup summary { min-height: 44px; padding: 10px 0; cursor: pointer; font-size: 13px; color: var(--muted); }
+.voice-error { margin: 12px 0 4px; border-radius: 10px; padding: 10px 12px; background: #fff5ee; overflow-wrap: anywhere; }
+.voice-error > p { margin: 0; font-size: 14px; }
+.voice-error details p { font-size: 12px; }
+.profile-page h2 { margin: 4px 0 20px; }
+.profile-avatar { border: 0; cursor: pointer; font: inherit; }
+.pronunciation-setup { padding: 18px; background: #fff; border: 1px solid var(--line); border-radius: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.pronunciation-setup h3 { margin: 0; font-size: 19px; }
+.pronunciation-setup p { font-size: 14px; color: var(--muted); }
+.pronunciation-setup button { min-height: 48px; padding: 10px 14px; border: 1px solid #91b9ad; border-radius: 9px; background: #fff; color: var(--ink); font: inherit; margin: 4px 4px 4px 0; cursor: pointer; }
+.pronunciation-setup button:disabled { opacity: .5; cursor: default; }
+.pronunciation-saved { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; font-size: 14px; }
+.pronunciation-saved dd { margin: 0; font-weight: 700; text-align: right; }
+.pronunciation-setup label { display: block; }
+.pronunciation-setup input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; font: inherit; font-size: 16px; }
+.pronunciation-capture { border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin: 12px 0; }
+@media(max-width:450px) { .quick-heading > span { display: none; } .pronunciation-setup { padding: 16px; } }
+
+.profile-avatar { min-width: 48px; min-height: 48px; }

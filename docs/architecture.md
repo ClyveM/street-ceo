@@ -1,16 +1,20 @@
 # Street CEO — Architecture (v0, 2026-10-29)
 
-Status: agreed plan. No code implements this yet.
+Status: implemented prototype; connected APK demo scope revised 2026-11-01.
+See `docs/demo-mvp-acceptance.md` for the current acceptance gates.
 
 ## MVP stack
 
 - Frontend: React + TypeScript Progressive Web App, mobile-first, responsive.
-- Backend: Python FastAPI + PostgreSQL (server database).
-- Offline: IndexedDB in the PWA; queued transactions sync to the server.
+- Backend demo: Python FastAPI + file-backed SQLite, one API worker. PostgreSQL
+  remains a separate adapter and is not required for this demo.
+- Demo connectivity: APK connects to the backend over the local network;
+  provider-backed Meta requests require internet. Offline sync is deferred.
 - Voice: "Apo" wake word starts listening; "Napo" ends the command; short,
   fast commands for hands-free sales.
 - AI: Meta models / Llama integrations for business insights and reasoning.
-- No native Android/iOS app for the hackathon MVP.
+- Android demo: Capacitor APK with foreground native speech recognition and
+  spoken responses; first-use microphone permission is required.
 
 ## Components and owners
 
@@ -33,7 +37,8 @@ Status: agreed plan. No code implements this yet.
    (Inzwi: Apo … command … Napo).
 2. Sale posts through Hwaro's API: stock decremented (Dura), ledger updated
    (Verengai) in one auditable transaction.
-3. Offline sales replay via idempotent sync; conflicts resolve deterministically.
+3. Connected request retries use stable idempotency keys; conflicts reject
+   changed payloads. Offline replay is outside the current demo scope.
 4. Cash/bank reconciliation (Verengai) and insights (Chiono + Ungwaru) read
    from the same ledger and stock truth.
 

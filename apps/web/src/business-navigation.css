@@ -1,0 +1,19 @@
+.stat-card-button { width: 100%; text-align: left; cursor: pointer; color: var(--ink); }
+.stat-card-button:hover { border-color: #a9d9d2; box-shadow: 0 5px 16px rgba(16,42,67,.06); }
+.alert-list, .transaction-list { display: grid; gap: 8px; margin-bottom: 16px; }
+.alert-row, .transaction-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 12px; }
+.alert-row > div:nth-child(2), .transaction-row > div { flex: 1; min-width: 0; }
+.alert-row strong, .transaction-row strong { display: block; font-size: 13px; }
+.alert-row span, .transaction-row span { display: block; color: var(--muted); font: 10px 'DM Mono', monospace; margin-top: 4px; }
+.alert-row > b { color: var(--orange); font-size: 18px; }
+.alert-row small { color: var(--muted); font: 10px 'DM Mono', monospace; font-weight: 400; }
+.transaction-row code { color: var(--muted); font: 10px 'DM Mono', monospace; }
+.muse-tool .tool-glyph { background: #e8f7f3; color: var(--teal-dark); }
+.muse-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 12px; }
+.muse-tabs button, .muse-prompts button { border: 1px solid var(--line); background: #fff; color: var(--ink); border-radius: 8px; padding: 9px 10px; font: 600 10px Manrope; cursor: pointer; }
+.muse-tabs button.selected { background: var(--teal); border-color: var(--teal); color: #fff; }
+.muse-prompts { display: grid; gap: 6px; margin: 10px 0 14px; }
+.muse-prompts button { text-align: left; color: var(--teal-dark); }
+.muse-response { display: flex; flex-direction: column; gap: 5px; margin-top: 13px; padding: 12px; background: #e8f7f3; border: 1px solid #cfe6e1; border-radius: 9px; color: #176f68; font-size: 11px; line-height: 1.45; }
+.analysis-card textarea { display: block; width: 100%; margin-top: 6px; border: 1px solid var(--line); border-radius: 9px; padding: 10px; font: 13px Manrope; resize: vertical; color: var(--ink); }
+@media (max-width: 520px) { .muse-tabs button { flex: 1; } }

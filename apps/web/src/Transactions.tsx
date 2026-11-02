@@ -1,0 +1,14 @@
+import { formatMoney, type Product, type Sale } from './api'
+import { savedReceiptLines, savedReceiptPayment } from './receiptHistory'
+
+function SavedReceipt({ sale, products }: { sale: Sale; products: Product[] }) {
+  let lines
+  try { lines = savedReceiptLines(sale, products) }
+  catch { return <p role="alert">Saved receipt lines are unavailable. Reference: <code>{sale.id}</code></p> }
+  const payment = savedReceiptPayment(sale)
+  return <div className="saved-receipt"><dl><dt>Full receipt reference</dt><dd><code>{sale.id}</code></dd><dt>Recorded at</dt><dd><time dateTime={sale.created_at}>{new Date(sale.created_at).toLocaleString()}</time></dd><dt>Payment method</dt><dd>{sale.tender === 'cash' ? 'Cash' : 'Bank · recorded tender, settlement unverified'}</dd><dt>Amount received</dt><dd>{payment.received === null ? 'Not supplied' : formatMoney(payment.received)}</dd><dt>Change</dt><dd>{payment.change === null ? 'Not supplied' : formatMoney(payment.change)}</dd></dl>{sale.tender === 'cash' && payment.received === null && <p className="muted">This older receipt did not save the cash received. Exact payment and change cannot be established from it.</p>}<h4>Saved items and stock after this sale</h4><ul>{lines.map((line, index) => <li key={`${line.productId}-${index}`}><div><strong>{line.label}</strong><span>{line.currentName ? 'Current catalogue name' : 'Product reference'} · quantity {line.quantity}</span><code>{line.productId}</code></div><p>Stock after sale <strong>{line.stockAfter === null ? 'Not saved' : line.stockAfter}</strong></p></li>)}</ul><p className="muted">Names are current catalogue labels. Quantities and stock snapshots are saved receipt values; stock may have changed since this sale.</p></div>
+}
+
+export function Transactions({ sales, products, error, onBack }: { sales: Sale[]; products: Product[]; error: string; onBack: () => void }) {
+  return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className="tool-hero social-tool"><span className="tool-glyph">↗</span><p className="eyebrow">SALES HISTORY</p><h2>Transactions</h2><p>Open a saved receipt to inspect its items, payment and stock snapshot.</p></div><section className="transaction-list">{error && <p role="alert" className="cost-error">{error}</p>}{sales.length ? sales.map((sale) => <details className="transaction-receipt" key={sale.id}><summary className="transaction-row"><div><strong>{formatMoney(sale.total_cents)}</strong><span>{new Date(sale.created_at).toLocaleString()} · {sale.tender}</span><small>View saved receipt</small></div><code>{sale.id.slice(0, 8)}</code></summary><SavedReceipt sale={sale} products={products} /></details>) : error ? null : <div className="placeholder"><strong>No transactions recorded yet</strong><span>Complete a sale from the Sell page and it will appear here.</span></div>}</section></section>
+}

@@ -8,6 +8,7 @@
   "theme_color": "#102a43",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/street-ceo-logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/street-ceo-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

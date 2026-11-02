@@ -22,8 +22,42 @@ build/
 # Env / secrets (never commit)
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 
 # Local worktree checkouts live outside the repo; ignore if nested
 .worktrees/
+
+# Local demo databases and request/response investigation logs
+data/*.sqlite3*
+data/*.db*
+data/*.log
+data/demo-launcher-state.json
+
+# Temporary COGS regression databases and traces
+/data/qa-starter-cogs-host-20261102-a/
+/data/qa-muse-outage-20261102/
+/data/qa-fast-counter-20261102/
+
+# Local runtime, test runs, and remote-chat attachments
+*.log
+*.tsbuildinfo
+.pytest-*/
+.codex-remote-attachments/
+/data/
+
+# Generated Android web bundle (recreated from apps/web/dist)
+/apps/android/web-assets/
+*.jks
+*.keystore
+
+# Separated local Project Operations Office; not part of Street CEO
+/apps/web/local-office/
+/services/api/local_team.py
+/services/api/team_activity.py
+/services/api/project_office.py
+/services/api/test_team_activity.py
+/services/api/test_project_office.py
+/apps/web/dist-office/
+/docs/local-office/

@@ -34,3 +34,6 @@ Config files existing does not mean agents are running.
 - Demo business: Zimbabwean tuckshop selling everyday grocery products.
 - Local-first development; deploy PWA + Python FastAPI backend for the demo.
 - Migration must preserve all agent files; legacy metadata stays untouched.
+
+## 2026-11-01 — Current approved demo scope supersedes initial stack assumptions
+Connected Capacitor APK + one-worker FastAPI/SQLite; no offline demo requirement. Catalogue/manual and Apo hands-free sales/stock/history plus sanitized persistent Muse investigations. Manual cash received/change is implemented and scoped accounting review approved with conditions. Device acceptance must be observed, never inferred from packaging. Current runbook docs/demo-runbook.md and verification docs/demo-mvp-verification.md are authoritative over historical phase plans.

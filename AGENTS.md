@@ -5,6 +5,13 @@ MVP first: a functioning end-to-end demo before advanced functionality.
 
 Mutungamiri (CTO & Lead Orchestrator) coordinates all agents and reports to the Project Owner.
 
+Current Owner-approved demo scope (2026-11-01): connected Android APK,
+catalogue, manual and hands-free Apo sales, stock, sales history, local SQLite
+durability, and sanitized persistent Muse request/response investigations.
+Offline sync and PostgreSQL deployment are deferred for this demo. Read
+`docs/demo-mvp-acceptance.md` and the latest master-board checkpoint before using
+historical plans. A packaged APK does not establish physical-phone acceptance.
+
 ## 1. Roster
 
 | # | Agent | Directory | Owns |
@@ -12,7 +19,7 @@ Mutungamiri (CTO & Lead Orchestrator) coordinates all agents and reports to the 
 | 1 | Mutungamiri — CTO & Lead Orchestrator | `agents/mutungamiri/` | Architecture, planning, delegation, integration, `AGENTS.md`, `docs/`, `tasks/` |
 | 2 | Runako — Frontend & UX Engineer | `agents/runako/` | Web UI: components, pages, styles (`apps/web/`, except offline layer) |
 | 3 | Fambai — Mobile & Offline Engineer | `agents/fambai/` | Service worker, IndexedDB, sync engine, offline queue |
-| 4 | Hwaro — Backend & Database Engineer | `agents/hwaro/` | FastAPI backend, PostgreSQL, auth, migrations, API contracts |
+| 4 | Hwaro — Backend & Database Engineer | `agents/hwaro/` | FastAPI backend, SQLite demo storage, PostgreSQL adapter, auth, migrations, API contracts |
 | 5 | Inzwi — Voice AI Engineer | `agents/inzwi/` | Voice pipeline, "Apo"/"Napo" interaction (`services/voice/`) |
 | 6 | Ungwaru — Meta AI Engineer | `agents/ungwaru/` | Meta/Llama integrations, model inference (`services/ai/`) |
 | 7 | Verengai — Financial Systems Engineer | `agents/verengai/` | Sales, payments, P&L, cashflow, reconciliations (`services/finance/`) |
@@ -21,7 +28,8 @@ Mutungamiri (CTO & Lead Orchestrator) coordinates all agents and reports to the 
 | 10 | Chengetai — QA, Security & DevOps Engineer | `agents/chengetai/` | Tests, CI/CD, deployment, security (`tests/`, `infra/`) |
 | 11 | Ruzivo — CFO & Business Strategy Advisor | `agents/ruzivo/` | Accounting policy, financial review, strategy (`docs/finance/`, advisory) |
 
-No application code exists yet. Code ownership above is prospective and takes effect as directories are created.
+Application code now exists. Ownership above is active; the coordinator records
+explicit temporary scope extensions before assigning cross-cutting work.
 
 ## 2. Activation protocol
 
@@ -136,7 +144,9 @@ subagent updates its brain and writes a handoff entry before terminating.
 - `analytics/`: Chiono. `tests/`, `infra/`, CI: Chengetai.
 - `docs/`, `tasks/`, `AGENTS.md`: Mutungamiri. `docs/finance/`: Ruzivo.
 
-No code directories exist yet; this map activates as they are created.
+Code directories exist and this ownership map is active. Android native source
+and packaging scopes must be explicitly assigned by Mutungamiri to avoid
+concurrent writes.
 
 ## 11. Delegation checklist (memory-aware)
 

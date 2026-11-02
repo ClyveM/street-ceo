@@ -28,3 +28,39 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
   Llama 3.1/4 structured tool-call formats and the official Llama API Python
   client's timeout/error/retry behavior. This is capability evidence, not live
   availability evidence.
+
+## Verified implementation facts (2026-10-30, W3-MUSE-001)
+
+- `services/ai/muse.py` sends structured requests to the configured
+  `https://api.meta.ai/v1/chat/completions` endpoint without exposing the key
+  to the browser.
+- `POST /api/v1/shops/{shop_id}/muse` returns period-filtered repository
+  evidence and validated Meta output for non-financial questions.
+- Profit/margin questions return `needs_data` until COGS and operating expenses
+  are present; sales revenue is never treated as profit.
+
+## Verified implementation facts (2026-10-31, W4-SOCIAL-001)
+
+- `StructuredAI.social_draft` accepts only explicit `SocialProduct` inputs and
+  validates selected product IDs and factual claim source fields.
+- The social provider prompt is draft-only and prohibits unsupported discounts,
+  stock, popularity, location, customer-result, and availability claims.
+- An optional `shop_image_ref` is passed as visual context metadata only; the
+  current boundary does not claim to inspect or infer facts from the image.
+
+## Verified implementation facts (2026-10-31, W4-MUSE-IMAGE-001)
+
+- The configured repository path currently uses `LLAMA_MODEL` with the text
+  chat-completions adapter; no `MUSE_IMAGE_MODEL` setting is present.
+- Official Meta documentation identifies `muse-image-1.0` and separate image
+  generation/edit endpoints. This capability is recorded as verified by docs
+  but unavailable in this workspace until explicitly configured and smoke-tested.
+- `SocialImageRequest` accepts selected products and URL/data/file image refs;
+  local filesystem paths are rejected. `SocialImageDraft` is always draft-only.
+
+## Verified implementation facts (2026-10-31, W6-MUSE-PROVIDER-WIRING-001)
+
+- `MetaInvoiceVisionProvider` now preserves both `file-` and `file_` invoice
+  references as Meta `file_id` content parts for PDF extraction.
+- This environment had no active LAN listeners on ports 8000, 5173, or 9001;
+  no live LAN API result was observed during this checkpoint.

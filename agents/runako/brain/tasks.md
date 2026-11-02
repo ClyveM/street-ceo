@@ -93,6 +93,59 @@ Task assignments from Mutungamiri will appear here under an
 
 ## Assigned by Mutungamiri
 
+### 2026-10-31 — Final frontend checkpoint (supersedes earlier WIP notes)
+
+- W3-ASK-MUSE-UI-001: UI implemented, including real typed request, loading,
+  answer/missing-data/unavailable/error states, evidence period/coverage.
+- Workbench 404 follow-up: implemented root normalization, actionable errors,
+  retained drafts and explicit stored-only receipt semantics.
+- W3-TEAM-CHAT-001: frontend implemented against Hwaro's dedicated member chat
+  routes; live listener returned history 404 during QA, requiring backend update.
+- W3-LIVE-DESK-STATUS-001: implemented exact SAST evidence timestamps, source
+  label, independent board assignment/freshness, owned-path file filtering,
+  and no-new-evidence state. No screen/typing claims.
+- W4-PROJECT-OFFICE-UI-001: standalone office.html, multi-project/room planning,
+  product/workstream UI, tasks/desks/chat/evidence views, and migration plan
+  implemented. Only verified initial room adapter is connected; new room-scoped
+  API integration/auth/persistence remains an explicitly documented next phase.
+- W4-APK-FIRST-UI-001: completed custom install UI removal and native browser
+  beforeinstallprompt suppression, preserving worker/manifest files.
+- W4-REMOVE-TEAM-PAGE-001: completed shop nav/page/state/polling/UI removal;
+  reusable office exists only in standalone entry.
+- W4-MUSE-SHOP-ID-001: completed as previously recorded; valid overrides kept.
+- W4-PRODUCT-IMAGES-UI-001: optional validated photo preview/upload, shared Social
+  selection, image request/loading/retry/unavailable/export gating implemented.
+  Real generated-image preview/download remains blocked by provider/output API.
+- W4-SOCIAL-UI-001: selected-product/image inputs, verified source brief,
+  loading/errors, manual copy and explicit local exports implemented. Actual AI
+  text draft generation remains blocked by absent HTTP endpoint; not called done.
+- Final evidence: npm run test:frontend **41 passed, 0 failed**; npm run build
+  exit 0, **55 modules**, emitted shop and office entries. Latest handoff contains
+  exact files, browser checks, blockers, and receiving-session instructions.
+
+### W4-MUSE-SHOP-ID-001 — complete frontend slice, 2026-10-31
+
+- Confirmed existing non-nil seeded ID from Hwaro/backend evidence; centralized
+  default and preserved valid saved/environment overrides.
+- Missing/nil/malformed IDs and missing/invalid backend URLs cannot reach the
+  Muse request; correction UI and explicit demo choice provided.
+- Evidence: 30 frontend tests passed; build passed, 47 modules and two entries.
+- Backend listener seeding/provider readiness are not claimed by these frontend
+  tests. Structured handoff records exact files and limits.
+
+### 2026-10-30/31 — Current frontend assignments (in progress)
+
+- W3-ASK-MUSE-UI-001: wire real Muse contract and visible honest response states;
+  include follow-up Workbench 404 handling. Scope apps/web plus own brain.
+- W3-TEAM-CHAT-001: each member desk opens history/task/status/action composer;
+  coordinate the source-backed API with Hwaro; no invented replies/typing.
+- W3-LIVE-DESK-STATUS-001: exact Last verified repository activity time,
+  assignment separated from evidence freshness, honest no-new-evidence state.
+- W4-PROJECT-OFFICE-UI-001: standalone reusable project office UI, project/room/
+  workstream hierarchy, Street CEO preserved, incremental migration plan.
+- Evidence milestone: 22 focused tests and production build (41 modules) passed
+  before latest per-member API/standalone-office changes; final checks pending.
+
 ### TEST-MEMORY-001: summarize agreed React PWA frontend architecture — assigned 2026-10-29
 
 - Description: read-only task. Load brain per AGENTS.md, read
@@ -108,3 +161,106 @@ Task assignments from Mutungamiri will appear here under an
   2026-10-29 appended to brain/handoffs.md; brain/current-state.md updated;
   status marked complete here; summary reported to Mutungamiri in completion
   message.
+
+### 2026-10-31 — W5-COSTS-INVOICES-UI-001 / mobile QA / demo audit
+
+- Invoice upload/manual review/product matching/explicit confirmation and guided
+  expense draft/review/confirm implemented and verified against local API.
+- Catalogue cost display and invoice-based cost review implemented. Direct
+  cost-only editing blocked by missing backend correction contract.
+- W4-MOBILE-QA-FINAL-001: measured320/390/431 browser viewports, fixed overflow
+  and photo target. APK checklist published; physical-device pass outstanding.
+- W5-DEMO-READINESS-UI-001: audit/storyboard/video checklist published; local vs
+  LAN mismatch isolated, positive synthetic costs/sale/profit checks recorded.
+- W4-SOCIAL-UI-001/W4-PRODUCT-IMAGES-UI-001: newly verified text/image adapters
+  integrated; actual text fallback timeout and image provider_not_configured.
+- Final evidence:52 frontend tests passed,0 failed; production build exit0,
+  60modules,shop and office entries. Full structured handoff has exact records,
+  files, remaining contracts, release reviews and physical-phone requirements.
+
+### 2026-10-31 — W6-REALTIME-OPS-MVP-UI
+
+Urgent polling cut complete frontend slice. Existing team/activity only,5second
+polling,15second snapshot freshness,6hour repository evidence age, server/receipt/
+last-change times,11members/team filter and task/file/test/commit history.
+58tests passed, build62modules/exit0; actual endpoint and320px browser QA passed.
+Wider W6-REALTIME-OPS-UI-001 heartbeat/session source is not implemented by this
+cut; verified backend/collector contract required. Exact files/URL in handoff.
+
+### 2026-10-31 — W5-DATE-UI-001 complete (revised local timezone)
+
+Today date/greeting follow browser local timezone/locale, refresh each minute
+and on focus/visibility resume. Deterministic formatter/clock tests4passed,
+build exit0/63modules. Exact files/evidence in latest structured handoff.
+
+### 2026-10-31 — W5-COSTS-INVOICES-UI-001 finalization complete frontend slice
+
+Verified current contracts; added direct cost-only draft/confirm/audit UI and
+invoice source status/recovery. Existing single purchase receipt flow and all
+seven expense categories/one-off/recurring periods retained and live verified.
+Focused27passed; full91passed; productionbuild73modules/exit0. Latest handoff
+has exact files, synthetic receipts and mobile/desktop evidence. OCR/durability
+and Ruzivo/Chengetai reviews remain external limitations; no fake OCR claimed.
+
+## Assigned by coordination — W6-APO-HANDSFREE-001 — 2026-10-31
+Frontend slice implemented;98tests passed/build76modules. Parent handles APK, phone validation outstanding. Exact scope/evidence in handoffs.md.
+
+## Assigned by coordination — W6-VOICE-ERROR-001 — 2026-10-31
+Frontend error classification/recovery complete;11focused tests passed,build76modules. Parent APK/device check outstanding. Evidence in handoffs.md.
+
+## Assigned by coordination — W6-VOICE-PROFILE-001 — 2026-10-31
+Profile enrollment/Sell cleanup implemented;103tests passed/build77modules. Actual CORS fix belongs backend,parent restart/APK. Evidence handoffs.md.
+
+## Assigned by Mutungamiri — 2026-11-01 — DEMO-APK-APO-001
+Implement hands-free APK MVP in apps/web/ excluding offline modules and apps/android/ native source (explicit temporary CTO scope extension) plus own brain. Load activation protocol and current code. User requires saying Apo to start, products, sale and tender/change without per-sale button clicks; auto-arm foreground APK listening after OS microphone permission (OS prompt unavoidable); Napo completion remains supported. Voice payment answers must work without Apo if prompted, speak unknown product/not found and no sale, authoritative total/change, resume wake loop after responses, pause recognition during TTS and lifecycle. Keep manual sale/stock/history refreshed. Coordinate backend with Hwaro. Add meaningful tests and build. Do not package until root coordinates final backend/web state; do not edit API/AI/offline or other brains. Persist handoff; report physical-device limits honestly.
+
+## DEMO-APK-APO-001 checkpoint — 2026-11-01
+Frontend/native sources implemented;114frontend tests pass/build77modules. Root native compile/package and Chengetai targeted review pending. Physical-device acceptance open; see structured handoff.
+
+## Assigned by Mutungamiri — 2026-11-01 — SPRINT90-UX-002
+90-minute improvement sprint authorized Owner. Full AGENTS activation. Own apps/web excluding offline and apps/android native source temporary CTO extension + own brain. Improve visible MVP: clear foreground Apo listening/processing/payment/success/error states and visible latest receipt with server total,received,change; no per-sale buttons in voice flow. Manual cash amount+change UI against Hwaro contract. Add small recent-request investigation view Profile using new shop-scoped sanitized trace API, show correlation/time/status/input/result, explicit errors no fake fixtures. Fix actual voice recovery pitfalls, natural cash decimal/word forms safely (never guess ambiguous amounts), tests for repeat/error scenarios. Coordinate Hwaro contract early. Keep scope demo only, preserve currentwork. Run frontend tests/build; no subagent escalations; root host native package. No live reset. Persist handoff/checkpoints.
+
+## SPRINT90-UX-002 — frontend implementation complete, 2026-11-01
+120frontend tests pass, final build80modules/shop-BJ3ZpTSI.js, scoped diffcheckpass. Chengetai targeted source review clear. Root packaging and physical/render acceptance remain. See structured handoff.
+
+SPRINT90-UX-002 integration follow-up: legitimate provider_called=null accepted and displayed Unknown.121tests/build80modules/shop-DdDVC_iF.js pass; root packaging next.
+
+SPRINT90-UX-002 finalpartial trace repair: explicit bounded truncated prefix display;122tests/build80modules/shop-QyDfyL_X.js pass. Root packaging next.
+
+SPRINT90-UX-002 savedhistory+knownnativeconnection upgrade complete:125frontendtests/build82modules explicit8001/shop-l6068vGv.js pass. Sourcefrozen; root finalpackaging and QA/deviceacceptance next.
+
+## Assigned by Mutungamiri — 2026-11-01 — PHONE-RECOVERY-001
+User supplied actualphone screenshots21:47/21:48: recognizedCoke, awaitingtender but uncertain Recoveroriginal, brokenClose wrap. Root currentUTC19:50, latestdefaultcommittraces18:51 (hourbefore). Screenshots5G noWiFi. FullAGENTS activation. Own web exceptoffline +Androidnative onlyifneeded +ownbrain. Fix closebuttonheader minwidth/nowrap/mobilelayout. Replace misleading navigatorOnline as shopreachable with realnonmutatingAPI readiness status/lastcheck/address and clear localLAN/connection guidance, no falseclaim5Gmustfailuniversally. Unknowncommitpreserveoriginalkey/basket; improve message distinguishes no receipt vs saleproof; no clearinguncertainty automatically. Paymentquestion/incomplete not mutating state inUI, ensure valid200needs_tender branch doesnotfallinto uncertain. Add realresponsefixturetests and connection/receiptstatusregressions. Do not changebackend/secrets orresetdata. No agent escalations; roottests/package. Checkpointpromptly, persist handoff.
+
+## Assigned by Mutungamiri — PHONE-RECOVERY-001 temporary scope extension
+2026-11-01: sole writer apps/web/public/service-worker.js narrowly authorized for network-only API/readiness/no-store/cross-origin handling and cacheversion update. Existing SW stale API fallback undermines truthful shop probe. No IndexedDB/sync/queue work. Fambai not active; no conflictingwriter. Persist tests/handoff.
+
+PHONE-RECOVERY-001 implementationfinal:132frontendtests/build84modules explicit8001/shop-Ct0WV7-I.js pass; cachev4andbuildlabeldistverified; scoped diffcheckpass. Rootpackages, QA/actualupdatedphone acceptance next. TemporarySWscope released.
+
+## Assigned by Mutungamiri — 2026-11-01 — CATALOGUE-VOICE-UX-001
+Fullactivation. Ownwebexceptoffline +nativeAndroid temporaryscope +brain. Coordinate Hwaro/AI newcatalogueclarification and explicitspokenmatchconfirmation. Useractuallogs:1 bread glove number;1coca-cola nabo marble;bath soap nabo maple map;coca-cola missingquantity. Exactfastpathsame; nonexactMuse/localproposals mustbe spoken Didyoumean1Breadloaf? acceptsYes/No/Cancel handsfree (no per-sale buttons), newcommitflagasagreedbackend. Ambiguous/missingquantity promptfollowup, neverautocommitmodelguess; retainoriginaltranscript+matchsource visiblyactualMuse thinking onlywhenrequestinflight. ImproveApo/Napo boundedframehandling cautiously commonASRvariantnabo onlyterminal appropriate oruserconfirmedaliases; do not silentlystripordinaryproductwords/number andsell. NativeASRalternatives optional ifsmall clearcontract otherwisefocuscore. Preservepaymentuncertainty/Retry/Cancel/receipts/networkfreshness. Labelnewbuild CATALOGUE-VOICE-001. Tests actualexamples andnegative aliases/falseconfirmation. NoAPI/AIwrites/liveresets/escalations; rootpackaging. Persist handoff.
+
+CATALOGUE-VOICE-UX-001 sourcecomplete:136frontendtests/build84modules explicit8001/shop-D3It--1w.js pass; scoped diffcheckpass. GroundedproposalYes/No/Cancel+missingquantitycontext wired. RootAPI/AI/QA/provider/packaging+phoneacceptance next.
+
+## Assigned by Mutungamiri — 2026-11-01 — COUNTER-POLISH-001
+FullAGENTS activation. Owner confirms phone sale works; PRESERVE functional sale/catalogue/Muse/payment/retry/backend contracts. Own webexceptoffline +nativeonlyifnecessary +ownbrain. User photo path .codex-remote-attachments/01a19763-315a-7d33-a788-00d9150a85c9/4ce0acee-bece-4c97-ad4e-03e36106c24a/1-1000389737.jpg inspectpluslogo. Clean busy-shop counter UI: compact receipt showsitems andTotal/Tendered/Change (changehero), shortpaidstate; diagnostics/build/server IDs/timestamps/legalstockundo text behinddetails orProfile, keep investigationdata notdelete. Gentlebrand character fromexistinglogo (teal/green,warmaccent,friendly restrainedcopy), no newassetsframework/unrelatedpages. Completedreceipt: Apo or Apple wake immediately dismisses modal/resets currentUI toSell while preservinglatestpaidreceipt/history and SAMEutterance remaindercaptured fornextsale; wake mustNEVERdiscard pendingpayment/clarification/uncertain outcome. Handsfree APKdefaulton, singlepersistenttoggle applies wake/YesNo/qty/CashBank/retries andnextsale; modalclose/completedflow shouldnotdisablelistening. ExplicitPause onlyoff; typing remainsavailableunderTypeinstead. Preserve TTS/selfecho/lifecycle safeguards. Prefer treatAppleonlyidle/completed startnotasproductinternalword; user saysApple. Add meaningful wake+session tests, buildnewCOUNTER-POLISH-001. NoAPI/AI/offlineedits/livemutations/escalations; roothostpackage. Persist handoff/checkpoint.
+
+COUNTER-POLISH-001 sourcecomplete/frozen:140frontendtestsPASS; final86moduleAPI8001build shop-D1AJuhDJ.js PASS; scoped diffcheckPASS. Compactcounter/sharedvoicepreference/completed-onlyApoApplewake ready. Rootpackaging andupdatedphoneacceptance next.
+
+
+## Assigned by Mutungamiri — 2026-11-02 STARTER-COGS-UX-001
+Load full activation protocol. Scope apps/web/src/api.ts demoProducts only, related frontend fixture tests and own brain; no UI/session changes. Coordinate exact illustrative unit_cost_micros values with Hwaro/Ruzivo so frontend fallback catalogue matches backend starter costs. Preserve names/prices/stock. Run focused/fullfrontend/build explicitAPI8001; no packaging or live calls. Persist handoff.
+
+STARTER-COGS-UX-001 complete/frozen2026-11-02: canonicalfallbackcostparity1test/full141frontendtests PASS; explicitAPI8001build86modules/shop-D4hvSYIv.js PASS; scoped diffcheckPASS. NoUI/session/native/backend/livewrites orpackaging. Rootintegrationnext.
+
+
+## Assigned by Mutungamiri — 2026-11-02 ANDROID-COUNTER-INSETS-001
+Fullactivation; temporarily exclusive apps/android/android/app/src/main native source/resources +apps/web UI/styles (excludeoffline) +ownbrain. Userbottomappbuttons behindAndroidnav, wants Androidcontrols revealedbyupwardswipe. Implement platformappropriate immersive transientnavigationbars with safe WebView/appbottomnav insets avoidingoverlap onreveal, gestures/3button/keyboard, lifecycle. Preservepermission/ASR/TTS/voiceflows andtyping; keepstatusbar ifappropriate. Readcurrentnativebeforeediting. Sourcefornewfastproposal provenance UI ifneeded coordinateUngwaru/root. Test/build explicit8001, freezehandoff. RootsolegeneratedAPKpackager; no SW/provider/API/live/escalations.
+
+ANDROID-COUNTER-INSETS-001 source COMPLETE/frozen 2026-11-02:142frontendpass,86moduleAPI8001build/shop-CMFZxwB9.js, QA sourcePASS; nativecompile/package+physicaldevice gates remain root/Owner.
+
+
+## Assigned by Mutungamiri — 2026-11-02 REPO-SHOP-UX-001 andPRODUCT-DIAGRAM-001
+Fullactivation. Scope apps/web source/config/tests excludingoffline + temporary docs/product-diagram/ artifacts andownbrain. Userwantsseparatedteamviewexcluded/ignored whileStreetCEOcleanclonebuildworks. Auditdependencies, split genericAPIURLvalidation outof teamMessages into shopownedgenericmodule; moveoffice/team-onlycode+tests intoignored local area (rootowns.gitignore, coordinateexactlist), optionalofficeentry localonlydefaultVite/TS/testbuild mustnotdependignoredfiles. Preservelocalteamapp working optionalworkflow ifpossible; no deletion oflocalfiles or agentsbrains. No sale/voiceUIfunctionalitychanges. Separately createvisuallyappealingeditableSVG+standaloneHTMLproductdiagram andPNG/PDFpreviewifavailable within docs/product-diagram/ (explicittemporaryscope); use existingbrand, currentMVPcatalogue→sale/manualorApo→tender/change→stock/history,SQLite+Muse tracing,safeproposalconfirmation. Readvisualization skill C:/Users/clyve/.codex/plugins/cache/openai-curated-remote/build-web-data-visualization/0.1.21/skills/data-visualization/SKILL.md; pickdirectstaticSVGsoftware/productflow plusaccessiblemobileHTML, noconceptapprovalrequired. AvoidclaimingallAIlocalproposalsareactualMuse. Rootwritesbuilderbrief/docsotherpaths. Sendexclusionmanifest ASAP beforeedits andhandsoffbuild; noAPKpackaging/live/escalations. Tests+handoff.
+
+REPO-SHOP-UX-001+PRODUCT-DIAGRAM-001 source/artifacts COMPLETE2026-11-02:117shop+26optionalofficepass,65/44modulebuildsPASS, editableSVG+mobileHTML+actualPDF/PNGpreviewvisuallyinspected. Parentcleanexportverificationpending; no deletion/staging/live/native/SWchanges.

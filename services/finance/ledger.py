@@ -120,6 +120,20 @@ class DailyClose:
     locked_at: datetime
 
 
+@dataclass(frozen=True)
+class ProfitabilityReport:
+    """Ledger-derived profitability for one UTC reporting interval."""
+
+    revenue: Decimal
+    refunds: Decimal
+    net_revenue: Decimal
+    cogs: Decimal
+    operating_expenses: Decimal
+    gross_profit: Decimal | None
+    net_profit: Decimal | None
+    warnings: tuple[str, ...]
+
+
 class Ledger:
     """In-memory journal with append-only posting and close semantics."""
 
@@ -195,11 +209,23 @@ class Ledger:
         cogs: Decimal | int | str | None,
         quantity: int,
         unit_price: Decimal | int | str | None = None,
+        amount_received: Decimal | int | str | None = None,
+        change: Decimal | int | str | None = None,
     ) -> JournalEntry:
         if quantity <= 0:
             raise ValueError("quantity must be positive")
         tender_value = self._tender(tender)
         revenue = _money(amount)
+        received = None if amount_received is None else _money(amount_received)
+        change_amount = None if change is None else _money(change)
+        if received is not None and tender_value is Tender.BANK and received != revenue:
+            raise ValueError("bank tender must equal the sale total")
+        if received is not None and received < revenue:
+            raise ValueError("amount_received cannot be less than the sale total")
+        if received is not None and change_amount is not None and change_amount != received - revenue:
+            raise ValueError("change must equal amount_received minus sale total")
+        if received is not None and change_amount is None:
+            change_amount = received - revenue
         postings = [Posting(tender_value.account, debit=revenue), Posting(Account.SALES_REVENUE, credit=revenue)]
         warnings: list[str] = []
         if cogs is None:
@@ -213,7 +239,9 @@ class Ledger:
             source_type="sale", source_id=source_id, actor=actor, occurred_at=occurred_at,
             postings=postings, warnings=warnings,
             metadata={"tender": tender_value.value, "quantity": str(quantity),
-                      **({"unit_price": str(unit_price)} if unit_price is not None else {})},
+                      **({"unit_price": str(unit_price)} if unit_price is not None else {}),
+                      **({"amount_received": str(received), "change": str(change_amount)}
+                         if received is not None else {})},
         )
 
     def return_sale(
@@ -244,7 +272,10 @@ class Ledger:
             postings.extend((Posting(Account.INVENTORY, debit=cost), Posting(Account.COGS, credit=cost)))
         else:
             cost = _money(original_cogs)
-            postings.extend((Posting(Account.STOCK_LOSS, debit=cost), Posting(Account.INVENTORY, credit=cost)))
+            # The original sale already credited inventory and debited COGS.
+            # A damaged return reclassifies that original cost to stock loss;
+            # it must not reduce inventory a second time.
+            postings.extend((Posting(Account.STOCK_LOSS, debit=cost), Posting(Account.COGS, credit=cost)))
             warnings.append("damaged_return_stock_loss")
         return self._append(
             source_type="return", source_id=source_id, actor=actor, occurred_at=occurred_at,
@@ -342,10 +373,49 @@ class Ledger:
         original = next((entry for entry in self.entries if entry.entry_id == entry_id), None)
         if original is None:
             raise ValueError(f"entry not found: {entry_id}")
+        if original.source_type == "reversal":
+            raise ValueError("a reversal cannot be reversed; reverse the original entry once")
+        if any(entry.reversal_of == entry_id for entry in self.entries):
+            raise ValueError(f"entry is already reversed: {entry_id}")
         postings = tuple(Posting(p.account, debit=p.credit, credit=p.debit) for p in original.postings)
         return self._append(source_type="reversal", source_id=source_id, actor=actor, occurred_at=occurred_at,
                             postings=postings, warnings=("reversal_of_original_entry",), reversal_of=entry_id,
                             metadata={"original_source_id": original.source_id})
+
+    def profitability(self, *, start: datetime, end: datetime) -> ProfitabilityReport:
+        """Reproduce P&L from journal postings; missing COGS stays disclosed."""
+        start_utc, end_utc = _timestamp(start), _timestamp(end)
+        if end_utc < start_utc:
+            raise ValueError("end must not precede start")
+        entries = [entry for entry in self.entries if start_utc <= entry.occurred_at <= end_utc]
+        def effective_source(entry: JournalEntry) -> str:
+            if entry.source_type != "reversal":
+                return entry.source_type
+            original = next((candidate for candidate in self.entries if candidate.entry_id == entry.reversal_of), None)
+            return original.source_type if original is not None else "reversal"
+
+        revenue = sum(((p.credit - p.debit) for e in entries if effective_source(e) == "sale"
+                       for p in e.postings if p.account == Account.SALES_REVENUE), ZERO)
+        refunds = sum(((p.debit - p.credit) for e in entries if effective_source(e) == "return"
+                       for p in e.postings if p.account == Account.SALES_REVENUE), ZERO)
+        cogs = sum((p.debit - p.credit for e in entries
+                    if effective_source(e) in {"sale", "return"}
+                    for p in e.postings if p.account == Account.COGS), ZERO)
+        operating = sum((p.debit - p.credit for e in entries if effective_source(e) == "expense"
+                         for p in e.postings if p.account == Account.OPERATING_EXPENSE), ZERO)
+        warnings = sorted({warning for entry in entries for warning in entry.warnings})
+        net_revenue = revenue - refunds
+        if "missing_cost_of_sales" in warnings:
+            gross_profit = net_profit = None
+            warnings.append("profitability_incomplete_missing_cost_of_sales")
+        else:
+            gross_profit = net_revenue - cogs
+            net_profit = gross_profit - operating
+        return ProfitabilityReport(
+            revenue=revenue, refunds=refunds, net_revenue=net_revenue, cogs=cogs,
+            operating_expenses=operating, gross_profit=gross_profit,
+            net_profit=net_profit, warnings=tuple(sorted(set(warnings))),
+        )
 
     def close_day(
         self,
@@ -365,26 +435,38 @@ class Ledger:
         before = [entry for entry in self.entries if entry.occurred_at < start]
         during = [entry for entry in self.entries if start <= entry.occurred_at <= end]
 
-        def tender_values(account: Account, source_types: set[str], *, credit: bool = False) -> dict[Tender, Decimal]:
-            result = {}
-            for tender, tender_account in ((Tender.CASH, Account.CASH), (Tender.BANK, Account.BANK)):
-                result[tender] = sum(
-                    ((p.credit if credit else p.debit) for e in during if e.source_type in source_types
-                     for p in e.postings if p.account == tender_account), ZERO
-                )
-            return result
+        # Same-day opening entries are part of the opening float. This keeps
+        # the close useful when a shop is first opened during the business day.
+        opening = {t: sum((p.debit - p.credit for e in before
+                           for p in e.postings if p.account == t.account), ZERO)
+                   for t in Tender}
+        opening = {t: opening[t] + sum((p.debit - p.credit for e in during
+                                        if e.source_type == "opening_balance"
+                                        for p in e.postings if p.account == t.account), ZERO)
+                   for t in Tender}
 
-        opening = {t: sum((p.debit - p.credit for e in before for p in e.postings if p.account == t.account), ZERO) for t in Tender}
-        sales = tender_values(Account.CASH, {"sale"})
-        refunds = tender_values(Account.CASH, {"return"}, credit=True)
-        expenses = tender_values(Account.CASH, {"expense"}, credit=True)
-        purchases = tender_values(Account.CASH, {"purchase"}, credit=True)
-        drawings = tender_values(Account.CASH, {"owner_drawing"}, credit=True)
-        injections = tender_values(Account.CASH, {"owner_injection"})
+        def effective_source(entry: JournalEntry) -> str:
+            if entry.source_type != "reversal":
+                return entry.source_type
+            original = next((candidate for candidate in self.entries if candidate.entry_id == entry.reversal_of), None)
+            return original.source_type if original is not None else "reversal"
+
+        def tender_delta(source_types: set[str], sign: int) -> dict[Tender, Decimal]:
+            return {t: sum((sign * (p.debit - p.credit) for e in during
+                            if effective_source(e) in source_types
+                            for p in e.postings if p.account == t.account), ZERO)
+                    for t in Tender}
+
+        sales = tender_delta({"sale"}, 1)
+        refunds = {t: -tender_delta({"return"}, 1)[t] for t in Tender}
+        expenses = {t: -tender_delta({"expense"}, 1)[t] for t in Tender}
+        purchases = {t: -tender_delta({"purchase"}, 1)[t] for t in Tender}
+        drawings = {t: -tender_delta({"owner_drawing"}, 1)[t] for t in Tender}
+        injections = tender_delta({"owner_injection"}, 1)
         expected = {t: opening[t] + sales[t] - refunds[t] - expenses[t] - purchases[t] - drawings[t] + injections[t] for t in Tender}
         actual = {Tender.CASH: None if actual_cash is None else _money(actual_cash), Tender.BANK: None if actual_bank is None else _money(actual_bank)}
         variance = {t: None if actual[t] is None else actual[t] - expected[t] for t in Tender}
-        warnings = []
+        warnings = sorted({warning for entry in during for warning in entry.warnings})
         if actual_cash is None:
             warnings.append("missing_cash_count")
         if actual_bank is None:
@@ -396,7 +478,7 @@ class Ledger:
             shop_id=self.shop_id, business_date=business_date, timezone=timezone_name,
             opening=opening, sales=sales, refunds=refunds, expenses=expenses, purchases=purchases,
             owner_drawings=drawings, owner_injections=injections, expected=expected, actual=actual,
-            variance=variance, warnings=tuple(sorted(warnings)), locked_at=_timestamp(locked_at),
+            variance=variance, warnings=tuple(sorted(set(warnings))), locked_at=_timestamp(locked_at),
         )
         self.closes[business_date] = close
         return close

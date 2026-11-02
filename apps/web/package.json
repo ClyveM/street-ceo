@@ -6,7 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:muse": "node --experimental-strip-types --test tests/muse.test.mjs",
+    "test:frontend": "node --experimental-strip-types --test tests/*.test.mjs",
+    "dev:office": "vite --config local-office/vite.config.ts",
+    "build:office": "tsc -p local-office/tsconfig.json && vite build --config local-office/vite.config.ts",
+    "test:office": "node --experimental-strip-types --test local-office/tests/*.test.mjs"
   },
   "dependencies": {
     "react": "latest",

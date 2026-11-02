@@ -1,0 +1,20 @@
+.ask-muse .muse-tabs button, .ask-muse .muse-prompts button { font-size: 14px; min-height: 48px; }
+.ask-muse .analysis-card > label { font-size: 15px; }
+.ask-muse .analysis-card textarea { font: inherit; font-size: 16px; line-height: 1.5; min-height: 120px; }
+.ask-muse .muted, .muse-idle { font-size: 14px; line-height: 1.6; }
+.ask-muse .muse-response { color: var(--ink); font-size: 16px; line-height: 1.6; padding: 18px; gap: 12px; overflow-wrap: anywhere; }
+.ask-muse .muse-response p, .ask-muse .muse-response h3, .ask-muse .muse-response h4 { margin: 0; }
+.ask-muse .muse-response h3 { font-size: 20px; line-height: 1.35; }
+.muse-answer-text { white-space: pre-wrap; }
+.muse-status { font-size: 13px; font-weight: 700; }
+.muse-answer dl { margin: 0; display: grid; gap: 12px; }
+.muse-answer dt { font-size: 13px; font-weight: 700; }
+.muse-answer dd { margin: 2px 0 0; font-size: 14px; }
+.muse-answer ul { margin: 6px 0 0; padding-left: 22px; }
+.muse-answer details { font-size: 14px; }
+.muse-answer summary { cursor: pointer; min-height: 48px; display: list-item; align-content: center; }
+.ask-muse .muse-error { background: #fff1ed; border-color: #e8b5a9; }
+.ask-muse .muse-needs_data, .ask-muse .muse-unavailable { background: #fff8e9; border-color: #e5d3a9; }
+.ask-muse .muse-unavailable { font-size: 16px; line-height: 1.6; }
+.ask-muse button:focus-visible, .ask-muse textarea:focus-visible, .ask-muse summary:focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 3px; }
+.ask-muse .primary-action:disabled { cursor: default; opacity: .65; }

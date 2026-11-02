@@ -70,7 +70,7 @@ def test_sale_never_silently_creates_negative_stock() -> None:
 def test_validation_is_deterministic_and_rejects_duplicate_lines() -> None:
     _, _, product = setup_product()
     with pytest.raises(ValueError, match="product_id may appear only once"):
-        SaleCreate(lines=[SaleLine(product_id=product.id, quantity=1), SaleLine(product_id=product.id, quantity=1)])
+        SaleCreate(lines=[SaleLine(product_id=product.id, quantity=1), SaleLine(product_id=product.id, quantity=1)], tender="cash")
 
 
 def test_shop_summary_reports_live_sales_and_stock_alerts() -> None:

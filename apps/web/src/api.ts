@@ -1,3 +1,10 @@
+import { requestMuse, resolveShopConnection, shopConfigurationError } from './muse'
+import { normalizeApiBaseUrl, validateApiBaseUrl } from './apiUrl'
+import { createCostsClient } from './costs'
+import { createProductCostsClient } from './productCosts'
+import { createRetailClient } from './retailContracts'
+import { requestSale } from './saleRequest'
+
 export type Tender = 'cash' | 'bank'
 
 export type Product = {
@@ -7,17 +14,22 @@ export type Product = {
   name: string
   unit_price_cents: number
   stock_qty: number
+  unit_cost_micros?: number | null
+  cost_source_invoice_id?: string | null
 }
 
 export type SaleLine = { product_id: string; quantity: number }
 
-export type SaleRequest = { lines: SaleLine[]; tender: Tender }
+export type SaleRequest = { lines: SaleLine[]; tender: Tender; amount_received_cents?: number }
 
-export type Sale = SaleRequest & {
+export type Sale = Omit<SaleRequest, 'amount_received_cents'> & {
   id: string
   shop_id: string
   total_cents: number
+  stock_after: Record<string, number>
   created_at: string
+  amount_received_cents?: number | null
+  change_cents?: number
 }
 
 export type ShopSummary = {
@@ -28,30 +40,37 @@ export type ShopSummary = {
   insight: string
 }
 
+
+// Illustrative starter costs approved in STARTER-COGS-001; this remains a labelled fallback, not live supplier evidence.
 export const demoProducts: Product[] = [
-  { id: '00000000-0000-0000-0000-000000000001', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'COKE-300', name: 'Coca-Cola 300ml', unit_price_cents: 150, stock_qty: 18 },
-  { id: '00000000-0000-0000-0000-000000000002', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'BREAD-700', name: 'Bread loaf', unit_price_cents: 180, stock_qty: 11 },
-  { id: '00000000-0000-0000-0000-000000000003', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'SUGAR-1KG', name: 'Sugar 1kg', unit_price_cents: 240, stock_qty: 7 },
-  { id: '00000000-0000-0000-0000-000000000004', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'MILK-500', name: 'Milk 500ml', unit_price_cents: 130, stock_qty: 15 },
-  { id: '00000000-0000-0000-0000-000000000005', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'CHIPS-100', name: 'Potato chips', unit_price_cents: 100, stock_qty: 23 },
-  { id: '00000000-0000-0000-0000-000000000006', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'SOAP-175', name: 'Bath soap', unit_price_cents: 220, stock_qty: 5 },
+  { id: '00000000-0000-0000-0000-000000000001', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'COKE-300', name: 'Coca-Cola 300ml', unit_price_cents: 150, stock_qty: 18, unit_cost_micros: 1000000 },
+  { id: '00000000-0000-0000-0000-000000000002', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'BREAD-700', name: 'Bread loaf', unit_price_cents: 180, stock_qty: 11, unit_cost_micros: 1200000 },
+  { id: '00000000-0000-0000-0000-000000000003', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'SUGAR-1KG', name: 'Sugar 1kg', unit_price_cents: 240, stock_qty: 7, unit_cost_micros: 1800000 },
+  { id: '00000000-0000-0000-0000-000000000004', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'MILK-500', name: 'Milk 500ml', unit_price_cents: 130, stock_qty: 15, unit_cost_micros: 900000 },
+  { id: '00000000-0000-0000-0000-000000000005', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'CHIPS-100', name: 'Potato chips', unit_price_cents: 100, stock_qty: 23, unit_cost_micros: 600000 },
+  { id: '00000000-0000-0000-0000-000000000006', shop_id: '00000000-0000-0000-0000-000000000001', sku: 'SOAP-175', name: 'Bath soap', unit_price_cents: 220, stock_qty: 5, unit_cost_micros: 1500000 },
 ]
 
-const DEFAULT_SHOP_ID = import.meta.env.VITE_SHOP_ID ?? '00000000-0000-0000-0000-000000000001'
 const CONFIG_KEY = 'street-ceo-api-config'
 
 export type ApiConfig = { baseUrl: string; shopId: string }
 
 export function getApiConfig(): ApiConfig {
-  const fallback = { baseUrl: import.meta.env.VITE_API_BASE_URL ?? '', shopId: DEFAULT_SHOP_ID }
+  const environment = { baseUrl: import.meta.env.VITE_API_BASE_URL, shopId: import.meta.env.VITE_SHOP_ID }
   try {
-    const stored = JSON.parse(localStorage.getItem(CONFIG_KEY) ?? 'null') as Partial<ApiConfig> | null
-    return { baseUrl: stored?.baseUrl ?? fallback.baseUrl, shopId: stored?.shopId ?? fallback.shopId }
-  } catch { return fallback }
+    const config = resolveShopConnection(JSON.parse(localStorage.getItem(CONFIG_KEY) ?? 'null'), environment)
+    return { ...config, baseUrl: normalizeApiBaseUrl(config.baseUrl) }
+  } catch {
+    const fallback = resolveShopConnection(null, environment)
+    return { ...fallback, baseUrl: normalizeApiBaseUrl(fallback.baseUrl) }
+  }
 }
 
 export function saveApiConfig(config: ApiConfig): void {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify({ baseUrl: config.baseUrl.replace(/\/$/, ''), shopId: config.shopId.trim() }))
+  const normalized = { baseUrl: validateApiBaseUrl(config.baseUrl), shopId: config.shopId.trim() }
+  const error = shopConfigurationError(normalized)
+  if (error) throw new Error(error)
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(normalized))
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -64,8 +83,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>
 }
 
+export const costsApi = createCostsClient(() => {
+  const config = getApiConfig()
+  const error = shopConfigurationError(config)
+  if (error) throw new Error(error)
+  return config
+})
+
+export const retailApi = createRetailClient(() => {
+  const config = getApiConfig(), error = shopConfigurationError(config)
+  if (error) throw new Error(error)
+  return config
+})
+
+export const productCostsApi = createProductCostsClient(() => {
+  const config = getApiConfig(), error = shopConfigurationError(config)
+  if (error) throw new Error(error)
+  return config
+})
+
 /** The only network boundary used by screens. Fambai can later decorate this with sync. */
 export const apiClient = {
+  askMuse(question: string, signal?: AbortSignal) {
+    return requestMuse(getApiConfig(), question, signal)
+  },
   async listProducts(): Promise<{ products: Product[]; isDemo: boolean }> {
     const config = getApiConfig()
     if (!config.baseUrl) return { products: demoProducts, isDemo: true }
@@ -75,19 +116,20 @@ export const apiClient = {
       return { products: demoProducts, isDemo: true }
     }
   },
-  async createSale(payload: SaleRequest): Promise<Sale> {
-    const config = getApiConfig()
-    return request<Sale>(`/shops/${config.shopId}/sales`, {
-      method: 'POST',
-      headers: { 'Idempotency-Key': `web-${Date.now()}-${Math.random().toString(16).slice(2)}` },
-      body: JSON.stringify(payload),
-    })
+  async createSale(payload: SaleRequest, idempotencyKey: string): Promise<Sale> {
+    return requestSale(getApiConfig(), payload, idempotencyKey)
   },
   async getSummary(): Promise<ShopSummary | null> {
     const config = getApiConfig()
     if (!config.baseUrl) return null
     try { return await request<ShopSummary>(`/shops/${config.shopId}/summary`) } catch { return null }
   },
+  async listSales(): Promise<Sale[]> {
+    const config = getApiConfig()
+    if (!config.baseUrl) throw new Error('Connect the shop to load transactions.')
+    return request<Sale[]>(`/shops/${config.shopId}/sales`)
+  },
+
 }
 
 export function formatMoney(cents: number): string {

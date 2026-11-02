@@ -2,6 +2,191 @@
 
 Handoff history initialized 2026-10-29.
 
+## 2026-10-31 — W3/W4 integrated frontend handoff
+
+### Assignment summary and scope
+
+Integrated W3-ASK-MUSE-UI-001, Workbench 404 follow-up, W3-TEAM-CHAT-001,
+W3-LIVE-DESK-STATUS-001, W4-PROJECT-OFFICE-UI-001, W4-APK-FIRST-UI-001,
+W4-REMOVE-TEAM-PAGE-001, W4-MUSE-SHOP-ID-001, W4-SOCIAL-UI-001, and
+W4-PRODUCT-IMAGES-UI-001 sequentially. AGENTS/role/six brain files/docs/board
+and prior handoffs were read. Wrote only apps/web UI and own Runako brain.
+No backend, Android, offline queue, or worker implementation was edited by
+Runako. Existing dirty worktree content was preserved; no commit was made.
+
+### Result and honest completion state
+
+- Ask Muse: real verified endpoint, response validation, loading/errors/retry,
+  missing-data/unavailable responses, period/evidence coverage, and safe shop
+  config. Confirmed seed ends 0001; valid overrides win. No fabricated profit.
+- Shop: Today/Sell/Stock nav only. No Team page/state/office polling. No mounted
+  install banner; native install promotion suppressed. Worker/manifest retained.
+- Office: separate office.html with project/room/product/workstream planning,
+  repository tasks/evidence, eleven desks, member chats, and migration plan.
+  Extra planning rooms cannot access Street CEO evidence/chat. New room API
+  adapter/auth/durable storage are a documented next phase.
+- Chat/status: verified per-member GET/POST schema, chronological isolated
+  history, stored-only receipts, draft retention/root correction, exact SAST
+  repository times, source labels, assignment separated from freshness, and
+  No new repository evidence when stale/missing/invalid/future. Changed files
+  are scoped; historical test mentions are not labelled current CI totals.
+- Product images: optional JPEG/PNG/WebP local previews shared between Stock
+  and Social; 10 MiB limit, type/signature/browser-decode checks, safe upload
+  names, verified multipart route/receipt, and memory-storage disclosure.
+- Social: source product/photo selection, optional shop-photo metadata, source
+  brief verification, image request/loading/error/retry/provider-unavailable,
+  manual draft editing and explicit local exports. No auto publication.
+- NOT COMPLETE: AI text drafting has no HTTP endpoint in current source. Image
+  generation contract only permits provider_unavailable/not_configured/null
+  output; actual generated-image preview/download cannot be wired honestly yet.
+
+### Exact files changed or added by this integrated assignment
+
+Shop/config/inputs:
+- apps/web/src/App.tsx
+- apps/web/src/api.ts
+- apps/web/src/main.tsx
+- apps/web/src/AskMuse.tsx
+- apps/web/src/muse.ts
+- apps/web/src/muse.css
+- apps/web/src/StockCatalog.tsx
+- apps/web/src/ProductImageControl.tsx
+- apps/web/src/useProductImages.ts
+- apps/web/src/productImages.ts
+- apps/web/src/product-images.css
+- apps/web/src/SocialUpdate.tsx
+- apps/web/src/social.ts
+- apps/web/src/social.css
+
+Standalone office/chat/status:
+- apps/web/office.html
+- apps/web/vite.config.ts
+- apps/web/src/office-main.tsx
+- apps/web/src/OfficeApp.tsx
+- apps/web/src/officeModel.ts
+- apps/web/src/office.css
+- apps/web/src/ActivityBadge.tsx
+- apps/web/src/CommandRoom.tsx
+- apps/web/src/RoomDesk.tsx
+- apps/web/src/AgentWorkbench.tsx
+- apps/web/src/teamRoster.ts
+- apps/web/src/teamActivity.ts
+- apps/web/src/deskStatus.ts
+- apps/web/src/teamMessages.ts
+- apps/web/src/agent-modal.css (pre-existing untracked stylesheet extended)
+
+Tests/docs/tooling:
+- apps/web/package.json
+- apps/web/tests/muse.test.mjs
+- apps/web/tests/teamMessages.test.mjs
+- apps/web/tests/teamChat.test.mjs
+- apps/web/tests/office.test.mjs
+- apps/web/tests/productImages.test.mjs
+- apps/web/tests/social.test.mjs
+- apps/web/tests/fixtures/product.png (synthetic 2x2 PNG for preview QA)
+- apps/web/README.md
+- apps/web/PROJECT-OFFICE-MIGRATION.md
+- agents/runako/brain/current-state.md, tasks.md, handoffs.md, decisions.md,
+  lessons.md
+- Build regenerated dist outputs and existing tsconfig.tsbuildinfo. Other dirty
+  files visible in git status were already present or written by other owners;
+  do not attribute them to this assignment.
+
+### Tests and build actually observed
+
+- Final `npm run test:frontend`: exit 0, **41 passed, 0 failed**, 463.8539 ms.
+  Counts: 11 Muse/config, 4 office model, 4 product-image, 6 social contract,
+  11 member-chat/status/scope, and 5 legacy message tests. No live provider calls.
+- Final `npm run build`: exit 0; TypeScript succeeded, Vite **55 modules**;
+  emitted dist/index.html and dist/office.html with separate shop/office bundles.
+- `git diff --check` on apps/web/Runako brain passed at source checkpoint;
+  source searches found no Team/monitor entry in App.tsx or InstallPrompt mount
+  in main.tsx. Final memory-only additions are checked separately before exit.
+- An attempted compact PowerShell npm wrapper failed with npm Unknown command
+  pm; rerunning the standard `npm run test:frontend` succeeded as above. This
+  wrapper error was not treated as a test failure or a passing test run.
+
+### Browser QA actually observed
+
+- Shop navigation exposes Today/Sell/Stock; no Team or custom install UI.
+- Settings rejects the nil UUID with a visible error and retains input.
+- Standalone office opens at /office.html with project/room/workstream views;
+  desk click opens member chat; exact SAST times and stale-evidence copy appear.
+- Running listener returned 404 for new per-member chat history. UI showed
+  actionable error instead of an empty conversation/success. No live chat POST
+  was sent by Runako.
+- Social selection/image-request/manual-export controls are visible; generation
+  submission is disabled in starter catalogue mode. No provider result invented.
+- Loaded only tests/fixtures/product.png through the local file picker: valid
+  decoded preview appeared in Social selection and persisted when switching to
+  Stock. Upload was correctly disabled in demo mode; no backend image mutation.
+- Phone-size viewport override did not apply (actual innerWidth stayed 1280);
+  no claim of mobile-device visual validation. Responsive CSS/touch sizing are
+  implemented; actual phone/APK QA remains for Chengetai.
+
+### Blockers, coordination, and next-session instructions
+
+User-authorized coordination messages were sent to Mutungamiri's existing chat
+for Hwaro/Ungwaru contract verification. Source contracts were read directly.
+Backend owner must update/verify listener and seed/routes before end-to-end
+claims. Add/verify an HTTP social text-draft contract and successful image-output
+contract/provider before replacing the explicit unavailable states. Image bytes,
+chat records, and office backend entities currently reset with the API process.
+
+Receiving session: read this handoff and canonical current-state Status first;
+restore normal activation protocol, inspect current files, then reproduce the
+documented tests/build. Preserve existing worktree changes and file ownership.
+Mutungamiri should synchronize the master board; Chengetai owns release review.
+
+## 2026-10-31 — W4-MUSE-SHOP-ID-001: confirmed default and safe overrides
+
+### Assignment summary
+
+Confirm Hwaro's seeded shop ID, preserve shop connection overrides, and show
+missing/invalid shop errors before Ask Muse calls. Scope: apps/web and own brain.
+Activation/previous handoffs were read. No backend or Android file was edited.
+
+### Contract and decision
+
+`services/api/app.py` InMemoryStore.seed_demo_shop(), `docs/api-contracts.md`,
+`services/api/test_muse.py`, and Hwaro's W3-MUSE-SHOP-001 handoff all identify
+`00000000-0000-0000-0000-000000000001`. It is not the nil UUID. The numeric
+default was already this value; the frontend now names and tests it explicitly
+rather than fabricating another ID. A configured valid shop override wins.
+Invalid/empty explicit overrides are rejected, not silently switched to demo.
+
+### Files changed for this slice
+
+- `apps/web/src/muse.ts`: confirmed DEMO_SHOP_ID, pure configuration resolution,
+  UUID/non-nil/backend validation, guarded scoped URL/header construction.
+- `apps/web/src/api.ts`: saved > environment > confirmed default precedence;
+  validation before saving connection settings.
+- `apps/web/src/AskMuse.tsx`: visible preflight configuration alert and blocked
+  submission until valid.
+- `apps/web/src/App.tsx`: Shop Connection offers explicit confirmed-demo-ID
+  selection; valid arbitrary shop overrides remain editable.
+- `apps/web/tests/muse.test.mjs`: default route/header, override precedence,
+  missing/nil/malformed IDs, invalid addresses, and no-network rejection tests.
+- `agents/runako/brain/current-state.md`, `tasks.md`, `handoffs.md`: evidence.
+- Production build regenerated output and existing tsconfig.tsbuildinfo.
+
+### Tests and results actually observed
+
+- `npm run test:frontend`: exit 0, **30 passed, 0 failed**, including 11 Muse
+  tests plus office/chat/status and legacy message tests.
+- `npm run build`: exit 0, TypeScript passed, Vite **47 modules transformed**;
+  emitted `dist/index.html` and `dist/office.html` plus split bundles.
+- Facebook Reel/Social workflow code was not changed for this slice. Existing
+  worktree changes from other assignments were preserved.
+
+### Outstanding issues and next session
+
+Backend seed availability depends on selected server/store; PostgreSQL does not
+seed demo records. Unit tests do not prove a deployed shop exists or a live AI
+provider is ready. Receiving owner should confirm actual listener/seed state
+before claiming end-to-end success. User subsequently assigned product images;
+resume that work and social draft/image contracts without inventing endpoints.
+
 ## 2026-10-30 — Priority wave: PWA install slice and tool entry points
 
 ### Assignment summary
@@ -323,3 +508,480 @@ verify beyond confirming the cited docs were read and the summary matches them.
   starting. Activation context (role, ownership, constraints) is unchanged.
 - Await Mutungamiri's next task assignment; confirm file scope per
   agents/runako/role.md before writing anything outside agents/runako/brain/.
+
+## 2026-10-31 — W5-COSTS-INVOICES-UI-001 / W5-DEMO-READINESS-UI-001 / W4-MOBILE-QA-FINAL-001 final handoff
+
+### Assignment and ownership
+
+Runako restored AGENTS.md, role and six brain files, shared documentation and
+master board. Own writer scope: apps/web UI and own brain. Backend, Android,
+offline worker/queue and other brains were not edited. Existing shared dirty
+files were preserved. Read the superseding current-state and this entry before
+resuming; earlier checkpoints remain historical.
+
+### Implemented files
+
+- apps/web/src/costs.ts: source-verified invoice/expense clients and strict
+  receipts; exact money/date/period validation, bounded file signatures, explicit
+  failures for old backend/404/405, no silent empty history or automatic retries.
+- apps/web/src/Invoices.tsx: PDF/JPEG/PNG/WebP upload (10 MiB), pending/provider
+  unavailable states, manual lines, explicit product matches, separate saved
+  review and acknowledged confirmation; server unit costs/receipts; catalogue
+  reload after confirmation. No fabricated OCR.
+- apps/web/src/ExpenseGuide.tsx: electricity, transport, rent, wages, airtime,
+  supplies, other; amount/date, one-off or recurring period, payment state and
+  notes. Save draft, review, explicit confirm; no transfer/future scheduling.
+- apps/web/src/CostsWorkspace.tsx and costs.css: mobile Stock subpage/tabs/forms.
+- apps/web/src/StockCatalog.tsx, App.tsx, api.ts: catalogue unit costs/source,
+  invoice cost review entry, typed Product fields and costs client integration;
+  removed obsolete metadata-only upload client. Receipt confirmation also adds
+  stock; direct correction is explicitly unavailable pending a verified API.
+- apps/web/tests/costs.test.mjs: 9 focused tests (money, periods/categories,
+  file validation, review vs confirm, match/dirty guards, draft-only expense,
+  cross-shop/legacy receipts, period mismatch, failed history/old backend).
+- apps/web/src/social.ts, SocialUpdate.tsx and tests/social.test.mjs: adapt newly
+  verified text draft/image contracts, validate provider/source/claims/output,
+  safe preview, regenerate and explicit export; two additional contract tests.
+- apps/web/src/styles.css: remove body minimum width that caused narrow overflow.
+- apps/web/src/agent-modal.css: fit office chat within actual client width.
+- apps/web/src/product-images.css: file target minimum 48px height.
+- apps/web/README.md: current contracts/cost workflow documentation.
+- apps/web/DEMO-READINESS.md: actual audit, step matrix, P0 fixes, conditional
+  storyboard/video checklist and superseding runtime evidence.
+- apps/web/APK-MOBILE-CHECKLIST.md: measured browser checks and actual-phone list.
+- apps/web/PROJECT-OFFICE-MIGRATION.md: acknowledge new source room APIs while
+  retaining adapter/auth/durability migration as future work.
+- Own brain current-state/tasks/decisions/lessons/handoffs updated. Previous
+  integrated frontend files remain as documented in their earlier handoff.
+
+### Tests and build actually run
+
+From apps/web, final rerun 2026-10-31:
+- npm run test:frontend: exit 0, 52 passed, 0 failed (617.889 ms).
+- npm run build: exit 0; TypeScript + Vite 8.3.5, 60 modules; dist/index.html
+  and dist/office.html emitted. Build itself does not prove runtime provider access.
+
+### Browser/API verification
+
+Measured desktop 1280x720; narrow 320x740, 390x844, and actual431x932 (requested430).
+At320 root client/scroll305/305 after fix. Office dialog x10..295 inside305,
+client/scroll268/268; at390 right365 inside375 and338/338. Composer16px, photo
+file target48px. Invoice/recurring expense fields fit320. No physical phone.
+Screenshot of current expense UI with restored LAN fallback:
+C:/Users/clyve/.codex/visualizations/2026/10/30/01a18ecf-6b85-7500-a91a-209ecea5bc67/costs-expense-qa.jpg
+
+Runtime isolation: LAN http://192.168.10.213:8000/openapi.json had13 old routes,
+seed shop GET returned404 shop not found. Localhost:8000 had32 current routes
+and working seed. Used browser-only Shop Connection override for local QA,
+then restored original LAN root and seed ID ending0001 through settings.
+No default/env/Android root was changed. Do not put localhost into phone config.
+
+Synthetic seeded-local records created during QA (not real business spending):
+- Invoice aeee8b95-86fa-4339-82ab-d40036aa7caf, fixture tests/fixtures/product.png
+  (actual2x2PNG). No OCR provider, lines initially empty. Manual COKE-300 line,
+  quantity1, total0.50, explicit product00000000-0000-0000-0000-000000000001.
+  Reviewed unitcost0.500000, confirm receipt1 unit/1costupdate; Stock refreshed
+  to20, weightedaverage0.975000.
+- Unpaid one-off airtime expense cf655865-ed1d-4099-b8b3-c3e3c63f15ef, date
+  2026-10-30, amount0.10, explicitly labelled synthetic QA. Saved draft then
+  confirmed; no payment transfer.
+- Existing sale flow audit: two Coke units, cash3.00, receipt
+  62f99f98-4e81-4883-b01e-3be0a9cd8d60. Reproduced stale Stock20 until reload18.
+- Before mutations, Ask Muse local profit0.25 from sales1.50/COGS1.00/expenses0.25,
+  repository source, last30days,4 evidence refs. Synthetic seeded data only.
+- Social selected Coke facts verified at18units. Actual text draft unavailable,
+  fallback timeout; actual image provider_not_configured, no preview/download.
+  No generated success, posting or physical-device verification claimed.
+
+### Remaining blockers and next session
+
+1. Hwaro aligns current service/seed with a phone-reachable LAN address. Local
+   success does not fix the old LAN listener. Coordinator informed with evidence.
+2. Direct product cost-only edit endpoint is absent (only cost-history GET and
+   receipt confirmation). Request correction contract from Hwaro/Dura/Verengai;
+   never fabricate a receipt because invoice confirmation also adds stock.
+3. OCR absent: manual review is functional, extraction is honestly unavailable.
+   Image provider unconfigured and text timed out. Backend records are in-memory.
+4. Audit P0s remain: sale product refresh, pending guard/logical retry key,
+   sales-history failure vs empty, missing setup/product-create UI. No broad
+   feature work or sale fix was added as part of this audit.
+5. Demo owner resets/prepares the synthetic QA records before filming. Chengetai
+   and Ruzivo review financial flows. User/Android owner runs physical-phone
+   camera/gallery, keyboard, back, permissions, rotation and download checklist.
+6. Additional office room adapters remain future integration; no live typing,
+   private-thought, screen capture or live-agent-execution claims.
+
+Final whitespace check: git diff --check exited 0 (line-ending notices only).
+Temporary QA tabs closed after restoring original browser connection; viewport
+override reset. Coordinator received handoff, results and blocker/reset notes.
+
+## 2026-10-31 — W6-REALTIME-OPS-MVP-UI (urgent polling cut)
+
+### Assignment, ownership, and scope
+
+Read prior handoff and restored AGENTS.md, Runako role/six brain files, architecture,
+API contracts/master board and verified source. Own apps/web UI plus own brain.
+The later urgent30-minute instruction narrowed W6-REALTIME-OPS-UI-001 to existing
+repository snapshot polling. No backend, Android, offline layer, other brains or
+shared task board edited. No heartbeat/event endpoint invented or called.
+
+### Exact URL and files
+
+Development: http://localhost:5173/office.html (standalone office; Operations default).
+Deployed path: /office.html. Existing VITE_TEAM_ACTIVITY_URL is the only evidence
+endpoint; current configured root calls /api/v1/team/activity on the LAN backend.
+
+- apps/web/src/OperationsDashboard.tsx (new): team filter/11members, receipt/server/
+  last-change times, snapshot freshness countdown, exact per-member repository
+  activity, task board, changed-file sample, historical tests and global commits.
+- apps/web/src/operationsEvidence.ts (new): five-second poll constant,15second
+  receipt freshness, six-hour repository evidence countdown using server time,
+  missing/future evidence guards, bounded observed snapshot-change model.
+- apps/web/src/OfficeApp.tsx: Operations default; five-second non-overlapping
+  polling, one-second clocks, last successful snapshot retained on error,
+  changes reset by project/room; existing workstream owners scope the view.
+- apps/web/src/teamActivity.ts: preserve generated_at/test/commit timestamps,
+  reject available=false/enabled=false, uncached read-only request with8second
+  timeout/cancellation cleanup; assignment no longer maps to Working.
+- apps/web/src/deskStatus.ts: repository assignment/time never proves Working.
+- apps/web/src/CommandRoom.tsx:5second legend and board-assignment label.
+- apps/web/src/office.css: responsive dashboard cards/feed/freshness layout.
+- apps/web/tests/operationsEvidence.test.mjs (new):6 focused tests covering
+  metadata, freshness expiry/error/clock skew, server-clock evidence countdown,
+  no initial/repeated fake events, task/file/test/commit diffs, endpoint/cancellation.
+- apps/web/README.md and PROJECT-OFFICE-MIGRATION.md: exact polling scope/limits.
+- Own current-state/tasks/decisions/lessons/handoffs updated; tsbuildinfo generated.
+
+### Verification actually run
+
+- npm run test:frontend:58passed,0failed,exit0 (718.458ms). Existing52 + new6.
+- Final npm run build:exit0, TypeScript + Vite8.3.5,62modules, both HTML entries.
+  Final Vite time412ms. Final office asset office-DBZoOg3z.js; shop asset unchanged.
+- git diff --check on changed tracked UI/own brain:exit0, line-ending notices only.
+- Browser real configured endpoint success: server snapshot10:57:20 then10:57:25
+  SAST; receipts10:57:21 then10:57:26. No intercepted/mock API used.
+- Runako selection returned7board tasks/1file from the source's limited sample;
+  no other member card/test list. Repository-global commits explicitly labelled.
+- Real own current-state write observed in next polls: evidence timestamp
+  10:58:32SAST, change received10:58:36, server snapshot10:58:35. Fresh evidence
+  countdown advanced; no synthetic activity was generated to fake a live feed.
+- Desktop measured1280x720, rootclient/scroll1265/1265. Narrow measured320x740,
+  rootclient/scroll305/305, no overflowing select/input/button/panel/healthcard.
+  Viewport reset after QA. No physical phone tested.
+- Saved actual dashboard screenshot:
+  C:/Users/clyve/.codex/visualizations/2026/10/30/01a18ecf-6b85-7500-a91a-209ecea5bc67/operations-polling-mvp.jpg
+
+### Semantics, outstanding issues, next session
+
+Fresh snapshot means a successful receipt within15seconds; fresh repository
+activity means timestamp within6hours. Missing/invalid/future timestamps show
+No active evidence. Neither implies a running agent/session. Source board still
+contains old assignments; frontend renders it rather than inventing current work.
+Last change is a browser-observed difference between snapshots, not a backend
+execution event. Initial history creates none. File times/authorship unavailable;
+test counts are overlapping historical handoff mentions, not a current CI run.
+Last snapshot is retained and explicitly historical on failure; no false empty
+success is rendered before first data. The source currently samples only6files
+for generic activity. New local planning rooms have no backend adapter and cannot
+reuse Street CEO data. Broader W6 session/heartbeat/task transitions/collector
+transport needs Hwaro's verified contract and real producers; no live typing,
+private thoughts or literal screen claims. Chengetai release review and actual
+phone testing remain. Prior W5 costs/demo issues are preserved in prior handoff.
+
+## 2026-10-31 — W5-DATE-UI-001 (revised: device local timezone)
+
+Assignment: replace fixed Today date; revised requirement explicitly uses browser
+locale/timezone rather than hard-coded Africa/Johannesburg. Prior W6 handoff read;
+Runako ownership remains apps/web UI + own brain. No backend/Android/offline edits.
+
+Files changed:
+- apps/web/src/shopDate.ts (new): deterministic formatShopWelcome(instant, options)
+  with Intl.DateTimeFormat browser defaults in production, optional injected
+  locale/timezone for tests. Local Gregorian date key and local-hour greeting.
+  watchShopWelcome schedules at minute boundaries and supports refresh/cleanup.
+- apps/web/src/App.tsx: remove Thursday,30October and fixed morning greeting;
+  initialize from current device time; update each minute and on windowfocus/
+  documentvisibility changes. Time element uses current local date key and
+  resolved timezone title. Account name is unchanged.
+- apps/web/tests/shopDate.test.mjs (new): four focused tests for default device
+  locale/timezone, injected Johannesburg/LosAngeles/Tokyo behavior, month/year/
+  noon/evening boundaries, mounted clock midnight/resume and cancelled timers.
+- Own current-state/tasks/decisions/handoffs updated; tsbuildinfo generated.
+
+Exact final verification from apps/web:
+- node --experimental-strip-types --test tests/shopDate.test.mjs: exit0,
+  4passed,0failed,236.1289ms.
+- npm run build: exit0, TypeScript + Vite8.3.5,63modules,338ms Vite build;
+  dist/index.html and dist/office.html, shop-BEKTo-xk.js. Office asset unchanged.
+- Full58-test suite was last run for W6; not re-claimed as a fresh full run here.
+- Midnight/resume verification uses deterministic injected clock/timezone tests,
+  not a real overnight browser or physical-phone wait. Production App calls
+  format/watch without injected timezone; no hard-coded SAST display remains.
+
+Outstanding: no date-task blocker. Clock follows the device's configured time;
+no profile timezone feature is introduced. Chengetai release review remains.
+
+## 2026-10-31 checkpoint — W6-RETAIL-CONTROL-UI-001 / W6-DEMO-LAN-RESET-001
+
+Before a browser download tool stalled for approximately6h46m, Runako implemented
+retail UI (PurchaseEntry/StockTake/DayClose/RetailControl/retailContracts), sale
+review (SellCheckout/saleRequest), API/App/Stock/catalogue integration, responsive
+costs.css, README and13newfocused tests. Final pre-stall fullsuite75passed,
+0failed(880.0628ms); buildexit0,68modules,555ms, shop-DuhW71-4.js.
+
+Own actual LAN browser synthetic QA succeeded: manualpurchase30906f06-ab56-4a3f-87a2-100369fa70c8
+createdQAproduct0cca12e9-44d4-4eb2-9818-11ecb6852c45 plusCoke17→18;
+monthlycount08094e36-8cd7-4c4c-8807-7bdaa1739dae adjustedQA2→1 auditf34d0c77-1528-4677-bc93-66996f47db3e;
+invoiceb917300a-f791-4bc4-be9f-e2c255af21d9 noOCR; invoicepurchase97ba6746-6a3f-4d26-ba70-be4d6c0c62d9
+Coke18→19 WAC1.200000→1.210526; Banksaleb44b1385-c904-434b-abf1-4a53b159fe21
+1.00 QAstock1→0 immediately withoutreload; expense262614f5-63d2-4775-af95-01ab76b1bee5
+unpaid0.01 confirmed. Fullclose syntheticemptyday2026-10-29 receipt/audit
+46b3ee1b-5b9b-4a94-bf5e-8c70e5da2b88 at12:15:52UTC; zero counts/variances.
+All synthetic, not real business purchases/spending/reconciliation.
+
+Authorized final reset via native LAN API succeeded HTTP200 at2026-10-31T12:16:46.288Z;
+6products/0sales/0invoices/0expenses/0costaudits. Raw histories eachHTTP200[]
+confirmed12:17; Coke18,Bread11,Sugar7,Milk15,Chips23,Soap5,allcostnull;
+oldpurchase97ba.../stocktake0809... GET404; fullclosepreviewall0. NativeLANschema
+45paths/57operations. InitialSwaggerresetFailedtofetch wasunconfirmed; directnative
+networkread/reset usedapprovedhostaccess afterdefaultsocketsdenied. Browser/native
+lateragreed; datachangesbetweenreads wereotherQA, not provenlistenerconflict.
+These clean counts are time-bounded historical evidence, NOTcurrent after subsequent
+backend test/restarts duringstall. No physicalphone tested.
+
+At320x740 rootclient/scroll305/305, nooverflow in purchase/newproduct/count/close
+forms; CSS minheight48px, actual47.99px rounding. Screenshotretail-control-mobile.jpg
+in visualizationroot. AfterresetMuseprofitreturnedneeds_data with0sales,missingCOGS/
+expenses; SocialbriefCoke18 passed; textdraftfallbackschema_error shot_list3–8items.
+Real generatedimage previewloaded1600x1600 taggedmeta_muse_image/muse-image-1.0,
+nooverflow at320. ExplicitdownloadcompletedC:/Users/clyve/Downloads/social-draft.png.
+No publication. The waitForEvent download call stalled24384seconds despite10000ms
+requestedtimeout; do not repeat this longbrowserdownloadwait. Lastpostedclient
+current-state isolder; newQuickSale/roomchat contractsnowmustberead beforeediting.
+
+## 2026-10-31 Quick Sale live checkpoint — W6-QUICK-SALE-FRONTEND-FINAL
+
+Implementation now in quickSale.ts, clientId.ts, VoiceCapture.tsx, voice.ts,
+quick-sale.css and App.tsx. DefaultQuick, Reviewsettings retained. Strict complete
+Apo framing+verified catalogue review authorizes automatic commit progression;
+missingtender becomes realbackendquestion, Cash/Cash100/Bank answers autoproceed.
+NoextraConfirm for completeQuickcommands. Sale/undo receipts validated, stablekeys,
+unknown-outcome recovery, pendingguards, mobilemodal, serveramount/change/stock.
+
+ActualLANURL192.168.10.213:5173 at320x740: Quickdefaultvisible; typedfallback
+Apo1CokeApo→Cash/Bankquestion; Cash100→sale dc117d79-68ab-4587-852f-8500c8cd0860
+at19:18:38UTC,total150cents,received10000,change9850,stock18→17. Undo audit/reversal
+8a6ce697-09f0-4ea8-a75f-ffd4765e0aa8 restoredstock18. Explicitly stock-only reversal;
+financialrefund/ledgerreversal not verified. No physical microphone/phone tested.
+Rootclient/scroll305/305; modal274/274, boundsx8..297inside305. ActualHTTP-LAN
+crypto.randomUUID unavailable caught beforePOST; clientId fallbackfixed allowned
+UIcallers. Quickpuretests8passed; build70modulespassed beforeclientId (finalchecks
+pending). Screenshotquick-sale-cash100-mobile.jpg savedvisualizationroot.
+Currentdemo hasnewsyntheticvoiceauditrecords;12:16cleanresetisnotcurrentclaim.
+
+## 2026-10-31 21:48 SAST — W5-COSTS-INVOICES-UI-001 final frontend handoff
+
+Assignment: invoice upload/status/review/product matching/confirmation, editable
+product costs, and seven-category guided operating expenses. apps/web UI only;
+no backend, Android, Social, or offline-layer changes in this finalization.
+Existing W6 retail purchase flow remains the single visible invoice receipt path.
+This entry supersedes the earlier direct-cost-editing blocker.
+
+Files changed in this finalization:
+- apps/web/src/productCosts.ts (new): verified correction draft/confirm and
+  cost-history adapter; exact integer micros, source validation, scope/receipt
+  validation, errors and no automatic retries.
+- apps/web/src/ProductCostEditor.tsx (new): cost-only draft/review/acknowledge/
+  confirm, effective date/reason/source/recorder, audit readback and uncertainty.
+- apps/web/src/api.ts, StockCatalog.tsx, App.tsx: cost adapter, catalogue editor,
+  truthful recorded-cost wording, catalogue refresh after confirmation.
+- apps/web/src/PurchaseEntry.tsx, costs.ts: invoice source ID recovery, refresh,
+  pending/unavailable/manual/provider labels, returned source lines/warnings,
+  explicit product matching and one purchase confirmation path.
+- apps/web/src/costs.css: narrow cost editor, wrapping and accessible controls.
+- apps/web/src/clientId.ts: fix existing Crypto/Uint8Array generic type mismatch
+  that initially blocked build; preserve HTTP LAN request-reference fallback.
+- apps/web/tests/productCosts.test.mjs (new,6), clientId.test.mjs (new,2),
+  costs.test.mjs (expanded seven categories x three tenders x frequency states).
+- apps/web/README.md and own brain records updated. Existing ExpenseGuide.tsx,
+  retailContracts.ts, RetailControl.tsx, costs.test.mjs/retailControl.test.mjs
+  provide the previously implemented guided/receipt flow; not rewritten.
+
+Verified contracts: running LAN OpenAPI and services/api/costs.py/app.py read.
+POST /api/v1/shops/{shop}/products/{product}/cost-corrections, POST same
+/{correction}/confirm, GET product/cost-history; invoice POST/GET/GET-by-ID;
+purchase POST/GET-by-ID/confirm; expense POST/GET/confirm. Catalogue remains
+GET /shops/{shop}/products (a guessed version-prefixed read returned404; corrected
+using verified api.ts route before checking invariants). No invented endpoint.
+
+Tests/build (own observed commands, all exit0):
+- node --experimental-strip-types --test tests/costs.test.mjs
+  tests/productCosts.test.mjs tests/retailControl.test.mjs tests/clientId.test.mjs:
+  27passed,0failed,907.8816ms.
+- npm run test:frontend:91passed,0failed,2330.6188ms.
+- npm run build:TypeScript + Vite passed,73modules,692ms; emitted index.html,
+  office.html, shop-DT8Cr84a.js and office-CYmikLYZ.js.
+- git diff --check -- apps/web/src apps/web/tests apps/web/README.md:exit0;
+  only Git LF/CRLF conversion notices. No backend tests claimed by Runako.
+
+Live synthetic QA: http://192.168.10.213:5173/ connected to LAN8000, stable seeded
+shop ending0001. No reset was performed; current data includes these QA records.
+- Cost draft b5853706-6d73-4f20-a8b6-b60358ba8cd4 showed exact0.420001/date/source.
+  Native catalogue read before confirm showed Coke stock18,costnull. Explicit
+  confirm returned confirmed; audit3db7e3fc-7f0c-4bc5-8bbe-302a67fcc7ad at
+  19:26:34.393552Z recorded cost420001 micros,stock18→18,quantity_received0.
+- PNG invoice fixture upload3a882eec-78f8-4f6b-99e1-37dbda64e79f returned
+  provider_unavailable,0lines,actualwarning. Refresh preserved honest state.
+  It is a synthetic upload fixture, not a real supplier document/OCR evidence.
+- Manually entered/matched Coke1@0.500000,unpaid; purchase draft
+  fbb37592-6c63-4c5c-b613-f68b645dc482 reviewed source/reference/date/total and
+  confirmation stayed disabled before acknowledgment. Confirmed stock18→19,
+  cost0.420001→0.424211; audit06efa0bd-6167-49c0-a7c8-ef9950a032f5 at
+  19:45:31.695936Z. No money transfer or historical-profit reconstruction.
+- All seven category-specific prompts selected and observed. Recurring rent
+  expense75c81f77-75ef-4571-860d-250569a860c4,1cent,unpaid,occurred2026-10-31,
+  period2026-10-01..31,synthetic note: draft then explicit confirmed at
+  19:45:54.355661Z; native GET verified exact fields. One-off selection hides
+  recurring fields; no future expenses scheduled.
+- Actual320x740 rootclient/scroll305/305 for cost editor, invoice receipt and
+  expense review; no horizontal overflow. Desktop1280x900 expense form
+  client/scroll1265/1265;16px inputs,min48px CSS controls(actual47.99px rounding).
+  Temporary viewport reset. Physical phone/real microphone not tested.
+- Screenshots in visualizationroot01a18ecf-6b85-7500-a91a-209ecea5bc67:
+  w5-cost-correction-mobile.png,w5-invoice-confirm-mobile.png,
+  w5-expense-review-mobile.png. Browser filechooser took1107seconds despite
+  bounded timeout; upload ultimately succeeded; avoid repeating chooser waits.
+
+Coordination: sent contract/financial-semantics notes to Hwaro,Dura,Verengai and
+Mutungamiri through existing chats under user's coordination authorization.
+These messages are coordination requests, not backend or accounting approval.
+
+Outstanding: live OCR absent(provider_unavailable); manual entry works. All
+records currently memory-backed and reset on API restart. Correction draft
+lookup/idempotent replay absent; UI freezes uncertain posting and exposes audit.
+Ruzivo finance review and Chengetai release QA still required. Existing old
+Invoices/CostsWorkspace code preserved but unmounted, preventing two visible
+stock-receipt routes. Unrelated Quick Sale/room-scoped chat/heartbeat/mobile APK
+follow-ons remain as prior checkpoints, not completed by this assignment.
+Next: owners review financial/inventory semantics, Chengetai validates build,
+Fambai rebuilds APK from accepted web output; phone test remains user's device.
+
+## 2026-10-31 — W6-APO-HANDSFREE-001 frontend handoff
+
+Assignment: parent-coordinated Runako slice, apps/web UI excluding offline, own brain. Loaded AGENTS, role, six brain files, board, voice design and architecture/product docs. Parent Fambai owns native plugin/APK. No backend/offline edits.
+Files: src/HandsFreeVoice.tsx (foreground opt-in hands-free and pronunciation setup), src/speechRecognition.ts (Capacitor native speech + browser recognition adapter), src/wakePhrase.ts (bounded final-transcript wake/close framing and local aliases), src/VoiceCapture.tsx (safe existing sale/payment routing, TTS/busy pause, Napo copy), src/quickSale.ts (canonical Napo close, legacy Apo retained), src/App.tsx (Napo settings copy); tests/wakePhrase.test.mjs and speechRecognition.test.mjs.
+Behavior: enable once on Sell, Apo wakes command capture, Napo ends. Only final results dispatch, 20s command timeout, no idle chatter dispatch. Recognition restarts at 500ms after silence/session end; fatal permission/service failures stop. UI/native background pause suppress restarts; pause during sale/network work and speech synthesis. Payment uses Apo Cash100 Napo / Apo Bank Napo, existing reviewed/idempotent receipt boundary preserved; tender modal has hands-free off control. Setup captures each requested word without calling sale APIs; user confirms recognizer rendering; distinct bounded aliases stored only on device, reset available. This adapts transcript phrase matching, not acoustic model training. No custom background/locked-device wake engine claimed. Speech provider availability/network and recognition accuracy require real phone validation.
+Evidence: npm run test:frontend 98 passed, 0 failed, exit0 (1096.49ms); TypeScript/Vite build passed (76modules), latest shop-BUM9vkav.js. Earlier test caught decimal normalization bug, fixed and exact cash1.50 test passed. Root npm invocation first failed due no root package.json; reran correct apps/web command. Mock native tests cover registration/finality/lifecycle forwarding/error classification/cleanup; pure tests cover boundaries, aliases, decimals, timeout/empty/oversize/closed-frame safety. No physical microphone/phone, actual speech-service session, UI browser QA, or production release pass claimed.
+Next: parent consume final dist and sync/rebuild APK; Chengetai source review; phone validation for Apo/Napo recognition, setup/save/reset, tender, TTS echo, background/resume and mic permission denial. Prior unrelated handoffs remain historical.
+
+## 2026-10-31 — W6-VOICE-ERROR-001 handoff
+
+Assignment: troubleshoot screenshot generic unknown-outcome error before any basket; frontend scope apps/web excluding offline, own brain. Restored AGENTS/role/six brain files/board and verified current quick-sale code; prior voice/API docs apply. No backend/Android/offline changes, no demo sale/reset.
+Confirmed cause: shared transport catch labelled transcript/audio connectivity or invalid-JSON failures as uncertain sales even though these endpoints only interpret audio/text. UI correctly declined mutation uncertainty for interpret operation, but retained alarming generic wording with no recovery.
+Files changed: src/quickSale.ts now distinguishes interpretation paths from /commit and /undo: nonmutating failure is retryable voice_connection, identifies configured API root and tells user check server/network/Shop Connection and retry; explicitly no sale submitted by this request. Commit/undo unknown outcomes retain original uncertainty and key semantics. src/VoiceCapture.tsx exposes Retry voice command for nonmutating failure outside modal, or Recover original request for real uncertainty; recovery uses pending review/payment/key or undoKey unchanged. Existing operation reset to interpret before process/transcription verified; uncertain state continues blocking new inputs.
+Regression tests: tests/quickSale.test.mjs covers transcript/audio network AND malformed JSON failures without uncertain-sale claims, uncertain commit/undo repeated original keys, and hands-free Apo Cash100 Napo / Cash1.50 / Bank bodies. Tender-only parsing was already correct: trailing-tender extraction requires whitespace before tender so a whole-body Cash100 remains body; no parser change needed.
+Evidence: focused node --experimental-strip-types --test tests/quickSale.test.mjs:11passed/0failed, exit0,272.05ms; npm run build exit0,76modules,shop-vZn_ZBuN.js. Prior98test suite is historical and not re-claimed for this task. No phone/browser runtime QA claimed. Parent independently reported healthz returns ok on LAN; this does not prove user's phone connectivity or original failure cause at screenshot time.
+Next: parent copy/sync/rebuild APK from current dist; user verify Shop Connection and retry command on phone. If network failure persists, inspect configured phone API base and reachable health endpoint; no transaction should be repeated from scratch when actual commit/undo remains uncertain.
+
+## 2026-10-31 — W6-VOICE-PROFILE-001 frontend handoff
+
+Assignment: user requested actual voice-error investigation plus cleaner Sell and pronunciation under Profile. Restored own current-state and current owned code; prior AGENTS/role/six brain and project docs remain loaded. Scope apps/web excluding offline, own brain. Parent coordinates backend/native transport and APK; no backend/Android edits.
+Confirmed repository diagnosis: services/api/app.py CORS whitelist has localhost:5173/127.0.0.1:5173/LAN:5173, while APK androidScheme=http serves http://localhost without port. Reported mismatch to parent; backend worker owns whitelist fix. API fetch clients use same configured root but voice JSON POST adds Idempotency-Key and triggers preflight; a PC health GET cannot prove this succeeds. Parent independently confirmed preflight400; no backend fix or running-server success claimed here.
+Files: src/HandsFreeVoice.tsx exposes compact main control/status for Sell and a separate setupOnly VoicePronunciation UI; src/App.tsx adds real Profile route/nav/avatar entry and mounts pronunciation there only; removes redundant greeting on Sell/Profile; src/VoiceCapture.tsx collapses recording/text fallback into accessible details, shortens instructions and waiting state, concise spoken/visible errors with expanded connection details, retains original-request recovery; src/voiceError.ts and tests/voiceError.test.mjs provide tested summary/error distinction; src/quick-sale.css adds compact spacing and Profile input/buttons/layout.
+Pronunciation saves same localStorage key as before; returning to Sell remount reads stored aliases. Profile setup has no sale callback. Unknown catalogue names remain unresolved through existing safe review; no products or names fabricated. Error display cleanup is separate from actual backend CORS fix; it does not claim successful connection.
+Evidence: full frontend suite103passed/0failed exit0 (1128.91ms). TypeScript/Vite build77modules passed; final shop-BcOa5ydJ.js,shop-BZSgmn4G.css. Build pass after final UI-only greeting/avatar changes. Initial optional script to remove greeting failed on Python default cp1252 read, made no edits; reran with explicit UTF-8 successfully. Focused tender-framing tests already prove Apo Cash100 Napo / Cash1.50 / Bank preserve payment-only body; QA agent withdrew incorrect strip hypothesis after empirical check. No physical phone, real mic, browser viewport or production release test claimed. QA source review delegated by parent; browser surface not exposed to this child.
+Next: parent coordinate CORS server restart without destroying in-memory demo records without approval, browser320px Sell/Profile visual review if available, then APK sync/build. Phone validation remains necessary for recognition and API transport.
+
+## 2026-11-01 — DEMO-APK-APO-001 implementation checkpoint
+Assignment: foreground APK no per-sale button Apo → catalogue items → Napo → spoken tender/amount → authoritative sale/change, refresh stock/history. Loaded AGENTS, role, six brain files, shared voice/API docs, board and current task; acknowledged prior handoffs. Scope apps/web excluding offline + temporary CTO-authorized Android native scope, own brain only. No service/API/AI edits or live shop mutations.
+Files changed: apps/web/src/App.tsx, HandsFreeVoice.tsx, VoiceCapture.tsx, speechRecognition.ts, quickSale.ts, voiceError.ts; tests/quickSale.test.mjs, speechRecognition.test.mjs, voiceError.test.mjs, wakePhrase.test.mjs. Native: ApoSpeechPlugin.java, MainActivity.java, AndroidManifest.xml. Build generated dist and tsconfig.tsbuildinfo normally.
+Behavior: Android launches Sell/Quick and auto-arms foreground ASR after unavoidable OS microphone grant. Browser remains opt-in. Wake/framing uses whole-token Apo/Napo; number words zero..twenty and full catalogue names can progress only against matching backend reviewed lines. Backend strict parser coordinated with Hwaro. Unknown product gets spoken concise not-found/no-sale response; no partial basket commit. Payment prompt accepts unframed Cash five/Cash100/Bank; amount-only accepted only when backend explicitly asks amount. Explicit Cancel discards unpaid tender basket only. Sale totals/change and stock are receipt-authoritative; existing parent callbacks refresh stock and history. Native TTS output replaces unproven WebView speech path, pauses ASR until completion/error/watchdog, then listening resumes. Background output stops; ASR resumes foreground. Serial bridge queue, owner token and disposed callback guards prevent stale cleanup stopping a replacement or duplicate start while permission pending. Native start defers permission completion until foreground; TTS init generation/null/destroy checks prevent stale callback dereference. Mutating HTTP5xx is uncertain, freezes new commands and keeps original recovery key.
+Evidence: npm run test:frontend latest114passed/0failed/0skipped, exit0,579ms; npm run build exit0,77modules, shop-DMDrfpZ1.js. New tests cover natural multi-product matching, unknown review rejection, tender amount context, exact cancel phrases, mutating503 replay keys, output promise/error, repeated wake frames, delayed permission serialization and stale owner disposal.
+Native compilation: initial .\gradlew.bat :app:compileDebugJavaWithJavac --offline failed sandbox Gradle cache zip.lck write permission. Escalated command waited and was aborted by user; no native compile/APK rebuild claimed by this agent. No surviving tool session ID returned. Root owns final host compile/copy/sync/packaging and QA has source ready for targeted review.
+Outstanding: actual device microphone/ASR pronunciation/permissions/TTS/lifecycle and end-to-end phone verification are not performed. No attached device per root. First OS permission prompt requires user grant; no background/locked-phone wake promise. Actual provider/network availability remains runtime-dependent. Full accounting/security gates remain separate.
+Next: Chengetai reviews native lifecycle/bridge; root builds APK with Android Studio JBR and verifies exact embedded assets, then physical tester rehearses spoken flow. Rebuild web only if source changes after this checkpoint.
+
+## 2026-11-01 — SPRINT90-UX-002 milestone
+- Restored AGENTS/role/six brains/current task, board and connected APK runbook. Scope confirmed apps/web excluding offline + native extension (no native edits needed this sprint).
+- Implemented visible Apo waiting/capturing/payment/processing/recovery status, heard transcript and persistent latest voice/manual receipt summaries. Added manual exact cash received and preview; payment/receipt validation uses Hwaro confirmed amount_received_cents contract. Uncertain manual sale freezes original config/payload/key, basket/payment/navigation and voice; uncertain voice/tender locks manual/navigation via derived state. No new sale can clear an unresolved outcome; recovery4xx retains uncertainty. Receipt success stays success if summary/history refresh fails.
+- Added Profile recent saved request events via Hwaro shop-scoped GET investigations/requests, correlation filter and explicit errors. No fixture history. Added exact natural cash words, decimal digits and explicit dollars/cents forms; ambiguous five-fifty and excessive precision rejected.
+- Milestone validation:120frontend tests passed/0failed; TypeScript+Vite build passed80modules (shop-DBNkydDT.js before final receipt-title wording edit). Root owns final packaging; QA reviewing. Browser inventory returned no available Chrome/Edge browser window, so visual/phone pass not claimed. No live resets/provider calls by Runako.
+
+## 2026-11-01 — SPRINT90-UX-002 final handoff
+Assignment: improve connected APK MVP visibility and trust: voice state/payment/receipt/recovery, manual cash received/change, Profile sanitized investigations, natural spoken money. AGENTS/role/six brains/board/current assignment/runbook restored and previous handoff acknowledged. Scope apps/web excluding offline, own brain; no Android native edits this sprint, no API/AI/voice-service changes, no live writes/resets.
+Files: src/App.tsx, api.ts, SellCheckout.tsx, VoiceCapture.tsx, HandsFreeVoice.tsx, quickSale.ts, saleRequest.ts; new src/investigations.ts, RequestHistory.tsx, demo-ux.css; tests/quickSale.test.mjs, saleRequest.test.mjs; new tests/investigations.test.mjs. Normal dist/tsconfig build output regenerated.
+Delivered: large waiting/capturing/payment/paused voice indicator, command echo, visible server-confirmed latest voice/manual receipt total/received/change. Manual cash requires exact nonnegative <=2decimal amount covering basket; shows preview before review; server cashreceipt change verified. Bank omission remains honest Not supplied for received under legacy contract. Manual uncertain preserves original config/payload/key and locks products/payment/navigation/voice until recovered; voice uncertain or tender locks manual/navigation through sole derived parent effect. Failed recovery4xx cannot clear prior uncertainty. Saved receipt remains success if summary/history refresh fails, with explicit refresh-unavailable notice. No unaudited fresh retry from unknown outcome.
+Profile investigations: confirmed Hwaro GET /api/v1/shops/{shop}/investigations/requests?limit=20&correlation_id=optional with matching X-Shop-ID. Shows exact phase/time/status/model/reference and escaped saved request/response in expandable detail. Shop/envelope/labels validated; loading/error/empty distinguished; no fixtures or sale-success inference from events. API still owns sanitization and authorization.
+Natural cash: integer words through hundreds, point plus one/two digit words, explicit dollars-and-cents, and cents-only phrases parse exactly to cents. Ambiguous five-fifty, excessive precision and incomplete one-hundred-and rejected. Payment frame stripping preserves word amounts independently from product-quantity normalization.
+Evidence: final npm run test:frontend120passed/0failed/0skipped, exit0,1248.67ms. Final npm run build exit0,80modules, shop-BJ3ZpTSI.js; shop-B69fOjAy.css. Scoped git diff --check PASS (line-ending warnings only). Chengetai reviewed cross-flow lock, uncertainty retention, manual cash/receipt, refreshsuccess and scoped trace UI; no remaining concrete scoped source blocker reported. QA focused37pass is Chengetai evidence, not a second claim of full suite by Runako.
+Limitations: browser-window inventory exposed no Edge/Chrome browser for visual observation. No browser rendering/320px measurement or actual physical phone ASR/TTS/API transport pass claimed. Root handles exact APK copy/sync/build/checksum/embedded-asset validation and backend runtime activation. No native compile/package executed by Runako in this sprint.
+Next: root consume stable dist and package; verify actual saved cash amounts/change and trace UI against current backend; physical tester completes no-click repeat/unknown/cash/cancel/permissions/background/recovery rehearsal. Keep existing data files intact.
+
+## 2026-11-01 — SPRINT90-UX-002 trace-null integration repair
+Root found actual completed Muse/audio trace metadata provider_called=null (unknown), while frontend validator accepted only defined booleans. Fixed investigations.ts type/validation to preserve null; RequestHistory renders Unknown rather than No; added legitimate stored Muse shape regression and invalid string rejection. Files: src/investigations.ts, RequestHistory.tsx, tests/investigations.test.mjs. Fresh fullfrontend121passed/0failed,604.82ms; finalbuild80modules/exit0,shop-DdDVC_iF.js. No backend/native/live writes. Root packages finaldist. Phone/visual acceptance remains open.
+
+## 2026-11-01 — SPRINT90-UX-002 partial trace integration repair
+Root requested visible oversized trace content after backend retained safe routing envelope. Inspected tracing.py actual payload={truncated:true,sanitized_prefix}; added optional bounded prefix schema (max16000chars) in investigations.ts and explicit Partial/truncated saved payload display in RequestHistory.tsx. UI warns prefix is not complete request/response, renders plain escaped text, never parses partialJSON as complete. Regression verifies real envelope shape and rejects falsemarker/nonstring/oversizedprefix. Files: src/investigations.ts, RequestHistory.tsx, tests/investigations.test.mjs. Fresh fullfrontend122passed/0failed,613.36ms; build80modules/exit0,shop-QyDfyL_X.js. No backend/native/live edits. Root final packaging next; visual/phone acceptance remains open.
+
+## 2026-11-01 — SPRINT90-UX-002 saved-history and known-demo migration final handoff
+Root assigned final core gap: inspect durable receipt after restart and avoid known APK upgrade retaining retired8000 runtime. Files: new src/Transactions.tsx, receiptHistory.ts, tests/receiptHistory.test.mjs; src/App.tsx, api.ts, demo-ux.css, muse.ts, tests/muse.test.mjs. Web/ownbrain only, no service/native/live writes. Existing work preserved.
+History now accessible details/summary receipt with fullID/time/tender, saved received/change, saved quantities and stock-after. Product names explicitly current catalogue labels; unavailable labels use full productID. App passes no starter-fixture labels when isDemo. No historical price/COGS inference. Legacy cash amountnull/absent shows bothreceived/change Not supplied even when olddefaultchange0; banknull received remains Not supplied. Mapping tests separate currentcatalogue/currentstock from savedsnapshot, missingstockunknown, invalidquantityrejection and legacycash handling. Sale type now accurately permits nullable received independently of creationrequest.
+Narrow migration: only nativeAndroid, recognized stored http://192.168.10.213:8000 + standarddemoUUID, exactbundled new http://192.168.10.213:8001 + standarddemoUUID. Preserves all other saved fields, arbitrarycustom URLs/shop/browser untouched; visibleconnectionnotice. Idempotent; failedstoragewrite leaves config intact and displays correction notice. No database/config deletion.
+Fresh evidence:125frontend tests passed/0failed,570.80ms; finalbuild with explicit VITE_API_BASE_URL=http://192.168.10.213:8001 passed82modules,shop-l6068vGv.js,shop-BEWkbaQB.css,styles-sX6Zceg6.js. Source frozen and root notified for finalAPK copy/sync/build/metadata. QA notified for narrowhistory/migrationreview. Root owns privilegedpackaging and finalhash; no visual/physicaldevicepass claimed.
+
+## 2026-11-01 — PHONE-RECOVERY-001 source checkpoint
+Activated from updated AGENTS, ownrole/sixbrains, task, board, acceptance and runbook; reviewed originalthree phone screenshots with view_image. Confirmed visibleClosewrap, networkOnlinepill, recognized1Coke/total1.50 with no suppliedpayment and Recoveroriginal state. Connectiondetailcollapsed; screenshots do not identify network/transportcause. Root/ Hwaro report no matchingrecenttrace; no fabricated diagnosis or phoneconnectivity claim.
+Scope web excludingoffline +ownbrain; native extension unused. Changes: App.tsx new actualreadonly readiness+configuredshop checks/address/lastcheck/buildlabel; new shopReachability.ts and buildInfo.ts; VoiceCapture.tsx visible modalconnectiondetails and PHONE-RECOVERY-001 label, safequestion Retry/Cancel samebasketkey; quickSale.ts mayCommitclassification and8squestiontimeout vs30spaid/AI; quick-sale.css Closeflex/nowrap/minwidth; demo-ux.css connectionpanel; voiceError.ts no-receipt recovery wording. Tests quickSale/voiceError plus new shopReachability.
+Contractdecision fromRoot/Hwaro: nulltender/cashwithoutamount cannotpostsale; questionrequesttransport5xx is recoverable questionfailure, not unknownsale. Completecash incl0,bank,undo remainuncertain. Runtimeinvalid bool/string/fraction/negative/unsafeamount rejectedbeforefetch. Priorpaiduncertainty sticky across4xx orquestionresponse; insufficientcashfallback disabledwhileuncertain so originalpaidbody/key preserved. Questionunavailable accepts spokenRetry/Cancel withoutwake, no freshinterpretation; paymentblockeduntilquestionretrieved. Valid actual200needs_tender fixtures pass. No auto success or clearingunknown withoutreceipt.
+Latest evidence:130frontendtests passed/0failed659.29ms; explicit8001 build84modules/exit0,shop-Bf6DEXwf.js. Scoped diffcheck previouslypass; QA finalreviewpending, rootpackages. No nativecompile/device/reachablephone or visualrerenderclaimed. RootactualserverPCpathhealth is separate fromphonepath.
+
+## 2026-11-01 — PHONE-RECOVERY-001 final handoff
+Assignment: repair actual phone-visible Closewrap, truthful server connectivity and incomplete-payment recovery, preserve original paidunknown requests. Updated AGENTS/role/sixbrains/task/board/acceptance/runbook restored; actualthree attachedscreenshots visuallyinspected. Screenshots prove1Coke1.50/nopayment/Recoveroriginal and brokenClose/networkOnline; they do not expose collapsedtransportdetail or prove5G/oldbuildcause. No fabricated diagnosis.
+Ownfiles: src/App.tsx, VoiceCapture.tsx, quickSale.ts, quick-sale.css, demo-ux.css, voiceError.ts; new src/shopReachability.ts and buildInfo.ts; tests/quickSale.test.mjs, voiceError.test.mjs; new tests/shopReachability.test.mjs and serviceWorkerNetworkOnly.test.mjs. Root explicitly extended sole temporaryscope to apps/web/public/service-worker.js to repair freshness; no other offline/queue/native/backend files edited. Normal dist/buildinfo regenerated.
+Delivered: Close has no-wrap/nonshrinking min72px with accessible48pxtarget. Actual readiness+matching shop readonlyprobe replaces navigatorOnline. Main/modal display endpoint, checkedtime, verified/unavailable state, recheckbutton and visible PHONE-RECOVERY-001 identifier; localLAN guidance says mobiledataalone maynotreachPC, notuniversaldiagnosis. Probe timeout5s, no-store+uniquenonce prevents cachedJSON replay; oldworkerHTMLfallback failsJSON verification. SWcachev4 skips API/crossorigin/no-storecache entirely while retaining existing shellfallback; skipwaiting/claim retained. No queuechanges.
+Contract-backed recovery: nulltender/cashmissingamount cannotpost; clientclassifiesfailedquestion fetch as recoverable unpaidbasket, not unknownsale. Same review/body/key retained, voiceRetry/Cancel work withoutwake; cannot supplypaidanswer until questionretrieved. Questiontimeout8s vs paid/AI30s. Valid200needs_tender fixtures stayquestion. Runtime invalidtender/amount bool/string/fraction/negative/unsafe rejectedbeforefetch; cash0/bank/undo remainmayCommit. Priorpaiduncertainty sticky acrosslater4xx/questionresponse; onlyverifiedreceipt clears. Insufficientcashfallback disabledwhen alreadyuncertain, preserving originalpaidpayload/key. Modal clearly distinguishes no savedreceipt from success/failure proof and shows originalreview/key details. No automatic freshsale retry from unknownoutcome.
+Evidence: final npm run test:frontend132passed/0failed/0skipped,674.39ms. Final explicit VITE_API_BASE_URL=http://192.168.10.213:8001 npm run build passed84modules/exit0,shop-Ct0WV7-I.js,shop-7HKeisxb.css. Scopedgitdiffcheckpassed (lineendingwarnings only). Checked dist/service-worker.js cachev4+bypass and builtbundle visible PHONE-RECOVERY-001 twice. Tests cover actualquestion200, questionfailednetwork/503/malformedJSON vs paiduncertainty, originalretrykey, invalidruntimepayments, readiness+scope, legacyHTMLfallback, nocacheAPIrouting vs shellfallback. Initial oldtest expectation for cashwithoutamount updated tocompletecash because newclassification deliberately separates questionrequests; finaltests pass.
+No nativecompile/APKpackage/livephone/servermutation by Runako. Root owns finalmetadata/copy/sync/package/hash and runtime evidence. QA finalreview notified. Actual updatedAPK phone ASR/TTS/reconnection/layout validation remainsrequired; PCserverhealth doesnotprovephonepath. Sourcefrozen; temporarySWwriter released back to coordinator/Fambai ownership afterhandoff.
+
+## 2026-11-01 — CATALOGUE-VOICE-UX-001 final source handoff
+Assignment: grounded catalogue conversation for actualmisheard utterances, explicitspokenmatchconfirmation andmissingquantity followup; noautocommitmodelguess. Restored AGENTS/role/sixbrains/task/board/acceptance/voice docs and acknowledged priorhandoff. Scope apps/web excludingoffline +ownbrain; no native/backend/AI/voice-service/worker edits orlivewrites inthisassignment. Coordinated Hwaro contract and QA; rootownsprovider/network/nativepackaging.
+Files: src/quickSale.ts, VoiceCapture.tsx, HandsFreeVoice.tsx, wakePhrase.ts, App.tsx, buildInfo.ts; tests/quickSale.test.mjs, wakePhrase.test.mjs. Normaldist/buildinfo regenerated.
+Contract: needs_match_confirmation +requires_match_confirmationtrue +groundedlines+record_saleintent+deterministicquestion+source/provider_called. Parse remainsnoncommittable until explicitYes; confirmedreview sends match_confirmedtrue onquestion/payment/retries, exactlegacyomitsfield. UIproposalYes alwaysasks payment first, neverauto-posts originalmodelguess/tender. No asks correctedbasket, Cancel discardsunpaidproposal; invalidaffirmations like yes-and-add-sugar do notauthorize. Correctedunframedexact replies alsoask explicitYes beforepayment. needs_clarification withlines[] asksmissingquantity; rawfollowup e.gone sent with clarification_of priorreviewID/newkey, serverownscontext. No quantityassumed. Modelmetadata sourceNone handledunknown; actualproviderlabel requiresprovider_calledtrue. Backendfixedrealproposalintent missingcontract beforeintegration; UIstrictintentguard retained.
+Originalfullheardcommand and rawproductbody preserved: API/provider receives pre-numberword/and-normalization heardBody, UIshowsoriginalheardphrase pluslatestanswer and responseprovenance. Ordinarynumber/marble/maple words are neverstripped tosell. Terminalwhole-token nabo acceptedasNapo; internalendmarker+tail retainedinstead ofsilentlydroppingtail. Userpronunciationenrollmentnote updated; defaultnabo conflictingwakealias rejected. No acoustictraining oraccuracyguarantee claimed. Optionalnativevocabularybiasing deferredto avoiddelayingcoreflow.
+Thinking/connectiontruth: genericcheckingonlyduringinflightoperations; savedresponseidentifiesactualMusevs exact/local. Handsfree captures match/clarification replies withoutApo, pausesduringTTS, resumesreply/wakecycles. Actualnetworkbusy callback aborts/skipsbackgroundconnectivityprobes toavoid5shealthtimeoutbehindmodeltransaction while retaininglastverifiedtime. It doesnot blockexplicitcheckwhilewaitingforuser. Payment/recovery/receipt/networkcache protections retained.
+Evidence: final npm run test:frontend136passed/0failed/0skipped,1281.68ms; explicit VITE_API_BASE_URL=http://192.168.10.213:8001 build84modules/exit0,shop-D3It--1w.js. ScopedgitdiffcheckPASS(lineendingwarnings only). Tests: proposalnoPOSTbeforeYes, matchflagtrueafterconfirm/exactomission, strictnegativeaffirmations, missingqtycontextnewrequest, actualnoisyphrases retained, terminalnabo/internal-noise boundaries, existingpayment/recovery suites. No actualprovider/phone/render/nativepackaging testbyRunako. QAfinalreviewpending, rootownsAPI/AIintegration/tests andexactAPKhash. Sourcefrozen pendingreview.
+Next: rootensure API/AIrealshape+grounding tests andactualprovidersmoke; consume stabledistlabelCATALOGUE-VOICE-001, packageandverifyassets. Physicalphone rehearse bread-glove-number proposalYes/No, CocaColamissingqty replyone→Yes→payment, unknownwholebasketreject, Napo/Naboframing, repeatedsale/recovery.
+
+## 2026-11-01 — COUNTER-POLISH-001 final handoff
+Assignment: preserve working connected sale flow, polish compact busy-shop counter, completedreceipt Apo/Apple nextsale, unified handsfree preference and typing. Fullactivation restored AGENTS/role/sixbrains/task/board/acceptance, latestuserphonephoto andexistinglogo viewed. Photo confirms working paidreceipt but debug/IDs/legaltext dominate; logo supports restrainednavy/green/warmgold. Ownwebexceptoffline+ownbrain; no API/AI/contracts/native/SW/live edits. Rootpackages existingAPI.
+Files: src/VoiceCapture.tsx, HandsFreeVoice.tsx, wakePhrase.ts, App.tsx, SellCheckout.tsx, buildInfo.ts; new src/counterSession.ts and counter-polish.css; new tests/counterSession.test.mjs. Normaldist/buildinfo regenerated. Existinglogo reused, no newassets/framework.
+Counter UI: compactpaidmodal shows existinglogo+Sale saved, items, Total/Tendered andlargeChangehero; shortnextApo/Applehint. IDs/times/build/server/stock-onlyUndo+adjacentwarning/source/rawtranscript/retryrefs remainunderDetails; Profile hasnormalconnectiondiagnostics. Connectionfailures remainprominent/actionable. ManualreceiptID likewiseunderdetails; data/investigationsnotdeleted. Friendlygreen/navy withwarmgoldaccents, no newproductflows. Typing/recordingfallback underTypeinstead, existingbackendcontracts untouched.
+Wake: WakeCommand.acceptEvent emitswoke+completecommand, legacyacceptretained. BareApo/leadingidleApple immediatelydismiss onlyverifiedsuccessreceipt andclearcurrentUI, preservelatestpaidreceipt/history; samecontrollerretainsremainingutterance orsubsequentproductsegment. Internalapple/pineapple notwake/reset, includinguseraliasapple. CounterWakeTransition rejects tender/match/clarification/review/error/uncertain/busy/disabled/unverified states. Noauto-dismisspendingpaymentorunknownsale. Focusguard skipsediting-inputrestoration onwakeclose andDonecompletedclose; focusesnoneditingcounter so barewakecontinuationdoesnotpauseASR. Flagscopedtoactualopenmodal, resetonnextopen. TTS/selfecho/lifecyclepauses retained.
+Unifiedvoice: controlledsinglehandsfreevalue sharedmain/modal, persistedonlyexpliciton/offpreference; APKdefaulton absentpreference. Modalclose/paidflow donotdisablepreference; Pausepersistsacrossremount. FatalASRstillstopsruntime, withoutwritinguseroffpreference. Inputfocus temporarilypausesrecognition, blurresumes, typedbasketnotcleared. Setup/pronunciation remainsseparate anddoesnotoverwritepreference. No secondrecognitioncontroller.
+Evidence: npm run test:frontend140passed/0failed/0skipped,750.56ms (before finalmanualID-detail/wording-only consistency changes). Finalexplicit VITE_API_BASE_URL=http://192.168.10.213:8001 npm run build86modules/exit0,shop-D1AJuhDJ.js andshop-BAqw4I8b.css. ScopedgitdiffcheckPASS(lineendingwarnings only). Ownnewtests provebarewakecontinuation/fullsameutteranceApoApple, productinternalapplepreserved, completed-onlyguard/pendingstateidentity, storedpause/nativeon/browseroff. Chengetai independently6helpertests passed; rootreportsfinalQA dispositionPASS. No actualnewbrowserrender/devicevalidationbyRunako, no physicalnextwakeacceptanceclaimed. Originalworkingphonephoto is inputevidence, notupdatedbuildtest.
+Source/buildfrozen perroot; rootalreadycopy/sync/repackagesfinalasset. No activecommands/sessions. Rootowns exactAPKhash/signature/embeddeddist/downloadcheck andupdatedphonevalidation. Nextphone: paidreceiptcompact, bareApo thenitemsNapo, Applefullsameutterance, explicitPause+Done+Resume, typedfocusblur, protectpendingpayment/match/unknown. Backend/AI/provider behaviorunchanged.
+
+## 2026-11-02 — STARTER-COGS-UX-001 handoff
+Assignment: mirror approved illustrative starter unit costs in frontend fallback only; preserve working UI/session/catalogueidentity/prices/stock. Fullactivation read AGENTS, role, sixbrains, task/board, MVPacceptance andaccountingpolicy; acknowledged latestcounterhandoff. Scope apps/web/src/api.ts demoProducts, relatedfrontendtest, ownbrain. No UI/session/backend/native/AI/SW/sourceflag/livecalls orpackaging.
+Coordination: Ruzivo approved docs/finance/review-STARTER-COGS-REVIEW-001.md and exactmicros; Hwaro supplied canonical services/api/demo_catalogue.json. Costs USD: Coke1.00=1000000, Bread1.20=1200000, Sugar1.80=1800000, Milk0.90=900000, Chips0.60=600000, Soap1.50=1500000. These are synthetic illustrative opening assumptions, not market/supplier/invoice evidence. Existingprices/stock/names/UUIDs unchanged. No inventedinvoice IDs or permanentProductsourceflag; backend owns demo_seed audit provenance.
+Files: apps/web/src/api.ts adds only unit_cost_micros to sixfallbackrows and provenancecomment. New apps/web/tests/starterCatalogue.test.mjs compares isolatedfallbackliteral against canonicalbackendJSON across allidentity/shop/price/stock/costfields, positiveintegermicros andno fabricatedinvoicefield. No browsermodule imported orAPIinitialized. Normaldist/tsconfigbuildoutput generated. Existing labelledfallback behavior untouched andcannotpostlivefallbacksale.
+Evidence: focused starterCatalogue1passed/0failed,26.97ms; npm run test:frontend141passed/0failed/0skipped,1317.21ms; explicit VITE_API_BASE_URL=http://192.168.10.213:8001 npm run build86modules/exit0,shop-D4hvSYIv.js, styles-B97sLFnV.js; scopedgitdiffcheckPASS. Initialfixturetest assumedlegacyTypeScriptASTAPI unavailable in installedTS7(version-onlyrootexport); replacedwithboundedisolatedstaticliteral evaluation, canonicalparitytestpasses.
+Source/buildfrozen; root/Hwaro/Ruzivonotified. No livebackfill/backenddurability/financialcertification claimed byfrontendtests. Rootownsbackendfinancialreview/tests, runtimeactivation andoptionalAPKcopy/package/hash. Next: coordinatorconsumehandoff, verifybackendstartupmissing-onlycostaudit/historypreservation, thenpackageifneeded. No activecommands/sessionhandles.
+
+## 2026-11-02 — ANDROID-COUNTER-INSETS-001 final handoff
+Activation: AGENTS/role/six brains/latest board/demo acceptance/fast-counter acceptance restored; scope root-approved exclusive MainActivity/resources +web UI excluding offline/ownbrain. No API/AI/SW/live mutation or packaging.
+Files: MainActivity.java sets edge-to-edge with single outer content inset owner; stable systemBars+cutout insets ignoring visibility, max(stable bottom,IME), consumed child insets; clears Capacitor WebView auto listener/margins to prevent duplication. Native navigation bars only hidden with BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE on launch/resume/focus and keyboard dismissal; keep status bar, no immediate rehide on transient reveal. adjustResize, focused/IME/destroy guards. Speech/plugin/permissions untouched. Existing web fixed bottom navigation now sits within safe WebView viewport; no extra CSS inset.
+Web: VoiceCapture honest local_catalogue_proposal source label; buildInfo FAST-COUNTER-001. New quickSale regression preserves provider_called false/local source and prevents payment until explicit match confirmation; then null tender returns question, no auto paid request.
+Evidence: npm run test:frontend142passed/0failed1130.221ms. Explicit VITE_API_BASE_URL=http://192.168.10.213:8001 npm run build PASS86modules, shop-CMFZxwB9.js; scoped git diffcheck PASS. Initial testappend used incorrect cwd-relative path and failed before edit; corrected and fullsuite rerun. Chengetai targeted native source review PASS. Official Android immersive/inset docs consulted. Sources/dist frozen, root notified for native compile/copy/sync/package. No native compile or physical 3-button/gesture/swipe/landscape/IME/audio acceptance claimed here; root reports empty ADB inventory. Next: root native build/artifact checks then actual phone rehearsal. No further source changes until assigned.
+
+## 2026-11-02 — REPO-SHOP-UX-001 / PRODUCT-DIAGRAM-001 source milestone
+Full activation restored AGENTS/role/six brains/task/latest board/MVP acceptance. Root approved exclusive web excluding offline and docs/product-diagram artifacts. Local office preserved by move under apps/web/local-office/; root owns ignore/staging. 21 office/team modules/styles+4tests+officeHTML now optional; officeApi local adapter removes shop team transport coupling. New tracked apiUrl.ts owns generic URL normalization/validation; api.ts only shop transports. Vite default input only index.html, tsconfig src unchanged; optional office dev/build/test scripts explicitly point local ignored configs. No file deletion, sale/voice behavior or native/SW/backend/live change.
+Evidence final shop117tests PASS1010.7083ms, optionaloffice26tests PASS561.16ms; explicitAPI8001 shopbuild65modules/shop-Bl6F3q6Z.js PASS, optionalofficebuild44modules PASS. Default tsconfig restored after optional TS-extension support moved into ignored office config. One optional test exposed old mojibake1–2,000 error; corrected only local source and rerun26pass. Source frozen, QA clean-export verification coordinated.
+Diagram skill router +software architecture route applied: branded editable SVG, standaloneHTML with sibling mobile reading order, generator-free static source and bounded optional Playwright preview script. Main flow catalogue→manual/Apo→tender→saved receipt; local/Muse proposal approval, uncertain retry, separate architecture with server SQLite and sanitized trace store. No provider claims for local suggestions. docs/product-diagram README records sources/design. Sandbox headless Edge launch hung without output and own session was interrupted; root requested host preview generation, currently pending. No render/physical acceptance claimed yet. Source freeze to root; next visual inspection of actual exports then final handoff.
+
+## 2026-11-02 — REPO-SHOP-UX-001 / PRODUCT-DIAGRAM-001 final handoff
+Scope: web source/config/tests excluding offline; temporary docs/product-diagram artifact ownership; ownbrain. Local files preserved; no Git stage/commit, API/SW/native/data/live operations. Root owns ignore manifest and clean staged export/repository cleanup.
+Shop separation: moved21 office/team-only source/styles+4tests+officeHTML to ignored apps/web/local-office/. Root sent exact list. Generic URL functions now tracked src/apiUrl.ts; api.ts no team imports/methods. Local officeApi adapter restores existing chats. Standard Vite input only shop index; default TS src unchanged. Optional local scripts dev:office/build:office/test:office need preserved local files and explicit local backend adapter. Local office configs own TS-extension option. apps/web/README opening corrected to shop-only commands; PROJECT-OFFICE-MIGRATION.md and old pollingnotes moved into local-office, preserved. New tests/apiUrl.test.mjs verifies normalization/proxy and unsafe URLs.
+Evidence final:117shoptests PASS1010.7083ms;26optionaloffice tests PASS561.16ms; explicitAPI8001 defaultbuild65modules shop-Bl6F3q6Z.js /shop-Bvj-sDwW.css PASS, index.html only. Optionaloffice44modulebuild PASS office-DWebULPz.js. Scoped diffcheckPASS. Parent/QA notified; clean export verification remains parent gate, not claimed from current working tree.
+Product diagram: docs/product-diagram/street-ceo-product.svg editable text/vector source; index.html standalone accessible mobile orderedpath; street-ceo-product.pdf vector export; street-ceo-product.png and review-preview.png real renderedpreviews; render_preview.py deterministic supportedSVGprimitive→ReportLab PDF→PopplerPNG; README source/design/regeneration. Actual finalPNG inspected using view_image, clear customerflow, confirmation safetyband and separate runtimearchitecture, no visible overlap/clipping. SVGXML valid9nodes. Navy/green/gold brand palette, numbered stages, labelled/dashedconditional links; preserves manual/Apo, missingquantity, unknownwholebasket, strictYes, tender/change, durablereceipt/stock/history, hostSQLite, provenance and sanitizedinvestigations. Deferred offline/Postgres explicit; not physical evidence. MobileHTML replaceswideSVG at<=760 ratherthan shrinkinglabels. Browserlaunch/screenshot attempts sandbox/root hung/timedout; ownsession interrupted. Defaultvectorrenderer succeeded2.67s/exit0. Firstpreview exposed shortHEXreportlab bluefill; expanded#fff→#ffffff and regenerated+visuallyverifiedfinal. No browser/mobileDOM/render claim; optional --browser now boundschecks only, parent may run host. No diagramdesign dependency onnetwork/CDN/fonts beyondlocalexportArial.
+Source and generated shopdist frozen. Parent may stage cleanproducttree and independently bootstrap/build/test. No APK changes/package byRunako. No running tool sessions. Further browser/phone checks parent/Owner; localoffice remains preservednotpublished.

@@ -51,12 +51,14 @@ def test_expense_owner_and_opening_entries_use_distinct_accounts() -> None:
 
 def test_return_requires_trace_and_damaged_return_records_stock_loss() -> None:
     ledger = Ledger(shop_id="shop-1")
+    sale = ledger.sale(source_id="sale", actor="a", occurred_at=WHEN, amount=10, tender="cash", cogs=6, quantity=1, unit_price=10)
     returned = ledger.return_sale(source_id="return", original_sale_id=None, actor="a", occurred_at=WHEN,
                                   refund=10, tender="cash", original_cogs=6, quantity=1, resalable=False)
     assert "unlinked_return_review_required" in returned.warnings
     assert "damaged_return_stock_loss" in returned.warnings
     assert ledger.balance(Account.STOCK_LOSS) == Decimal("6")
     assert ledger.balance(Account.INVENTORY) == Decimal("-6")
+    assert ledger.balance(Account.COGS) == Decimal("0")
     assert_balanced(ledger)
 
 
@@ -70,6 +72,37 @@ def test_reversal_is_append_only_and_exact_opposite() -> None:
     assert ledger.balance(Account.SALES_REVENUE) == 0
     assert ledger.balance(Account.COGS) == 0
     assert_balanced(ledger)
+    with pytest.raises(ValueError, match="already reversed"):
+        ledger.reverse(sale.entry_id, source_id="sale-correction-again", actor="a", occurred_at=WHEN)
+    with pytest.raises(ValueError, match="cannot be reversed"):
+        ledger.reverse(reversal.entry_id, source_id="double-reversal", actor="a", occurred_at=WHEN)
+
+
+def test_cash_change_is_metadata_only_and_bank_cannot_have_change() -> None:
+    ledger = Ledger(shop_id="shop-1")
+    sale = ledger.sale(source_id="cash-sale", actor="a", occurred_at=WHEN, amount=1.50, tender="cash",
+                       cogs=1, quantity=1, unit_price=1.50, amount_received=2, change=0.50)
+    assert sale.metadata["amount_received"] == "2"
+    assert sale.metadata["change"] == "0.5"
+    assert ledger.balance(Account.CASH) == Decimal("1.50")
+    with pytest.raises(ValueError, match="bank tender"):
+        ledger.sale(source_id="bank-sale", actor="a", occurred_at=WHEN, amount=1.50, tender="bank",
+                    cogs=1, quantity=1, amount_received=2, change=0.50)
+
+
+def test_profitability_is_ledger_derived_and_discloses_missing_cogs() -> None:
+    ledger = Ledger(shop_id="shop-1")
+    ledger.sale(source_id="sale", actor="a", occurred_at=WHEN, amount=1.50, tender="cash", cogs=0.50, quantity=1)
+    ledger.expense(source_id="expense", actor="a", occurred_at=WHEN, amount=0.25, tender="cash", category="airtime", paid=True)
+    report = ledger.profitability(start=WHEN, end=WHEN)
+    assert report.net_revenue == Decimal("1.50")
+    assert report.gross_profit == Decimal("1.00")
+    assert report.net_profit == Decimal("0.75")
+    incomplete = Ledger(shop_id="shop-1")
+    incomplete.sale(source_id="sale", actor="a", occurred_at=WHEN, amount=1.50, tender="cash", cogs=None, quantity=1)
+    incomplete_report = incomplete.profitability(start=WHEN, end=WHEN)
+    assert incomplete_report.gross_profit is None
+    assert "profitability_incomplete_missing_cost_of_sales" in incomplete_report.warnings
 
 
 def test_daily_close_is_reproducible_locked_and_surfaces_variance() -> None:
@@ -83,3 +116,14 @@ def test_daily_close_is_reproducible_locked_and_surfaces_variance() -> None:
     assert "missing_bank_confirmation" in close.warnings
     with pytest.raises(ValueError, match="already locked"):
         ledger.close_day(business_date=date(2026, 10, 30), timezone_name="Africa/Harare", actual_cash=24, actual_bank=None)
+
+
+def test_daily_close_counts_same_day_opening_and_reversal_movements() -> None:
+    ledger = Ledger(shop_id="shop-1")
+    same_day = datetime(2026, 10, 30, 8, tzinfo=timezone.utc)
+    sale = ledger.sale(source_id="sale", actor="a", occurred_at=same_day, amount=3, tender="cash", cogs=1, quantity=1)
+    ledger.reverse(sale.entry_id, source_id="sale-reversal", actor="a", occurred_at=datetime(2026, 10, 30, 9, tzinfo=timezone.utc))
+    ledger.opening_balance(source_id="open", actor="a", occurred_at=datetime(2026, 10, 30, 7, tzinfo=timezone.utc), amount=20, tender="cash", source_known=True)
+    close = ledger.close_day(business_date=date(2026, 10, 30), timezone_name="Africa/Harare", actual_cash=20, actual_bank=0)
+    assert close.opening[Tender.CASH] == Decimal("20")
+    assert close.expected[Tender.CASH] == Decimal("20")

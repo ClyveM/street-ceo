@@ -1,0 +1,9 @@
+{
+  "appId": "com.streetceo.app",
+  "appName": "Street CEO",
+  "webDir": "web-assets",
+  "server": {
+    "cleartext": true,
+    "androidScheme": "http"
+  }
+}

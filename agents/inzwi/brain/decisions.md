@@ -13,3 +13,17 @@
   commit only after quote confirmation and tender selection.
 - Treat a supplied cash amount below the quote as an interaction-level failure;
   omitted amount remains allowed because MVP tender recording is not settlement.
+
+
+## 2026-10-31 — W6-DEMO-VOICE-001
+Backend voice contract supersedes optional cash amount: ask actual received amount,
+forward amount_received_cents; never infer it. Closing Apo confirms basket, but
+cash still requires amount. needs_tender is not a receipt. Undo requires explicit
+reversed acknowledgement and retains sale for safe retry if acknowledgement fails.
+
+## 2026-10-31 — W6-DEMO-VOICE-001 follow-up
+
+- Normalize only terminal spoken punctuation at the state-machine boundary. ASR
+  commonly returns `Apo.` or `Cash, 500.`; accepting these bounded variants keeps
+  Quick Sale automatic closing usable without widening the command grammar or
+  changing backend tender semantics.

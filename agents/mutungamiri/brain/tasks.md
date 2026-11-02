@@ -60,3 +60,15 @@
 - Evidence: manifest 85/85 + backup 85/85 + new-dir 85/85 hashes identical;
   commit 3c4e24438c5e44b494b5a0289adabcd26c1cec94 (87 files); secrets scan
   clean; worktree probe created/removed cleanly; old dir re-hash identical.
+## SPRINT90-ORCH-001 — software delivery complete; phone acceptance pending
+Coordinated five specialists and integrated verified improvements. Evidence docs/demo-mvp-verification.md and final handoff; backend190/frontend125/baseline19 passes, final signed APK and download verified. DEMO-PHONE-ACCEPT-001 remains pending actual device.
+
+## PHONE-RECOVERY-001 — software patch packaged; actual phone retest pending
+Evidence docs/demo-mvp-verification.md; new APK labelled PHONE-RECOVERY-001, frontend132/SQLite22/baseline21 passed. User network/build confirmation remains unknown.
+
+## CATALOGUE-VOICE — implemented, activated and packaged; phone retest pending
+Evidence docs/demo-mvp-verification.md. Real Muse catalogue calls verified; explicit spoken confirmation/server guard; backend215/frontend136/baseline21 passed. New CATALOGUE-VOICE-001 APK downloaded and verified.
+
+STARTER-COGS-001 complete software+runtime; see2026-11-02 handoff and docs/starter-demo-costs.md. Physicaltest remainsseparate.
+
+FAST-VOICE-001/ANDROID-COUNTER-INSETS-001/FAST-COUNTER-QA-001 softwarecomplete+activated; physicalacceptanceremainsseparate, see2026-11-02 handoff.

@@ -1,0 +1,17 @@
+{
+  "shop": {
+    "id": "00000000-0000-0000-0000-000000000001",
+    "name": "Street CEO Demo Tuckshop",
+    "currency": "USD",
+    "timezone": "Africa/Harare"
+  },
+  "cost_basis": "Illustrative demo opening unit costs; not supplier or invoice evidence.",
+  "products": [
+    {"id": "00000000-0000-0000-0000-000000000001", "sku": "COKE-300", "name": "Coca-Cola 300ml", "unit_price_cents": 150, "stock_qty": 18, "unit_cost_micros": 1000000},
+    {"id": "00000000-0000-0000-0000-000000000002", "sku": "BREAD-700", "name": "Bread loaf", "unit_price_cents": 180, "stock_qty": 11, "unit_cost_micros": 1200000},
+    {"id": "00000000-0000-0000-0000-000000000003", "sku": "SUGAR-1KG", "name": "Sugar 1kg", "unit_price_cents": 240, "stock_qty": 7, "unit_cost_micros": 1800000},
+    {"id": "00000000-0000-0000-0000-000000000004", "sku": "MILK-500", "name": "Milk 500ml", "unit_price_cents": 130, "stock_qty": 15, "unit_cost_micros": 900000},
+    {"id": "00000000-0000-0000-0000-000000000005", "sku": "CHIPS-100", "name": "Potato chips", "unit_price_cents": 100, "stock_qty": 23, "unit_cost_micros": 600000},
+    {"id": "00000000-0000-0000-0000-000000000006", "sku": "SOAP-175", "name": "Bath soap", "unit_price_cents": 220, "stock_qty": 5, "unit_cost_micros": 1500000}
+  ]
+}

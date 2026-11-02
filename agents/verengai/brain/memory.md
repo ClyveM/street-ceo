@@ -21,3 +21,11 @@ Initialized 2026-10-29. No prior sessions; no work performed yet.
 - Supported posting flows are opening balance, paid/unpaid stock purchase, sale, resalable/damaged return, paid/unpaid expense, owner injection/drawing, append-only reversal, and locked daily close.
 - Every entry stores shop, currency, source type/id, actor, event time, record time, postings, warnings, and optional reversal/source metadata. `balance()` is debit-minus-credit, so credit-normal income/equity accounts are negative.
 - Finance tests are in `services/finance/test_ledger.py`; they cover the Ruzivo worked demo, balance invariants, warnings, reversals, and daily-close variance locking.
+
+## Verified implementation facts (2026-10-31, W6 finance remediation)
+
+- Sale postings accept optional `amount_received` and `change` metadata. Only the sale total affects tender balances; bank tender must equal the sale total.
+- Damaged returns reclassify original COGS to `stock_loss` and do not credit inventory a second time.
+- `Ledger.profitability()` derives revenue, refunds, COGS, operating expenses, and profit from journal entries; missing COGS yields explicit warnings and unknown gross/net profit.
+- `Ledger.close_day()` includes same-day opening float, reversal movements, and source warnings; reversal targets are single-use and reversal entries cannot themselves be reversed.
+- Fresh finance evidence: 8 tests passed, compileall passed, and `git diff --check` passed on 2026-10-31.

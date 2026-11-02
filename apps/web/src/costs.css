@@ -1,0 +1,43 @@
+.costs-workspace { font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.cost-tabs, .cost-actions, .cost-heading { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.cost-tabs { margin: 18px 0; }
+.cost-tabs button[aria-pressed=true] { background: #176f68; color: #fff; }
+.costs-workspace button { min-height: 48px; border: 1px solid #a5c7bf; border-radius: 8px; padding: 10px 14px; font: inherit; cursor: pointer; }
+.costs-workspace button:disabled { opacity: .55; cursor: default; }
+.cost-card { background: #fff; border: 1px solid var(--line); border-radius: 14px; margin: 16px 0; padding: 18px; min-width: 0; }
+.cost-card h3 { margin: 0 0 12px; font-size: 20px; }
+.cost-heading { justify-content: space-between; }
+.cost-card label { display: block; margin: 12px 0; font-size: 15px; }
+.cost-card input:not([type=checkbox]), .cost-card select, .cost-card textarea { display: block; width: 100%; min-width: 0; min-height: 48px; border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin-top: 6px; font: inherit; font-size: 16px; color: var(--ink); background: #fff; }
+.cost-card fieldset { border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 14px 0; min-width: 0; }
+.cost-card legend { font-weight: 700; padding: 0 5px; }
+.cost-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 12px; }
+.cost-warning, .cost-error { background: #fff7e4; border: 1px solid #dec99a; border-radius: 10px; padding: 14px; }
+.cost-error { background: #fff0ea; color: #923b29; border-color: #d9a28f; }
+.cost-history { list-style: none; padding: 0; display: grid; gap: 8px; }
+.cost-history button { width: 100%; text-align: left; background: #f4faf8; color: var(--ink); overflow-wrap: anywhere; }
+.cost-history small { display: block; font-size: 13px; }
+.cost-card .cost-check { display: flex; gap: 10px; align-items: start; }
+.cost-check input { width: 24px; height: 24px; flex-shrink: 0; margin-top: 2px; }
+.invoice-confirm { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 16px; }
+.cost-review { display: grid; gap: 4px; }
+.cost-review dt { font-weight: 700; font-size: 14px; }
+.cost-review dd { margin: 0 0 10px; white-space: pre-wrap; }
+.retail-form { min-width: 0; border: 1px solid var(--line); padding: 18px; border-radius: 12px; background: #fff; }
+.costs-workspace .retail-form label { display: block; margin: 12px 0; }
+.costs-workspace .retail-form input:not([type=checkbox]), .costs-workspace .retail-form select, .costs-workspace .retail-form textarea { width: 100%; min-width: 0; min-height: 48px; font: inherit; font-size: 16px; display: block; margin-top: 6px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+.retail-form fieldset { min-width: 0; border: 1px solid var(--line); padding: 14px; border-radius: 10px; margin: 18px 0; }
+.retail-count { border-top: 1px solid var(--line); padding: 12px 0; }
+.retail-count small { display: block; font-size: 13px; line-height: 1.6; }
+.retail-reconciliation { margin: 18px 0; font-size: 14px; overflow-wrap: anywhere; }
+.retail-reconciliation [role=row] { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; border-bottom: 1px solid var(--line); padding: 10px 0; }
+.catalogue-cost { grid-column: 1 / -1; font-size: 14px; line-height: 1.6; padding: 8px 0; }
+.catalogue-cost strong { white-space: normal; }
+.catalogue-cost summary { min-height: 48px; align-content: center; cursor: pointer; }
+.catalogue-cost summary strong { display: inline; font-size: 14px; }
+.catalogue-cost button { min-height: 48px; border: 1px solid #a5c7bf; border-radius: 8px; color: #176f68; background: #fff; padding: 10px; margin-top: 8px; font: inherit; cursor: pointer; }
+.product-cost-editor { font-size: 16px; overflow-wrap: anywhere; }
+.product-cost-editor button { width: 100%; }
+.product-cost-editor .cost-history li { border-top: 1px solid var(--line); padding-top: 12px; }
+.product-cost-editor .cost-history strong { display: block; font-size: 16px; }
+@media(max-width: 450px) { .cost-tabs button, .cost-actions button, .cost-heading button { width: 100%; } .cost-card { padding: 14px; } }

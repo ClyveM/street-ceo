@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="1190" viewBox="0 0 1360 1190" role="img" aria-labelledby="title desc">
+<title id="title">Street CEO — from spoken basket to saved sale</title><desc id="desc">Connected Android shop workflow: catalogue to manual or Apo sale, explicit approval of suggestions, cash or bank payment, saved receipt and stock/history. FastAPI persists in SQLite. Harder catalogue phrases use Muse; sanitized request and response investigations persist. Unknown products and uncertain payment never imply a completed sale.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10Z" fill="#19836c"/></marker></defs>
+<style>text{font-family:Arial,sans-serif;fill:#142f43}.kicker{font-size:14px;font-weight:700;letter-spacing:2px;fill:#287a65}.title{font-size:40px;font-weight:700;letter-spacing:-1px}.sub{font-size:18px;fill:#526675}.head{font-size:23px;font-weight:700}.body{font-size:17px}.note{font-size:15px;fill:#526675}.num{font-size:14px;font-weight:700;fill:#287a65}.node{fill:#fff;stroke:#c9d9d4;stroke-width:1.5}.arrow{fill:none;stroke:#19836c;stroke-width:2.5;marker-end:url(#arrow)}.branch{stroke-dasharray:6 5}.label{font-size:14px;fill:#287a65}</style>
+<rect width="1360" height="1190" fill="#f8faf6"/>
+<rect x="0" width="1360" height="12" fill="#176c52"/>
+<text x="60" y="63" class="kicker">STREET CEO / CONNECTED DEMO MVP</text>
+<text x="60" y="118" class="title">From spoken basket to saved sale.</text>
+<text x="60" y="154" class="sub">A practical counter assistant. Voice when your hands are busy; typing when you need it.</text>
+<text x="60" y="211" class="kicker">01 / THE SHOPKEEPER’S PATH</text>
+<g id="catalogue"><rect x="60" y="244" width="265" height="218" rx="16" class="node"/>
+<text x="82" y="274" class="num">1 / KNOW THE PRODUCTS</text>
+<text x="82" y="309" class="head">Catalogue</text>
+<text x="82" y="348" class="body">Saved names, quantities,</text>
+<text x="82" y="375" class="body">prices and stock.</text>
+<text x="82" y="402" class="body">Starter costs are illustrative.</text>
+</g>
+<g id="sale"><rect x="385" y="244" width="265" height="218" rx="16" class="node"/>
+<text x="407" y="274" class="num">2 / BUILD THE BASKET</text>
+<text x="407" y="309" class="head">Manual or Apo</text>
+<text x="407" y="348" class="body">Tap/type, or say:</text>
+<text x="407" y="375" class="body">“Apo one Coke Napo.”</text>
+<text x="407" y="402" class="body">No partial unknown basket.</text>
+</g>
+<g id="payment"><rect x="710" y="244" width="265" height="218" rx="16" class="node"/>
+<text x="732" y="274" class="num">3 / ANSWER OUT LOUD</text>
+<text x="732" y="309" class="head">Cash or Bank</text>
+<text x="732" y="348" class="body">Cash: ask amount received.</text>
+<text x="732" y="375" class="body">Verify total and change.</text>
+<text x="732" y="402" class="body">Bank is recorded tender.</text>
+</g>
+<g id="receipt"><rect x="1035" y="244" width="265" height="218" rx="16" class="node"/>
+<text x="1057" y="274" class="num">4 / ONLY AFTER SAVE</text>
+<text x="1057" y="309" class="head">Sale saved</text>
+<text x="1057" y="348" class="body">Total · Tendered · Change</text>
+<text x="1057" y="375" class="body">Stock and history refresh.</text>
+<text x="1057" y="402" class="body">Next Apo starts a new sale.</text>
+</g>
+<path d="M325 352 H383" class="arrow"/>
+<path d="M650 352 H708" class="arrow"/>
+<path d="M975 352 H1033" class="arrow"/>
+<rect x="60" y="488" width="1240" height="124" rx="12" fill="#fff4d9"/>
+<text x="82" y="521" class="num">SUGGESTIONS REQUIRE YES. UNKNOWN IS NEVER A SALE.</text>
+<text x="82" y="554" class="body">A local catalogue proposal or Muse suggestion asks “Did you mean…?” before payment. Missing quantity asks again.</text>
+<text x="82" y="582" class="note">Unknown products are spoken; uncertain paid requests retain the original basket and retry key. No duplicate new sale.</text>
+<text x="60" y="678" class="kicker">02 / HOW THE CONNECTED DEMO WORKS</text>
+<g id="android"><rect x="60" y="716" width="300" height="170" rx="16" class="node"/>
+<text x="82" y="746" class="num">ANDROID APK + WEB UI</text>
+<text x="82" y="781" class="head">Counter interface</text>
+<text x="82" y="820" class="body">Foreground ASR → TTS pause</text>
+<text x="82" y="847" class="body">Manual entry + saved receipts</text>
+</g>
+<g id="api"><rect x="530" y="716" width="300" height="170" rx="16" class="node"/>
+<text x="552" y="746" class="num">FASTAPI / AUTHORITATIVE</text>
+<text x="552" y="781" class="head">Validate and commit</text>
+<text x="552" y="820" class="body">Catalogue + explicit approval</text>
+<text x="552" y="847" class="body">Idempotency · totals · stock</text>
+</g>
+<g id="sqlite"><rect x="1000" y="716" width="300" height="170" rx="16" class="node"/>
+<text x="1022" y="746" class="num">LOCAL SQLITE / API HOST</text>
+<text x="1022" y="781" class="head">Durable shop state</text>
+<text x="1022" y="820" class="body">Catalogue · sales · stock</text>
+<text x="1022" y="847" class="body">Reviews · original retry bindings</text>
+</g>
+<path d="M360 797 H528" class="arrow"/>
+<text x="398" y="783" class="label">HTTP / LAN</text>
+<path d="M830 797 H998" class="arrow"/>
+<text x="869" y="783" class="label">transaction</text>
+<g id="muse"><rect x="530" y="960" width="300" height="150" rx="16" class="node"/>
+<text x="552" y="990" class="num">ONLY WHEN NEEDED</text>
+<text x="552" y="1025" class="head">Muse catalogue help</text>
+<text x="552" y="1064" class="body">Harder phrases → short wait</text>
+<text x="552" y="1091" class="body">Provider calls labelled honestly</text>
+</g>
+<g id="traces"><rect x="1000" y="960" width="300" height="150" rx="16" class="node"/>
+<text x="1022" y="990" class="num">SANITIZED + PERSISTENT</text>
+<text x="1022" y="1025" class="head">Request investigations</text>
+<text x="1022" y="1064" class="body">Requests, responses, failures</text>
+<text x="1022" y="1091" class="body">Correlation + provider provenance</text>
+</g>
+<path d="M680 886 V958" class="arrow branch"/>
+<text x="696" y="928" class="label">unresolved phrase</text>
+<path d="M830 1034 H998" class="arrow branch"/>
+<text x="869" y="1019" class="label">trace events</text>
+<path d="M830 850 H920 V988 H998" class="arrow branch"/>
+<text x="847" y="916" class="label">persist traces</text>
+<text x="60" y="990" class="note">Connected demo:</text>
+<text x="60" y="1015" class="note">Phone must reach the API host.</text>
+<text x="60" y="1040" class="note">SQLite is on the API host,</text>
+<text x="60" y="1065" class="note">not an offline phone database.</text>
+<text x="60" y="1139" class="note">Scope: catalogue → sale → stock → history. Offline sync and PostgreSQL deployment are deferred.</text>
+<text x="60" y="1170" class="note">Source: current demo acceptance + implemented client/API contracts · 2 November 2026 · schematic, not phone test evidence.</text>
+</svg>

@@ -77,7 +77,7 @@ Assume the configured currency has two decimal places, opening cash is 20.00, op
 
 1. Receive and pay 10 units at 1.00 in cash: inventory = 10 units at WAC 1.00; cash = 10.00.
 2. Confirm a cash sale of 2 units at 1.50: revenue = 3.00; cash = 13.00; inventory = 8; COGS = 2.00.
-3. Receive and pay 10 units at 1.40 by bank: inventory = 18; bank = 6.00; WAC = 1.222222… (40.00 inventory value ÷ 18 units).
+3. Receive and pay 10 units at 1.40 by bank: inventory = 18; bank = 6.00; WAC = 1.222222… (22.00 inventory value ÷ 18 units).
 4. Confirm a bank sale of 3 units at 1.60: revenue = 4.80; bank = 10.80; inventory = 15; COGS = 3.666666… using the pre-sale WAC.
 5. Return 1 unit from step 4 and refund 1.60 by bank: revenue reverses by 1.60; bank = 9.20; inventory = 16; COGS reverses by the original sale cost of 1.222222… because the unit is resalable.
 

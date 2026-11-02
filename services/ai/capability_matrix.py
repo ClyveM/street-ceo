@@ -39,6 +39,14 @@ CAPABILITY_MATRIX = (
         "notes": "Not required for Wave 1 sale-intent or insight MVP.",
     },
     {
+        "capability": "Image generation and editing",
+        "route": "Muse Image via Meta Model API images/generations or images/edits",
+        "verified": True,
+        "available_here": False,
+        "evidence": "https://dev.meta.ai/docs/image-generation",
+        "notes": "Requires the separate muse-image-1.0 model configuration. The current LLAMA_MODEL text chat route is not image generation, and this workspace has no credentialed image smoke test.",
+    },
+    {
         "capability": "Street CEO live model access, credentials, latency, cost",
         "route": "Repository/runtime",
         "verified": False,

@@ -50,3 +50,19 @@ No lessons recorded yet. Initialized 2026-10-29; no work performed.
   transaction then keeps validation and decrement atomic under concurrent sales.
 - Readiness should check the migration marker/table as well as `SELECT 1`; a
   reachable but uninitialized database is not ready for traffic.
+
+## 2026-10-31 — W6-DEMO-BACKEND-001
+
+- Transaction idempotency alone is insufficient for one reviewed voice basket: a different request key bypassed replay and created another sale. Bind the review to its successful key/receipt, and replay before re-reading mutable catalogue prices. This process-local fix does not establish multi-worker or restart safety.
+
+## 2026-10-31 — W6-PERSISTENCE-COGS-001
+
+- A database column alone does not make a financial value durable: the
+  PostgreSQL sale path had `sales.cogs_micros` in the schema but neither read
+  product cost during the locked sale transaction nor selected COGS during
+  reload. Test both write parameters and reconstruction.
+- LAN route audits should compare OpenAPI paths with the actual client
+  contract; sales intentionally remains the legacy `/shops/.../sales` path
+  while newer operational routes use `/api/v1/...`.
+
+2026-10-31 W6-APK-VOICE-CORS-001: health GET from native shell does not prove WebView POST works; test CORS preflight with exact bundled origin and custom headers. localhost:5173 differs from Capacitor http://localhost.

@@ -24,25 +24,33 @@ class Settings:
     repository_root: Path = Path.cwd()
     team_activity_enabled: bool = True
     voice_enabled: bool = True
+    demo_seed_enabled: bool = False
+    sqlite_path: str = "data/street-ceo.sqlite3"
+    local_team_enabled: bool = False
 
     def __post_init__(self) -> None:
-        if self.store_backend not in {"memory", "postgres"}:
-            raise ValueError("store_backend must be 'memory' or 'postgres'")
+        if self.store_backend not in {"memory", "postgres", "sqlite"}:
+            raise ValueError("store_backend must be 'memory', 'sqlite' or 'postgres'")
         if self.store_backend == "postgres" and not self.database_url:
             raise ValueError("database_url is required for postgres mode")
 
     @classmethod
     def from_env(cls) -> "Settings":
-        backend = os.getenv("STREET_CEO_STORE", "memory").strip().lower()
-        database_url = os.getenv("STREET_CEO_DATABASE_URL")
+        backend = os.getenv("STREET_CEO_STORE", "sqlite").strip().lower()
+        database_url = os.getenv("STREET_CEO_DATABASE_URL", "").strip() or None
         repository_root = Path(os.getenv("STREET_CEO_REPOSITORY_ROOT", str(Path.cwd())))
+        local_team_enabled = os.getenv("STREET_CEO_LOCAL_TEAM_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
         enabled_value = os.getenv("STREET_CEO_TEAM_ACTIVITY_ENABLED")
-        enabled = (backend == "memory") if enabled_value is None else enabled_value.strip().lower() in {"1", "true", "yes", "on"}
+        enabled = local_team_enabled if enabled_value is None else enabled_value.strip().lower() in {"1", "true", "yes", "on"}
         voice_value = os.getenv("STREET_CEO_VOICE_ENABLED")
-        voice_enabled = (backend == "memory") if voice_value is None else voice_value.strip().lower() in {"1", "true", "yes", "on"}
-        if backend not in {"memory", "postgres"}:
-            raise ValueError("STREET_CEO_STORE must be 'memory' or 'postgres'")
-        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled, voice_enabled=voice_enabled)
+        voice_enabled = (backend in {"memory", "sqlite"}) if voice_value is None else voice_value.strip().lower() in {"1", "true", "yes", "on"}
+        seed_value = os.getenv("STREET_CEO_SEED_DEMO")
+        # Local memory mode is the runnable demo default. PostgreSQL never
+        # receives synthetic data unless a separate migration/import is used.
+        demo_seed_enabled = (backend in {"memory", "sqlite"}) if seed_value is None else seed_value.strip().lower() in {"1", "true", "yes", "on"}
+        if backend not in {"memory", "postgres", "sqlite"}:
+            raise ValueError("STREET_CEO_STORE must be 'memory', 'sqlite' or 'postgres'")
+        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled, voice_enabled=voice_enabled, demo_seed_enabled=demo_seed_enabled, sqlite_path=os.getenv("STREET_CEO_SQLITE_PATH", "data/street-ceo.sqlite3"), local_team_enabled=local_team_enabled)
 
 
 class Repository(Protocol):
@@ -141,8 +149,8 @@ class PostgresRepository:
                 shop_row = connection.execute(text("SELECT id, name, currency, timezone FROM shops WHERE id = :shop_id"), {"shop_id": str(shop_id)}).mappings().first()
                 if shop_row is None:
                     raise RepositoryNotFound("shop not found")
-                product_rows = connection.execute(text("SELECT id, shop_id, sku, name, unit_price_cents, stock_qty FROM products WHERE shop_id = :shop_id ORDER BY sku"), {"shop_id": str(shop_id)}).mappings().all()
-                sale_rows = connection.execute(text("SELECT id, shop_id, tender, total_cents, created_at, idempotency_key, request_fingerprint FROM sales WHERE shop_id = :shop_id ORDER BY created_at"), {"shop_id": str(shop_id)}).mappings().all()
+                product_rows = connection.execute(text("SELECT id, shop_id, sku, name, unit_price_cents, stock_qty, unit_cost_micros, cost_source_invoice_id FROM products WHERE shop_id = :shop_id ORDER BY sku"), {"shop_id": str(shop_id)}).mappings().all()
+                sale_rows = connection.execute(text("SELECT id, shop_id, tender, total_cents, cogs_micros, created_at, idempotency_key, request_fingerprint FROM sales WHERE shop_id = :shop_id ORDER BY created_at"), {"shop_id": str(shop_id)}).mappings().all()
                 line_rows = connection.execute(text("""
                     SELECT sl.sale_id, sl.product_id, sl.quantity
                     FROM sale_lines sl JOIN sales s ON s.id = sl.sale_id
@@ -156,7 +164,12 @@ class PostgresRepository:
         shop = Shop(id=UUID(str(shop_row["id"])), name=shop_row["name"], currency=shop_row["currency"].strip(), timezone=shop_row["timezone"])
         record = ShopRecord(shop=shop)
         for row in product_rows:
-            product = Product(id=UUID(str(row["id"])), shop_id=shop.id, sku=row["sku"], name=row["name"], unit_price_cents=row["unit_price_cents"], stock_qty=row["stock_qty"])
+            product = Product(
+                id=UUID(str(row["id"])), shop_id=shop.id, sku=row["sku"], name=row["name"],
+                unit_price_cents=row["unit_price_cents"], stock_qty=row["stock_qty"],
+                unit_cost_micros=row["unit_cost_micros"],
+                cost_source_invoice_id=UUID(str(row["cost_source_invoice_id"])) if row["cost_source_invoice_id"] else None,
+            )
             record.products[product.id] = product
         lines_by_sale: dict[UUID, list[Any]] = {}
         for row in line_rows:
@@ -164,7 +177,10 @@ class PostgresRepository:
             lines_by_sale.setdefault(sale_id, []).append(SaleLine(product_id=UUID(str(row["product_id"])), quantity=row["quantity"]))
         for row in sale_rows:
             sale_id = UUID(str(row["id"]))
-            sale = Sale(id=sale_id, shop_id=shop.id, lines=lines_by_sale.get(sale_id, []), tender=row["tender"], total_cents=row["total_cents"], created_at=row["created_at"])
+            sale = Sale(
+                id=sale_id, shop_id=shop.id, lines=lines_by_sale.get(sale_id, []), tender=row["tender"],
+                total_cents=row["total_cents"], cogs_micros=row["cogs_micros"], created_at=row["created_at"],
+            )
             record.idempotent_sales[row["idempotency_key"]] = (row["request_fingerprint"].strip(), sale)
         return record
 
@@ -195,6 +211,9 @@ class PostgresRepository:
     def create_sale(self, record: Any, request: Any, fingerprint: str, key: str) -> Any:
         from sqlalchemy import text
 
+        if getattr(request, "amount_received_cents", None) is not None:
+            raise RuntimeError("Cash received persistence is supported by the SQLite demo store")
+
         _, _, Product, _, Sale, _, _, _ = self._models()
         try:
             with self.engine.begin() as connection:
@@ -210,20 +229,29 @@ class PostgresRepository:
                 products: list[Any] = []
                 for line in request.lines:
                     row = connection.execute(text("""
-                        SELECT id, shop_id, sku, name, unit_price_cents, stock_qty
+                        SELECT id, shop_id, sku, name, unit_price_cents, stock_qty, unit_cost_micros
                         FROM products WHERE id = :product_id AND shop_id = :shop_id FOR UPDATE
                     """), {"product_id": str(line.product_id), "shop_id": str(record.shop.id)}).mappings().first()
                     if row is None:
                         raise RepositoryNotFound("product not found")
                     if row["stock_qty"] < line.quantity:
                         raise RepositoryInsufficientStock("insufficient stock")
-                    products.append(Product(id=UUID(str(row["id"])), shop_id=record.shop.id, sku=row["sku"], name=row["name"], unit_price_cents=row["unit_price_cents"], stock_qty=row["stock_qty"]))
+                    products.append(Product(
+                        id=UUID(str(row["id"])), shop_id=record.shop.id, sku=row["sku"], name=row["name"],
+                        unit_price_cents=row["unit_price_cents"], stock_qty=row["stock_qty"],
+                        unit_cost_micros=row["unit_cost_micros"],
+                    ))
                 total_cents = sum(product.unit_price_cents * line.quantity for product, line in zip(products, request.lines))
-                sale = Sale(id=uuid4(), shop_id=record.shop.id, lines=request.lines, tender=request.tender, total_cents=total_cents, created_at=datetime.now(timezone.utc))
+                has_all_costs = all(product.unit_cost_micros is not None for product in products)
+                cogs_micros = sum(product.unit_cost_micros * line.quantity for product, line in zip(products, request.lines)) if has_all_costs else None
+                sale = Sale(
+                    id=uuid4(), shop_id=record.shop.id, lines=request.lines, tender=request.tender,
+                    total_cents=total_cents, cogs_micros=cogs_micros, created_at=datetime.now(timezone.utc),
+                )
                 connection.execute(text("""
-                    INSERT INTO sales (id, shop_id, tender, total_cents, created_at, idempotency_key, request_fingerprint)
-                    VALUES (:id, :shop_id, :tender, :total_cents, :created_at, :key, :fingerprint)
-                """), {"id": str(sale.id), "shop_id": str(sale.shop_id), "tender": sale.tender, "total_cents": sale.total_cents, "created_at": sale.created_at, "key": key, "fingerprint": fingerprint})
+                    INSERT INTO sales (id, shop_id, tender, total_cents, cogs_micros, created_at, idempotency_key, request_fingerprint)
+                    VALUES (:id, :shop_id, :tender, :total_cents, :cogs_micros, :created_at, :key, :fingerprint)
+                """), {"id": str(sale.id), "shop_id": str(sale.shop_id), "tender": sale.tender, "total_cents": sale.total_cents, "cogs_micros": sale.cogs_micros, "created_at": sale.created_at, "key": key, "fingerprint": fingerprint})
                 for product, line in zip(products, request.lines):
                     connection.execute(text("""
                         INSERT INTO sale_lines (sale_id, product_id, quantity, unit_price_cents)
@@ -246,13 +274,21 @@ class PostgresRepository:
 
         _, _, _, _, Sale, _, SaleLine, _ = PostgresRepository._models()
         lines = connection.execute(text("SELECT product_id, quantity FROM sale_lines WHERE sale_id = :sale_id ORDER BY product_id"), {"sale_id": str(row["id"])}).mappings().all()
-        return Sale(id=UUID(str(row["id"])), shop_id=shop_id, lines=[SaleLine(product_id=UUID(str(line["product_id"])), quantity=line["quantity"]) for line in lines], tender=row["tender"], total_cents=row["total_cents"], created_at=row["created_at"])
+        return Sale(
+            id=UUID(str(row["id"])), shop_id=shop_id,
+            lines=[SaleLine(product_id=UUID(str(line["product_id"])), quantity=line["quantity"]) for line in lines],
+            tender=row["tender"], total_cents=row["total_cents"], cogs_micros=row["cogs_micros"],
+            created_at=row["created_at"],
+        )
 
 
 def build_repository(settings: Settings | None = None) -> Any:
     """Build the selected backend; never silently downgrade PostgreSQL."""
 
     settings = settings or Settings.from_env()
+    if settings.store_backend == "sqlite":
+        from services.api.sqlite_store import SQLiteStore
+        return SQLiteStore(settings.sqlite_path)
     if settings.store_backend == "postgres":
         if not settings.database_url:  # defensive for callers constructing Settings directly
             raise ValueError("database_url is required for postgres mode")
@@ -302,5 +338,46 @@ CREATE TABLE IF NOT EXISTS sale_lines (
     quantity bigint NOT NULL CHECK (quantity > 0),
     unit_price_cents bigint NOT NULL CHECK (unit_price_cents >= 0),
     PRIMARY KEY (sale_id, product_id)
+);
+
+ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_cost_micros bigint CHECK (unit_cost_micros >= 0);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS cost_source_invoice_id uuid;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS cogs_micros bigint CHECK (cogs_micros >= 0);
+
+CREATE TABLE IF NOT EXISTS invoices (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), shop_id uuid NOT NULL REFERENCES shops(id),
+    filename varchar(240) NOT NULL, content_type varchar(80) NOT NULL,
+    size_bytes bigint NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 10485760),
+    sha256 char(64) NOT NULL, storage_backend varchar(20) NOT NULL, storage_ref varchar(255) NOT NULL,
+    extraction_status varchar(32) NOT NULL, extraction_source varchar(32) NOT NULL,
+    uploaded_at timestamptz NOT NULL, confirmed_at timestamptz
+);
+CREATE TABLE IF NOT EXISTS invoice_lines (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), invoice_id uuid NOT NULL REFERENCES invoices(id),
+    shop_id uuid NOT NULL REFERENCES shops(id), description varchar(240) NOT NULL, sku varchar(64),
+    quantity bigint NOT NULL CHECK (quantity > 0), line_total_cents bigint NOT NULL CHECK (line_total_cents >= 0),
+    calculated_unit_cost_micros bigint CHECK (calculated_unit_cost_micros >= 0),
+    suggested_product_id uuid REFERENCES products(id), matched_product_id uuid REFERENCES products(id),
+    match_status varchar(20) NOT NULL, source varchar(32) NOT NULL, evidence_ref varchar(240)
+);
+CREATE TABLE IF NOT EXISTS product_cost_audits (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), shop_id uuid NOT NULL REFERENCES shops(id),
+    product_id uuid NOT NULL REFERENCES products(id), invoice_id uuid NOT NULL REFERENCES invoices(id),
+    quantity_received bigint NOT NULL CHECK (quantity_received > 0), unit_cost_micros bigint NOT NULL CHECK (unit_cost_micros >= 0),
+    previous_unit_cost_micros bigint CHECK (previous_unit_cost_micros >= 0), new_unit_cost_micros bigint NOT NULL CHECK (new_unit_cost_micros >= 0),
+    stock_before bigint NOT NULL CHECK (stock_before >= 0), stock_after bigint NOT NULL CHECK (stock_after >= 0), recorded_at timestamptz NOT NULL
+);
+CREATE TABLE IF NOT EXISTS product_cost_corrections (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), shop_id uuid NOT NULL REFERENCES shops(id),
+    product_id uuid NOT NULL REFERENCES products(id), unit_cost_micros bigint NOT NULL CHECK (unit_cost_micros >= 0),
+    effective_date date NOT NULL, reason varchar(500) NOT NULL, source_ref varchar(240) NOT NULL,
+    actor varchar(80) NOT NULL, status varchar(20) NOT NULL, created_at timestamptz NOT NULL, confirmed_at timestamptz
+);
+CREATE TABLE IF NOT EXISTS operating_expenses (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), shop_id uuid NOT NULL REFERENCES shops(id),
+    category varchar(32) NOT NULL, frequency varchar(20) NOT NULL, occurred_on date NOT NULL,
+    period_start date, period_end date, amount_cents bigint NOT NULL CHECK (amount_cents > 0),
+    notes varchar(500) NOT NULL DEFAULT '', tender varchar(20) NOT NULL, status varchar(20) NOT NULL,
+    created_at timestamptz NOT NULL, confirmed_at timestamptz
 );
 """

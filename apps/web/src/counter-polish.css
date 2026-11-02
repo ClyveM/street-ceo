@@ -1,0 +1,57 @@
+.counter-panel { border: 1px solid #d4e4da; box-shadow: 0 5px 22px #183b2d06; border-radius: 19px; margin-top: 4px; padding: 17px; }
+.counter-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.counter-heading .eyebrow { color: #527363; font-size: 10px; margin: 0 0 4px; }
+.counter-heading h3 { color: #102c3c; margin: 0; font-size: 23px; line-height: 1.25; letter-spacing: -.5px; }
+.counter-wave { color: #1c8a60; font-size: 22px; letter-spacing: 2px; background: #fff3d8; border-radius: 12px; padding: 8px 10px; white-space: nowrap; }
+.counter-panel .hands-free { position: relative; padding-top: 4px; }
+.counter-panel .hands-free > .voice-toggle { margin: 10px 0 0; }
+.quick-sale .voice-toggle, .counter-modal .voice-toggle { min-height: 44px; border: 1px solid #a8c7b3; border-radius: 99px; background: #eef7ef; color: #245f43; font: 650 12px/1.3 Manrope, sans-serif; padding: 10px 13px; margin: 0; white-space: nowrap; }
+.quick-sale .voice-toggle[aria-pressed="false"], .counter-modal .voice-toggle[aria-pressed="false"] { background: #f5f4f0; color: #606b63; border-color: #d6dad5; }
+.counter-panel .voice-live-state { padding: 12px 0 8px; border: 0; margin: 0; background: transparent; gap: 12px; }
+.counter-panel .voice-live-state strong { color: #173c2e; font-size: 16px; }
+.counter-panel .voice-status { font-size: 12px; line-height: 1.5; }
+.counter-panel .voice-step { margin: 10px 0; padding: 11px 13px; font-size: 14px; }
+.counter-panel .voice-step p { font-size: 13px; }
+.counter-hint { margin: 8px 0; font-size: 12px; color: #5b7465; }
+.counter-panel .voice-fallback { margin-top: 8px; padding-top: 0; }
+.counter-panel .voice-fallback > summary { color: #325d49; font-weight: 650; min-height: 44px; }
+.counter-text-button { font-size: 12px !important; border: 0 !important; padding: 6px 0 !important; background: transparent !important; color: #32674d !important; }
+.counter-last-sale { font-size: 12px; color: #587263; border-top: 1px solid #e0e9e2; margin-top: 8px; padding-top: 4px; overflow-wrap: anywhere; }
+.counter-last-sale > summary { min-height: 44px; display: list-item; padding: 10px 0; cursor: pointer; }
+.counter-last-sale p { margin: 4px 0 10px; }
+.counter-modal { max-width: 480px; padding: 20px; border-radius: 24px; line-height: 1.45; border: 1px solid #f0f2eb; }
+.counter-modal .counter-modal-heading { align-items: center; gap: 12px; margin-bottom: 12px; }
+.counter-modal .counter-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.counter-brand > img { width: 54px; height: 54px; object-fit: contain; background: #fff7e6; border: 1px solid #efe6cf; border-radius: 14px; flex: 0 0 auto; padding: 2px; }
+.counter-modal .counter-kicker { color: #447b57; font-size: 9px; font-weight: 800; letter-spacing: .13em; margin: 0 0 3px; }
+.counter-modal .counter-modal-heading h2 { color: #112e3e; font-size: 25px; line-height: 1.15; letter-spacing: -.7px; margin: 0; }
+.counter-modal .counter-close { min-width: 62px; min-height: 44px; padding: 9px 11px; border-radius: 10px; margin: 0; font-size: 13px; color: #516958; border-color: #d9e3d9; background: #fafcf8; }
+.counter-voice-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0 14px; }
+.counter-voice-bar > span { flex: 1 1 110px; font-size: 11px; line-height: 1.45; color: #6b7d70; }
+.counter-modal .counter-items { margin: 0 0 14px; }
+.counter-modal .counter-items li { padding: 10px 0; font-size: 14px; border-color: #edf0e9; }
+.counter-modal .counter-items li strong { font-weight: 650; }
+.counter-modal .counter-items li span { color: #647b6b; font-size: 14px; }
+.counter-payment-summary { background: #f6f9f2; border: 1px solid #dce8d7; border-radius: 18px; padding: 16px; }
+.counter-payment-summary dl { display: flex; flex-direction: column; margin: 0; gap: 10px; }
+.counter-payment-summary dl > div { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; }
+.counter-payment-summary dt { font-size: 13px; color: #5c7562; }
+.counter-payment-summary dd { margin: 0; font-weight: 750; font-size: 20px; letter-spacing: -.4px; color: #203d2b; }
+.counter-change { margin: 16px -16px -16px; border-radius: 0 0 17px 17px; padding: 16px; border-top: 1px solid #d7e3c8; background: #e7f1d9; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+.counter-change > span { color: #31552e; font-size: 14px; font-weight: 650; }
+.counter-change > strong { color: #164e2b; font-size: clamp(32px, 10vw, 46px); line-height: 1; letter-spacing: -1.8px; overflow-wrap: anywhere; }
+.counter-next { text-align: center; color: #526c55; font-size: 12px; margin: 15px 0 10px; }
+.counter-details { border-top: 1px solid #e9ede5; margin-top: 12px; padding-top: 4px; color: #657465; font-size: 12px; overflow-wrap: anywhere; }
+.counter-details > summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-size: 12px; }
+.counter-details p { font-size: 12px; line-height: 1.6; margin: 8px 0; }
+.counter-modal .counter-details button { min-height: 44px; font-size: 12px; padding: 9px 12px; }
+.counter-question { border-radius: 14px; padding: 13px; margin: 10px 0; border: 1px solid #ebdfc7; background: #fff8e9; }
+.counter-modal .counter-question h3 { font-size: 17px; line-height: 1.45; margin: 0 0 7px; color: #263c2d; }
+.counter-question p { font-size: 12px; color: #6c735f; margin: 6px 0; line-height: 1.55; }
+.counter-question summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-size: 12px; font-weight: 650; }
+.counter-modal .quick-totals { padding: 13px; margin: 10px 0; font-size: 14px; background: #f3f7ee; }
+.counter-connection-alert { border: 1px solid #d3ad7d; border-radius: 10px; padding: 6px 12px; background: #fff5e8; margin-bottom: 12px; font-size: 12px; color: #7e4b22; overflow-wrap: anywhere; }
+.counter-connection-alert summary { min-height: 44px; padding: 12px 0; cursor: pointer; font-weight: 700; }
+.counter-connection-alert p { line-height: 1.6; }
+.counter-connection-alert button { min-height: 44px; border: 1px solid #c8ab82; border-radius: 8px; background: #fff; padding: 8px 12px; color: #785631; font: inherit; }
+@media(max-width:360px) { .counter-modal { padding: 15px; border-radius: 20px; } .counter-brand > img { width: 43px; height: 43px; } .counter-modal .counter-modal-heading h2 { font-size: 23px; } .counter-modal .counter-close { min-width: 54px; padding: 9px; } .counter-heading h3 { font-size: 21px; } }
