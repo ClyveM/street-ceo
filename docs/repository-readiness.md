@@ -38,3 +38,5 @@ The live phone demo was not restarted or repackaged for repository cleanup.
 See root README for commands, `docs/repository-boundaries.md` for exclusions,
 `docs/product-demo-builder.md` for the product, and `infra/repo-clean-qa-001.md`
 for the independent gate.
+
+Publication: implementation commit6a4ff0a was pushed to origin/main and its remote SHA matched. The worktree was clean after push. GitHub Actions could not be read with available access (connector unavailable; unauthenticated API404), so remote CI is not claimed green.
