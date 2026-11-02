@@ -11,6 +11,11 @@ Ignored: secrets, runtime databases/traces, logs, temporary tests, chat attachme
 dependencies, generated bundles, Android outputs, SDK machine paths and signing
 keys. Existing local copies are preserved.
 
+Generated product-diagram PNG/PDF exports and the inspection preview are also
+local-only. Their editable SVG, standalone HTML and export script remain tracked.
+Android APKs belong in separately published release assets, not source commits;
+a source push does not upload an APK automatically.
+
 The local team frontend is `apps/web/local-office/`; its output is
 `apps/web/dist-office/`. Optional local backend files are
 `services/api/local_team.py`, `team_activity.py`, `project_office.py` and their two

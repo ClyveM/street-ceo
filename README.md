@@ -72,6 +72,11 @@ Install Android Studio, its Java runtime and Android SDK 35. The Android project
 and Gradle wrapper are included; generated APKs are not committed. Use your PC's
 reachable LAN address in the web build and run the API on `0.0.0.0`.
 
+Cloning this repository does not download an installable APK. Share a tested APK
+as a GitHub Release asset for a public download; pushing source alone does not
+publish a release. The local port-8081 APK link depends on the developer's PC and
+network and is not a public distribution link.
+
 Follow [Android setup](apps/android/README.md) and the [demo runbook](docs/demo-runbook.md).
 Browser setup does not require Android Studio. The demo is connected; offline
 sync and PostgreSQL deployment are deferred. Building is not phone acceptance.

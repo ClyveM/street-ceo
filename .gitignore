@@ -61,3 +61,8 @@ data/demo-launcher-state.json
 /services/api/test_project_office.py
 /apps/web/dist-office/
 /docs/local-office/
+
+# Reproducible product-diagram exports; keep editable SVG and HTML tracked.
+/docs/product-diagram/review-preview.png
+/docs/product-diagram/street-ceo-product.png
+/docs/product-diagram/street-ceo-product.pdf

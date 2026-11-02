@@ -21,8 +21,9 @@ omitting them. The SVG remains the editable source. `--browser` optionally check
 390px/320px HTML horizontal bounds with local Playwright and Microsoft Edge.
 The default renderer does not claim HTML/browser visual verification.
 
-`review-preview.png` is a reduced-size PNG used for visual inspection; the full
-PNG and PDF preserve the labelled customer flow and runtime architecture.
+PNG/PDF exports and the reduced inspection preview are ignored generated files.
+Local copies are preserved, but a fresh clone uses the SVG/HTML directly. Run
+the export command above when PNG/PDF files are needed for sharing.
 
 Source of meaning: `docs/demo-mvp-acceptance.md`, `docs/fast-counter-acceptance.md`, and
 current frontend/API contracts, 2026-11-02. Deferred: offline synchronization and PostgreSQL deployment.
