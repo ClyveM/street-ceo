@@ -1,2 +1,2 @@
 /** Visible identifier for the phone recovery candidate; APK checksum remains the exact artifact identity. */
-export const DEMO_BUILD_LABEL = 'NAPO-RETRY-001'
+export const DEMO_BUILD_LABEL = 'SHORT-VOICE-TRAIN-001'

@@ -1,3 +1,4 @@
+import { spokenPaymentQuestion, SALE_SAVED_SPEECH } from './voicePrompts'
 import { catalogueReplyEvent, readPronunciation, WakeCommand } from './wakePhrase'
 import { EndDayContent, useEndDay } from './EndDay'
 import { canStartEndDay, endDayCommand } from './reportsClose'
@@ -107,9 +108,9 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
     setReview(basket); setOpen(true); setQuestionUnavailable(false)
     if (result.kind === 'question') {
       if (uncertain) { setQuestion(null); setPhase('error'); setError('Recovery returned a payment question, not a saved receipt. The earlier sale outcome remains unverified. Keep this original request for investigation.'); prompt('No saved receipt was received. Keep the original request and check the shop connection before recovering again.'); return }
-      setQuestion(result); setAnswer(''); setPhase('tender'); prompt(result.question)
+      setQuestion(result); setAnswer(''); setPhase('tender'); prompt(spokenPaymentQuestion(result))
     }
-    else { setUncertain(false); setReceipt(result.sale); setLatestReceipt(result.sale); setQuestion(null); setPhase('success'); onConfirmed(result.sale); prompt(`Sale saved. Total ${money(result.sale.total_cents)}. Change ${money(result.sale.change_cents)}.${handsFreeState.current ? ' Say Apo for the next sale.' : ''}`) }
+    else { setUncertain(false); setReceipt(result.sale); setLatestReceipt(result.sale); setQuestion(null); setPhase('success'); onConfirmed(result.sale); prompt(SALE_SAVED_SPEECH) }
   }
   const process = async (raw: string, signal: AbortSignal, supplied?: VoiceReview, clarificationOf?: string, conversationReply = false) => {
     if(endDayCommand(raw)) { if(canStartEndDay({phase,busy:false,blocked,uncertain,manualBasket})) { setOpen(false); await endDay.start(); return } setError('Finish or cancel the current basket before starting End my day.'); prompt('Finish or cancel the current basket first.'); return }

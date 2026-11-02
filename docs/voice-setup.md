@@ -16,6 +16,23 @@ Match, payment and day-close replies remain on their existing paths. Generic
 trailing Apple is not treated as an end word. Profile pronunciation setup is
 personal phrase matching, not training the speech provider's model.
 
+## Short conversations and five-sample Napo setup
+
+The payment-choice screen keeps its full visible question, while Apo says only
+“Cash or bank?” A confirmed saved sale says “Sale saved.” Totals, amount received
+and change remain visible on the receipt; other clarification/error prompts stay
+specific to the answer needed.
+
+In Profile, use Napo pronunciation setup to capture five samples. Review what
+the recognizer heard for each sample. Valid distinct phrases are retained as
+personal end-word aliases on that device; repeated recognitions count as samples
+without duplicating aliases. Existing saved pronunciation remains supported.
+For example, a tester can review and save “nepal”, “nepo” or “nopple” when that
+is what their recognizer produces. These are personal mappings, not global fuzzy
+matching or changes to Meta's speech model. Aliases close a command only at its
+end; ordinary product words inside the basket remain product text. Reset clears
+the personal mappings. Testers should repeat setup on their own device/browser.
+
 Street CEO uses Meta Llama for understanding the transcript of a short shop
 command. The Apo/Napo state machine remains responsible for wake/end words,
 confirmation, stock checks, and posting a sale. This prevents a model response

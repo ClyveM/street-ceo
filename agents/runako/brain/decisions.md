@@ -93,3 +93,5 @@ Serverownsreportpreset/businessdate/TZ/expectedcash/version; clientonlyformatand
 
 ## 2026-11-02 NAPO-RETRY-001
 Clarificationmayacceptbareanswersorintentionalfullretry. Leadingknownwakeandterminalknownenddefineframe; neverremovegenerictrailingapple. Bufferfinalchunksuntilclosingword; preserveoriginalreviewcontextandexplicitYes. Nappleterminalaliasonly; longestpersonalaliasesfirst. LegacyApo…Apocompatibilityhelperonly, noglobalendexpansion.
+
+2026-11-02 SHORT-VOICE-TRAIN: additive v1napoAliases keepslegacyaliases; five reviewed samples atomic onfifth withduplicatescount, max10personalvariants. No fuzzyglobalnepal. Speechseparatefromvisiblepaymentquestion; savedreceiptvoice exactlySale saved.

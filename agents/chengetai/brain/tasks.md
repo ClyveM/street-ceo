@@ -184,3 +184,9 @@ Review Ungwaru waitbudget24s/catalogueHTTP25s vs existing frontend30s request. S
 
 ### DEMO-MUSE-WAIT-QA-001 completed — PASS
 117 focused tests passed4.10s;24sresolver/25scatalogueHTTP vs30sfrontend, generalMuse20s and local/safety guards preserved. Handoff persisted; activation root, no activeQA processes.
+
+## Assigned by Mutungamiri — 2026-11-02 SHORT-VOICE-TRAIN-QA-001
+Independent QA of Runako shortspoken Cashorbank/Salesaved +Profile5Naposamples and allsavedaliases persisted/migrated/reflectedSell. Tests/ scope; readonlyfrontendimplementation. Loadactivationprotocol/role6brains docsboard. Verify command terminalonly aliases and longestmatch, conflicts/badinput/dedup/cancel/reset/storagefailure, no productwordloss/partial basket/sale duringtraining, sharedhandsfree/TTSrecover. Sourcefocusedtests+type/build asappropriate, mockASRDOM iffeasible. Waitfinalsourcehandoff. No liveAPI/provider/nativefinancialmutation. PersistQAhand off. Rootgo packaging afterwards.
+
+### SHORT-VOICE-TRAIN-QA-001 completed — PASS
+24focused tests +builtDOM5sample/rearm/duplicate/cancel/storagefail/reload/reset/zeroPOSTpass. Owner137frontend/build attributed. Handoff persisted, rootpackaging/physical separate; no activeQA processes.

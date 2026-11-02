@@ -1,13 +1,24 @@
-export type Pronunciation = { apo: string; napo: string }
+export type Pronunciation = { apo: string; napo: string; napoAliases?: string[] }
+export const PRONUNCIATION_EVENT = 'street-ceo-pronunciation-changed'
+export const NAPO_SAMPLE_COUNT = 5
+export function napoAliases(value: Pronunciation): string[] { return [...new Set(['napo', 'nabo', 'napple', value.napo, ...(value.napoAliases ?? [])].filter(validAlias).map(words))] }
+export function addNapoSamples(value: Pronunciation, samples: string[]): Pronunciation {
+  if (samples.length !== NAPO_SAMPLE_COUNT || samples.some(sample => !validAlias(sample))) throw new Error('Review five short Napo samples before saving.')
+  const aliases = [...new Set([...(value.napoAliases ?? []), ...samples.map(words)])]
+  if (aliases.length > 10) throw new Error('Ten saved variations already. Reset pronunciation to replace them.')
+  const next = { ...value, napoAliases: aliases }
+  if (conflictingAliases(next)) throw new Error('Apo and Napo must be distinct: neither phrase can begin with the other.')
+  return next
+}
 export const PRONUNCIATION_KEY = 'street-ceo-pronunciation-v1'
 export const words = (value: string) => value.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim().replace(/\s+/g, ' ')
 export function validAlias(value: string) { const clean = words(value); return /^[a-z]+(?: [a-z]+){0,2}$/.test(clean) && clean.length <= 30 }
 export function conflictingAliases(value: Pronunciation) {
-  const starts = ['apo', 'apple', value.apo].map(words), ends = ['napo', 'nabo', 'napple', value.napo].map(words)
+  const starts = ['apo', 'apple', value.apo].map(words), ends = napoAliases(value)
   return starts.some((start) => ends.some((end) => start === end || start.startsWith(`${end} `) || end.startsWith(`${start} `)))
 }
 export function readPronunciation(storage?: Pick<Storage, 'getItem'>): Pronunciation {
-  try { const value = JSON.parse(storage?.getItem(PRONUNCIATION_KEY) ?? '{}'); const result = { apo: validAlias(value.apo ?? '') ? words(value.apo) : 'apo', napo: validAlias(value.napo ?? '') ? words(value.napo) : 'napo' }; return conflictingAliases(result) ? { apo: 'apo', napo: 'napo' } : result } catch { return { apo: 'apo', napo: 'napo' } }
+  try { const value = JSON.parse(storage?.getItem(PRONUNCIATION_KEY) ?? '{}'); const result = { apo: validAlias(value.apo ?? '') ? words(value.apo) : 'apo', napo: validAlias(value.napo ?? '') ? words(value.napo) : 'napo' }; const aliases = Array.isArray(value.napoAliases) ? value.napoAliases.filter((item: unknown) => typeof item === 'string' && validAlias(item)).slice(0, 10).map(words) : []; const extended = aliases.length ? { ...result, napoAliases: [...new Set<string>(aliases)] } : result; return conflictingAliases(extended) ? { apo: 'apo', napo: 'napo' } : extended } catch { return { apo: 'apo', napo: 'napo' } }
 }
 export class WakeCommand {
   body = ''
@@ -22,7 +33,7 @@ export class WakeCommand {
     if (this.awake && now - this.startedAt > 20000) this.reset()
     const tokens = text.toLowerCase().replace(/(\d)\.(?=\d)/g, '$1decimalmark').replace(/[^a-z0-9\s-]/g, ' ').replace(/decimalmark/g, '.').trim().split(/\s+/).filter(Boolean)
     const starts = [...new Set(['apo', pronunciation.apo])].map((s) => s.split(' ')).sort((a,b)=>b.length-a.length)
-    const ends = [...new Set(['napo', 'nabo', 'napple', pronunciation.napo])].map((s) => s.split(' ')).sort((a,b)=>b.length-a.length)
+    const ends = napoAliases(pronunciation).map((s) => s.split(' ')).sort((a,b)=>b.length-a.length)
     const match = (at: number, choices: string[][]) => choices.find((part) => part.every((token, i) => tokens[at + i] === token))
     for (let i = 0; i < tokens.length; i++) {
       const end = match(i, ends), start = match(i, starts)
