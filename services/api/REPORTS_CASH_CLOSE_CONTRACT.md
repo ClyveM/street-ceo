@@ -85,3 +85,10 @@ its legacy bank figures carry an explicit recorded-estimate warning.
 
 Month-end stock take is an optional separate reviewed inventory workflow. It is
 not required for cash close and does not invent sales, refunds or cash movements.
+
+## 2026-11-02 — Product gross profit (PRODUCT-PROFIT-API-001)
+Existing GET reports/sales adds these fields to summary and every products row:
+- gross_profit_micros: integer|null; exact historical revenue_cents * 10,000 minus saved COGS micros, only when both are complete.
+- margin_bps: integer|null; ROUND_HALF_UP(gross_profit_micros * 10,000 / revenue_micros), nearest basis point with symmetric ties away from zero. 100 bps = 1%. Undefined (null) at zero revenue or incomplete evidence. Losses are signed and never clamped.
+Summary uses exact aggregate recorded revenue/COGS before computing its margin, never an average of product margins. Existing known subtotals are not promoted to complete profit. A product with missing legacy revenue or cost has both new fields null; another fully known product remains reportable. Complete aggregate sale COGS can support summary gross profit even when a legacy mixed receipt lacks per-product allocations. No-sales complete summary has gross profit zero and undefined margin.
+Gross profit excludes operating expenses; this is not net profit or a stock valuation. Existing stock-only Undo disclosure and gross revenue treatment remain. Product names/costs/prices come from saved receipt evidence where available, with existing legacy label warnings, never repriced from current catalogue.

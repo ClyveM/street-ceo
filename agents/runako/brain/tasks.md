@@ -305,3 +305,10 @@ Owner standaloneStockCount page withStart stockcounttop historicalcountsbelow. R
 STOCK-COUNT-HISTORY-UX-001 sourcefrozen144frontendPASS/build73modules shop-CwgRw3nQ.js; QA/screens/rootGO pending.
 
 STOCK-COUNT-HISTORY-UX-001 software/packagecomplete7172841bytes SHA256d08bbd5c6470d324f33bf724049601f2bca0bbb96583314a3ce158c8b5259a80; samekey/7assetsPASS; physicalacceptanceOwner.
+
+## Assigned by Mutungamiri — 2026-11-02 PRODUCT-PROFIT-UX-001
+Owner addsProfitbyproduct Reports. Runakoapps/web Reportsscopeclienttypes/parsers/helpers/reportCSS/buildInfo/tests. KeepcleanbrandedReports; pageheadingReports, clearSales/Profitselector sharedperiods. Profitview summary revenue/recordedCOGS/grossprofit/margin +perproduct qtysalescostgrossprofitmargin, rank grossprofit completefirstunknownhonest; showlossnegative/zeromarginundefined, incompletevisible no fakezero. NewAPIadditive summary/product nullablegross_profit_micros/margin_bps; productcogs existsalready addparse. BigIntvalidatemath/safeints no currentcataloguecostprofit. Explain grossprofit beforeexpenses; no arbitraryexpensesallocation/netprofitclaim. Ruzivopolicy pendingrounding. ExistingSales/StockCount/EndDayunchanged. FrozenbuildQA/finance thenrootpackaginggo generatedAndroidscope samecert/API8001 labelPRODUCT-PROFIT-001. Followactivation/persistbrains/handoff. No backend/native/livefinancialposts.
+
+PRODUCT-PROFIT-UX-001 sourcefrozen150frontendPASS/build74modules shop-aJiWshyF.js; QAfinance/screens/rootGO pending.
+
+PRODUCT-PROFIT-UX-001 software/packagecomplete7174651bytes SHA256843db5f53cd586cb17a4c4f422a2ec92b4eddcfba7a1b05011a331eae57abee6; samekey/7assetsPASS; physicalacceptanceOwner.

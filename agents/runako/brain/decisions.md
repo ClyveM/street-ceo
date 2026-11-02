@@ -99,3 +99,5 @@ Clarificationmayacceptbareanswersorintentionalfullretry. Leadingknownwakeandterm
 2026-11-02 REPORTS-POLISH: Todaydefault explicitlylabelled; selection-keyed report preventsstale periodmislabel; draftsseparate. Grosssales notprofit; incompletecostvisible whilecoverage/auditdetailssecondary. PreserveEndDaystylesunchanged. MonthstockcountonlyinMonthreview.
 
 2026-11-02 STOCK-COUNT-HISTORY: dedicatedpageoneflow, GETlist+freshitemonopen, expected_snapshot authoritative/currentlabelsdisclosed. Draftresumealwaysfreshack; uncertainconfirmationmustreloadverified andrefreshcatalogueifconfirmed, navigationblockeduntilknown. Historydifferencescountproductsnotnetunits.
+
+2026-11-02 PRODUCT-PROFIT: sharedReportsperiods/optionaladditivefields preserveSalesoldbackend, missingprofitIncomplete. BigIntvalidate exactGP/signedHALF_UPbasispoints. MoneycentHALF_UP tinyknownlossmarkedLoss<USD0.01 withexact6details. Grossprofitbeforeexpenses, no allocation/netclaim.

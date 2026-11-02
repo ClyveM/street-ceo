@@ -104,7 +104,7 @@ try:
         page.goto(f'http://127.0.0.1:{server.server_port}', wait_until='domcontentloaded')
         page.locator('nav[aria-label="Main navigation"] button').filter(has_text='Reports').click()
         reports = page.locator('.reports-page')
-        expect(reports.get_by_role('heading', name='Sales reports', exact=True)).to_be_visible()
+        expect(reports.get_by_role('heading', name='Reports', exact=True)).to_be_visible()
         expect(page.locator('.welcome')).not_to_be_visible()
         expect(reports.locator('.reports-brand img')).to_have_count(0)
         expect(reports).to_contain_text('USD 87.00')

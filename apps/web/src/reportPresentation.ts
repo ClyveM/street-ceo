@@ -9,3 +9,19 @@ export function missingCostMessage(summary: SalesReport['summary']): string | nu
  if(summary.missing_cogs_sale_count > 0) return `Cost missing for ${summary.missing_cogs_sale_count} ${summary.missing_cogs_sale_count === 1 ? 'sale' : 'sales'}. Profit is incomplete.`
  return summary.cogs_micros === null ? 'Some saved costs are unknown. Profit is incomplete.' : null
 }
+
+export function rankedProfitProducts(products: SalesReport['products']): SalesReport['products'] {
+ return [...products].sort((a,b)=>{const x=a.gross_profit_micros,y=b.gross_profit_micros;if(typeof x!=='number'&&typeof y==='number')return 1;if(typeof x==='number'&&typeof y!=='number')return -1;if(typeof x==='number'&&typeof y==='number'&&x!==y)return x>y?-1:1;return a.product_name.localeCompare(b.product_name)})
+}
+/** Integer HALF_UP at a cent; tiny known losses remain visible rather than -0.00. */
+export function reportMicroAmount(micros:number|null|undefined,currency:string):string {
+ if(typeof micros!=='number')return 'Incomplete'
+ const n=BigInt(micros),abs=n<0n?-n:n,cents=(abs+5000n)/10000n
+ if(abs>0n&&cents===0n)return `${n<0n?'Loss <':'<'} ${currency} 0.01`
+ return `${currency} ${n<0n?'-':''}${cents/100n}.${String(cents%100n).padStart(2,'0')}`
+}
+export function reportMargin(bps:number|null|undefined,revenue:number|null,profit:number|null|undefined):string {
+ if(typeof bps!=='number')return typeof profit==='number'&&revenue===0?'Not defined':'Incomplete'
+ const n=BigInt(bps),abs=n<0n?-n:n
+ return `${n<0n?'-':''}${abs/100n}.${String(abs%100n).padStart(2,'0')}%`
+}

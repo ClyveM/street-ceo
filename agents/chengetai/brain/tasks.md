@@ -210,3 +210,9 @@ IndependentQA APIlistshopisolation/newest/reopen no mutation; frontend standalon
 
 ### STOCK-COUNT-HISTORY-QA-001 completed — PASS
 22APItests6.28s +actualDOM320390 Start/history/draftack/confirm/reopenreadonly/503recoveryglobalguards/Reportslink/error/blanknotzero pass. Topviewports data/qa-stock-count-history-20261102/history-top-{390,320}.png. Handoffpersisted, packaginggo, no activeQA.
+
+## Assigned by Mutungamiri — 2026-11-02 PRODUCT-PROFIT-QA-001
+IndependentQA Hwaro exactread-onlysummary/productgrossprofit/margin andRunakoSales/Profit mobileUI. Followactivation6brains/docsboard. Tests/ ownscope readonlyimplementation. Ruzivopolicy grossprofitmicros exactrevenue*10000-cogs completeonly; marginbps DecimalROUND_HALF_UP signednullzerorevenue/unknown, nosumrounded/noexpensealloc. Tests complete/mixedunknowncost+revenue/legacy/costedloss/zerorevenue/zeroSales/currentcatalogueedits/TZ/dedup/stockUndo unchanged, parsergrossprofitvalidation. BuiltDOM320390views/datefilters/loss/unknown/empty/error screenshotsroot, Sales/EndDayStockCountregressionsappropriate. No livefinancialmutation/cloud. Awaitsourcefreeze; finalfinance approval neededbeforeactivationpackaging. Persisthandoff.
+
+### PRODUCT-PROFIT-QA-001 completed — PASS
+46API2.17s/10client246.91ms/finalBfx1YKMZ+B8gz1mm9builtProfit+Sales/EndDayDOMpass;320390singlelinemargins/screensdata/qa-product-profit-20261102. Missingcostmetadata-omittedguardfixed/retested. Handoffpersisted noactiveQA; rootfinance/visual/packagego.

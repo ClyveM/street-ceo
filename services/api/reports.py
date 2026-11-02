@@ -4,6 +4,22 @@ from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 
+def _gross_profit(revenue_cents, cogs_micros):
+    """Exact saved-cost gross profit; nearest basis point, ties away from zero."""
+    if revenue_cents is None or cogs_micros is None:
+        return {"gross_profit_micros": None, "margin_bps": None}
+    revenue_micros = revenue_cents * 10_000
+    profit = revenue_micros - cogs_micros
+    if revenue_micros == 0:
+        margin = None
+    else:
+        numerator = abs(profit) * 10_000
+        quotient, remainder = divmod(numerator, revenue_micros)
+        rounded = quotient + (2 * remainder >= revenue_micros)
+        margin = -rounded if profit < 0 else rounded
+    return {"gross_profit_micros": profit, "margin_bps": margin}
+
+
 def sales_report(record, start_date=None, end_date=None, preset=None, month=None):
     zone = ZoneInfo(record.shop.timezone)
     today = datetime.now(zone).date()
@@ -84,6 +100,7 @@ def sales_report(record, start_date=None, end_date=None, preset=None, month=None
     for item in products.values():
         item["revenue_cents"] = None if item["unknown_revenue_line_count"] else item["known_revenue_cents"]
         item["cogs_micros"] = None if item["unknown_cogs_line_count"] else item["known_cogs_micros"]
+        item.update(_gross_profit(item["revenue_cents"], item["cogs_micros"]))
     reversals = [item for item in record.voice_sale_reversals.values() if start <= item.created_at < end]
     if reversals:
         warnings.append("Stock-only reversals are listed separately; they do not establish a cash refund or reduce gross sales.")
@@ -94,5 +111,5 @@ def sales_report(record, start_date=None, end_date=None, preset=None, month=None
     if any(item["label_source"] != "latest_receipt_snapshot" for item in products.values()):
         warnings.append("Some product labels use the current catalogue because the old receipt did not save a label.")
     return {"start_date": start_date.isoformat(), "end_date": end_date.isoformat(), "coverage_end_date": min(end_date, today).isoformat(), "coverage": coverage, "as_of": now.isoformat(), "shop_timezone": record.shop.timezone, "currency": record.shop.currency,
-            "summary": {"sales_total_cents": sum(sale.total_cents for sale in receipts), "transaction_count": len(receipts), "cash_sales_cents": tenders["cash"], "bank_sales_cents": tenders["bank"], "other_tender_sales_cents": sum(value for key, value in tenders.items() if key not in {"cash", "bank"}), "cogs_micros": None if unknown_cogs else known_cogs, "known_cogs_micros": known_cogs, "missing_cogs_sale_count": unknown_cogs, "unallocated_product_revenue_cents": unallocated_revenue},
+            "summary": {"sales_total_cents": sum(sale.total_cents for sale in receipts), "transaction_count": len(receipts), "cash_sales_cents": tenders["cash"], "bank_sales_cents": tenders["bank"], "other_tender_sales_cents": sum(value for key, value in tenders.items() if key not in {"cash", "bank"}), "cogs_micros": None if unknown_cogs else known_cogs, "known_cogs_micros": known_cogs, "missing_cogs_sale_count": unknown_cogs, "unallocated_product_revenue_cents": unallocated_revenue, **_gross_profit(sum(sale.total_cents for sale in receipts), None if unknown_cogs else known_cogs)},
             "daily": [{"business_date": key, **value} for key, value in sorted(daily.items())], "monthly": [{"month": key, **value} for key, value in sorted(monthly.items())], "products": sorted(products.values(), key=lambda item: item["product_id"]), "stock_reversal_count": len(reversals), "warnings": warnings}

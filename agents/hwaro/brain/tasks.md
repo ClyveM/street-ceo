@@ -331,3 +331,8 @@ MUSE-SALES-ANSWERS-001 source frozen 2026-11-02:17focusedPASS2.19s; independentQ
 Owner wants standaloneStockCount page starttop/historybelow. Hwaro scope services/api/app.py GET /api/v1/shops/{shop_id}/stock-takes list actualsavedrecords newestfirst deterministic stableorder; existingshop_scope; no confirmation/movementmath change. Followactivation6brains/docsboard. Return list[StockTakeRecord] matchingexistingGETitem shape, uniqueactualrecords, draft+confirmed, nofakehistory. Testscope/ordering/reopenSQLite/no mutation. No livefinancialposts/restart. Handoff exactcontract toRunako/root. Persistmemory.
 
 STOCK-COUNT-HISTORY-API-001 sourcecomplete/frozen2026-11-02:19affectedPASS9.98s+final1PASS2.36s; rootQA/integrationpending.
+
+## Assigned by Mutungamiri — 2026-11-02 PRODUCT-PROFIT-API-001
+Owner profitbyproduct report. Hwaro services/api/reports.py/app.py ifneeded/contract+focusedtests singlewriter. Followactivation6brains/docsboard. Add nullable gross_profit_micros and margin_bps tosummary/productrows existingreport using historicalcomplete revenue/COGS only (micros exact signed), marginundefined0revenue, negativeprofits valid, noexpensesallocated ornetprofitclaim. CoordinateRuzivopolicy rounding; missingcost/revenue nullable no currentcostreprice, legacyoneproduct exactlyattributable/mixedunknown, preserveexistingreport totals/TZ/dedup/futurereceipts. Contract immediatelytoRunako. No livefinancialmutation/restart/cloud. Financialfinalreviewrequired. Persisthandoff/tests.
+
+PRODUCT-PROFIT-API-001 sourcefrozen2026-11-02:18affectedPASS1.79s; QA/finalfinance/rootintegrationpending.
