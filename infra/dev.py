@@ -45,6 +45,7 @@ def main():
         environment.setdefault("STREET_CEO_LOCAL_TEAM_ENABLED", "0")
         environment.setdefault("STREET_CEO_SEED_DEMO", "1")
         environment.setdefault("STREET_CEO_VOICE_ENABLED", "1")
+        environment.setdefault("STREET_CEO_CONSOLE_TRACE", "detail")
         run([PYTHON, "-m", "uvicorn", "services.api.app:app", "--host", "127.0.0.1", "--port", "8001", "--workers", "1"], env=environment)
     else:
         environment = os.environ.copy()

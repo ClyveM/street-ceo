@@ -172,3 +172,9 @@ Fullactivation tests/infra/CI ownbrain readonlyproduct. Independentterminalnappl
 ### NAPO-RETRY-QA-001 completed — targeted source/software PASS
 Own8+ownerfocused43pass; broader57pass453.1658ms. Report infra/napo-retry-qa-001.md andhandoffpersisted. Rootartifact/phone acceptance separate, no activeQA processes.
 
+
+## Assigned by Mutungamiri — 2026-11-02 TERMINAL-MUSE-QA-001
+After Hwaro TERMINAL-MUSE-001 handoff, independently review and test console tracing. Read activation protocol/own role/six brains/docs/master board. Read-only implementation review services/ai/console_trace.py,tracing.py, services/api/sqlite_store.py, infra/dev.py,.env.example; test ownership tests/ allowed if needed. Verify real isolated SQLite API local/mocked provider paths, named basket, truthful provider vs accepted proposal and timing, off/normal/detail, ANSI/credentials/PII sanitization and bounded payload, persistent logs unaffected, console failure cannot change outcomes. No real provider/live data mutation/restart. Root will notify when ready. Persist QA handoff.
+
+### TERMINAL-MUSE-QA-001 completed — PASS
+37 final affected tests passed7.72s; 5 independent acceptance cases, oversized honest-display finding fixed/retested. See own handoff. Runtime activation root; no active QA processes.

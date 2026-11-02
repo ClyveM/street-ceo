@@ -198,7 +198,7 @@ class SQLiteTransactionMiddleware(BaseHTTPMiddleware):
             except _RollbackResponse:
                 if traced:
                     try:
-                        trace_store.record({"correlation_id": correlation_id, "shop_id": shop_id, "operation": operation, "phase": "failed", "status_code": response.status_code, "response": json.loads(content), "source": "api"})
+                        trace_store.record({"correlation_id": correlation_id, "shop_id": shop_id, "operation": operation, "phase": "failed", "status_code": response.status_code, "response": json.loads(content), "source": "api", "duration_ms": round((time.monotonic() - started) * 1000), "provider_called": actual_provider_called})
                     except Exception:
                         return JSONResponse({"detail": "Request logging unavailable; no changes were committed"}, status_code=503)
                     response.headers["X-Correlation-ID"] = correlation_id
@@ -206,7 +206,7 @@ class SQLiteTransactionMiddleware(BaseHTTPMiddleware):
             except Exception:
                 if traced:
                     try:
-                        trace_store.record({"correlation_id": correlation_id, "shop_id": shop_id, "operation": operation, "phase": "failed", "error_type": "transaction_or_trace_failure", "source": "api"})
+                        trace_store.record({"correlation_id": correlation_id, "shop_id": shop_id, "operation": operation, "phase": "failed", "error_type": "transaction_or_trace_failure", "source": "api", "duration_ms": round((time.monotonic() - started) * 1000)})
                     except Exception:
                         pass  # Preserve the controlled 503 even when the audit device fails.
                 detail = "Receipt logging failed after commit; retry with the same Idempotency-Key" if committed else "SQLite transaction failed; no changes were committed"

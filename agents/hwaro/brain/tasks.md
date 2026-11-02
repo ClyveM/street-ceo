@@ -316,3 +316,8 @@ Fullactivation APIscope ownbrain. Ownerrequests mobilemonthlysalessummary/produc
 REPORTS-CLOSE-API-001 source frozen2026-11-02: exactcontractdoc, ownpure13PASS4.78s/compile/diffPASS; parentfullintegration+Ruzivoactualcodereview pending. No liveDB/restart.
 
 REPORTS-CLOSE-API-001 final financial blocker repaired2026-11-02: explicitopening generic bypass closed afterlegacyreplay; future actualcash guarded+previewexcluded; own15focusedPASS3.97s, parentaffectedtests/finalfinancialsignoffpending. Source frozen.
+
+## Assigned by Mutungamiri — 2026-11-02 TERMINAL-MUSE-001
+Implement Owner-approved readable backend terminal logging: heard transcript, local vs provider routing, actual sanitized provider request/response in demo detail mode, durations, validated basket product names/qty and clarification/failure honesty. Modes off/normal/detail via STREET_CEO_CONSOLE_TRACE; development launcher defaults detail for requested demo, direct API normal default. No secrets/raw ANSI/control injection; bounded safe printable output, correlated concurrent requests, no sale behavior change. Temporary explicit scope extension: services/ai/tracing.py, new services/ai/console_trace.py, services/api trace middleware/app hooks as necessary, infra/dev.py defaults, .env.example and focused tests. Single writer all listed paths. Load AGENTS, own role/six brains, relevant docs and master board. Persist handoff/tests. Do not restart live API or call paid provider. Root owns docs.
+
+TERMINAL-MUSE-001 source frozen 2026-11-02: focused31 PASS5.89s; root QA/activation pending; no live mutation.

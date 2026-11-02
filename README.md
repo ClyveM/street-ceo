@@ -57,6 +57,10 @@ to values enabled for your Meta account. Restart the API. Keys stay on the
 backend; never put them in `VITE_` variables. Without a key, manual sales and
 exact/local catalogue paths remain usable; cloud-only checks report unavailable.
 
+The API development terminal shows local versus Muse handling, timing and
+sanitized request/response details. See [terminal activity logging](docs/terminal-muse-logging.md)
+for output modes and watching the background demo server.
+
 Native Android speech uses the phone's recognition and text-to-speech. A browser
 needs microphone permission and supported speech APIs; remote HTTP microphone
 access may be restricted. Typing remains available. The full hands-free demo

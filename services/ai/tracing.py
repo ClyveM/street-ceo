@@ -126,6 +126,14 @@ class SQLiteTraceStore:
         with closing(self._connect()) as connection, connection:
             connection.execute("INSERT INTO muse_trace_events VALUES (?, ?, ?, ?)",
                                (event["event_id"], safe["correlation_id"], event["created_at"], json.dumps(safe)))
+        try:
+            try:
+                from .console_trace import emit_console_trace
+            except ImportError:  # unittest discovery with services/ai on sys.path
+                from console_trace import emit_console_trace
+            emit_console_trace(safe)
+        except Exception:
+            pass  # Console display is optional; persisted audit succeeded.
         return event["event_id"]
 
     def read(self, correlation_id: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
