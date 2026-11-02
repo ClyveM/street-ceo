@@ -303,3 +303,5 @@ Source/buildfrozen; root/Hwaro/Ruzivonotified. No livebackfill/backenddurability
 2026-11-02 QUANTITY-REPLY-UX-001 COMPLETE/frozen: actualspeechReady/modalfeedback, terminalhandler-settlementrearm+postTTSreplyTurn, foregroundguards.122frontendPASS/66moduleAPI8001build shop-D8flaUN9.js; buildQUANTITY-REPLY-001. Nativeonlyreadyemit; rootpackages. Originalphonecauseunproven; physicalbareone→Yes→paymentretestrequired. Finalhandoffpersisted.
 
 2026-11-02 REPORTS-CLOSE-UX-001 SOURCEFROZEN:129frontendPASS/69moduleAPI8001build shop-BlQoqAAb.js,labelREPORTS-CLOSE-001. Reportsserverdates/month/productunknowns; sharedvoiceEndmydaycashfirst/openingYes/finalYes/bankunknown/samekeyrecovery; CountorSkip. FinalDOMhostrerun/financeQA/rootpackagingpending. Handoffpersisted; noactivecommands/live/native/SWwrites.
+
+2026-11-02 NAPO-RETRY-001 COMPLETE/sourcefrozen: terminalnapple+longestpersonalaliases; catalogueclarification framedretrybuffer/typednormalization; legacyApo…Apohelperonly; appleproductwordspreserved.132frontendPASS/69moduleAPI8001build shop-BCeIFwuy.js,labelNAPO-RETRY-001. RootQAack/package/physicalretestpending; no native/backend/financial changes.

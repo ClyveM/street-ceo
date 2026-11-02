@@ -1,5 +1,21 @@
 # Apo/Napo voice setup
 
+## Current app framing and retries — 2026-11-02
+
+The Android APK uses native foreground recognition/TTS; the web app uses supported
+browser speech APIs. Both normalize recognized control words before submitting
+the product request. Apo (or leading Apple) starts capture; terminal Napo, Nabo
+or Napple closes it. Saved personal phrases remain supported, with longest
+matching phrases taking precedence. Ordinary/internal Apple stays product text.
+
+Catalogue questions accept a bare quantity or a complete framed retry. A retry
+such as recognized “Apple one bath soap napple” is buffered across speech chunks
+and canonicalized; control words do not become unknown products. Incomplete
+framed retries wait for the end word rather than submit a partial basket.
+Match, payment and day-close replies remain on their existing paths. Generic
+trailing Apple is not treated as an end word. Profile pronunciation setup is
+personal phrase matching, not training the speech provider's model.
+
 Street CEO uses Meta Llama for understanding the transcript of a short shop
 command. The Apo/Napo state machine remains responsible for wake/end words,
 confirmation, stock checks, and posting a sale. This prevents a model response

@@ -50,4 +50,4 @@ jobs:
         working-directory: apps/web
         run: npm run build
       - name: Independent client acceptance
-        run: node --experimental-strip-types --test tests/catalogue_voice_client.mjs tests/counter_polish_client.mjs tests/phone_recovery_client.mjs tests/quantity_reply_client.mjs tests/reports_close_client.mjs
+        run: node --experimental-strip-types --test tests/catalogue_voice_client.mjs tests/counter_polish_client.mjs tests/phone_recovery_client.mjs tests/quantity_reply_client.mjs tests/reports_close_client.mjs tests/napo_retry_client.mjs

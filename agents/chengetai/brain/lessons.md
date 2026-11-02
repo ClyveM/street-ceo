@@ -46,3 +46,7 @@ A final-answer latch must suppress duplicate dispatch without suppressing foregr
 ## 2026-11-02 — REPORTS-CLOSE-QA-001
 Read complete financialcalculator control flow before flagging preliminary values: later validatedcashoverride replaced legacycash result, and QA correctedpartialread. Test API/UI shapes using authoritative auditreason normalization, nullhistoricalSKU/unknownpayment andother-tender totals. New guardedendpoint is insufficient ifgenericmutation can bypass it; preserve exactoldreplay before rejecting newcashopenings/futureactuals. Source/tests/DOM do not establish physicalphone orbank/fullledger acceptance.
 
+
+## 2026-11-02 — NAPO-RETRY-QA-001
+A reply-mode directfinal path can bypass wake-frame normalization even when idleframing works. Test question→full/splitframedretry using realhelpers and recognizerrestarts. Prefer longestvalidpersonalalias overdefaultprefix, keep ordinaryproductwords, and preserve exactlegacytypedcompat without adding arbitraryglobalendaliases. Sourcefix is not proof of completephonecause.
+

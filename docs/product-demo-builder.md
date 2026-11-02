@@ -78,7 +78,7 @@ Example:
 Required behavior:
 
 - Apo begins a command; a leading Apple is a supported recognizer alias. Napo,
-  or terminal Nabo, ends it. Personal pronunciation setup remains available.
+  or terminal Nabo/Napple, ends it. Personal pronunciation setup remains available.
 - During a question, simply accept Yes/No/Cancel, a quantity, Cash/Bank or an
   amount. No new wake phrase or enable button is required for each answer.
 - A bare wake event can dismiss a completed receipt. Preserve following product

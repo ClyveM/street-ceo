@@ -164,3 +164,11 @@ Pure11+client12combined pass;2HTTP rootrunready/CI updated. Report infra/reports
 ### REPORTS-CLOSE-QA-001 completed — final source/software PASS
 Finalroot333postguardPython/129frontend/12client/DOMPASS, own13purePASS. Ruzivofinalapprovewithconditions. Report/handoffpersisted, rootruntimeAPK/phone acceptance separate. No activeQA processes.
 
+
+
+## Assigned by Mutungamiri — 2026-11-02 NAPO-RETRY-QA-001
+Fullactivation tests/infra/CI ownbrain readonlyproduct. Independentterminalnapple vsinternalapple safeguards, fullframedretryduringclarification vsbareone/Yes/Cash, splitASRutterances/framing/ownTTS/background/uncertainguards. Roottraces rawApple..napple whilequestion, latestreportsdidnotchangeNapomatcher. No actualphonecauseguarantee. Testrealhelpers andDOMfakeASR ifneeded; no live financial/provider/restart/escalation. Rootnativepackage/readonlyAPI. Persisthandoff.
+
+### NAPO-RETRY-QA-001 completed — targeted source/software PASS
+Own8+ownerfocused43pass; broader57pass453.1658ms. Report infra/napo-retry-qa-001.md andhandoffpersisted. Rootartifact/phone acceptance separate, no activeQA processes.
+

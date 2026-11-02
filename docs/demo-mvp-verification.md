@@ -1,5 +1,38 @@
 # Connected SQLite APK demo — verified 2026-11-01
 
+## NAPO-RETRY-001 — framing correction, 2026-11-02
+
+The reports release did not change the Napo matcher, native recognizer or speech
+language. Recent traces instead contained `apple one bath soap napple` and another
+ambiguous Apple-ending phrase while catalogue clarification was active. The reply
+branch previously bypassed wake/end normalization and sent those control words
+as literal product input. The logs do not establish every current acoustic failure.
+
+Terminal Napple now closes like Napo/Nabo. Catalogue clarification accepts complete
+framed retries and buffers split recognizer finals until their end word. Bare
+quantities and cancellation remain direct. Ordinary/internal Apple is preserved;
+generic trailing Apple is not stripped. Longest matching personal boundaries take
+precedence, including phrases beginning with Napo/Napple. The existing complete
+legacy Apo...Apo reply is normalized only in clarification, not a global end alias.
+Match/payment/day-close routes, backend, financial rules and native speech are
+unchanged. Incomplete retry text remains visible and expires safely.
+
+Evidence: frontend **132 passed1056.46ms**; final QA speech/guard suite
+**57 passed**, including the legacy compatibility and personal-alias regressions.
+Root baseline **29 passed20.394s**. Frozen-build existing reports/closing DOM
+simulation passed full voice/recovery/next-Apo/report/mobile/count sequence. This
+is simulated recognition, not a physical-phone speech guarantee.
+
+Build69modules, `shop-BCeIFwuy.js`, NAPO-RETRY-001. APK **7,168,326 bytes**,
+SHA256 `b71dbe1266292b4c21ead9d5ff8f022130f05b42c3e002097a58792b5543f367`.
+Offline Gradle4s, v1/v2 signatures, ZIP/all7 current embedded files, label/API8001
+and metadata/download byte checks passed. Same download:
+http://192.168.10.213:8081/street-ceo.apk.
+
+API17580 stayed running; no restart, provider call, sale, close or stock change was
+needed. Web development source includes the same fix. Actual browser/phone
+recognition must be retested; unsupported ambiguous endings are not guessed.
+
 ## REPORTS-CLOSE-001 — mobile reports and spoken cash-close, 2026-11-02
 
 Apo listening/TTS runs in the Android foreground; the connected FastAPI runtime

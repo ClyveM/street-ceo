@@ -78,3 +78,5 @@ REPO-SHOP-UX-001/REPO-SHOP-API-001/REPO-CLEAN-QA-001/PRODUCT-DIAGRAM-001 andbuil
 QUANTITY-REPLY-UX-001/API-001/QA-001 softwarecomplete, packagedactivated; physicalacceptanceremainsrequired.
 
 REPORTS-CLOSE-API-001/UX-001/QA-001/REVIEW-001 softwarecomplete/activated+packaged withscopedfinanceapproval; physicalacceptance separate.
+
+NAPO-RETRY-001 andNAPO-RETRY-QA-001 sourcecomplete/tested/packaged; physicalweb/phoneASRretetst required.
