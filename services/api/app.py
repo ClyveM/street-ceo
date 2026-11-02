@@ -1625,6 +1625,10 @@ def create_app(
         now = datetime.now(timezone.utc)
         question = request.question
         lowered = question.lower()
+        from .sales_answers import repository_sales_answer
+        repository_answer = repository_sales_answer(question, record)
+        if repository_answer is not None:
+            return MuseAskResponse(**repository_answer)
         period_start = _muse_period_start(lowered, now)
         sales = [
             sale for _, sale in record.idempotent_sales.values()

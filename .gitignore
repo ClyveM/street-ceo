@@ -44,6 +44,7 @@ data/demo-launcher-state.json
 *.log
 *.tsbuildinfo
 .pytest-*/
+.pytest-*.sqlite3*
 .codex-remote-attachments/
 /data/
 

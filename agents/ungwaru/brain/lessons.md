@@ -50,3 +50,5 @@ Trace truncation must preserve sanitized routing metadata such as shop_id indepe
 
 ## 2026-11-02 — MUSE-OUTAGE-001
 Correlate caller deadline with eventual provider terminal event before calling an incident provider outage. An8s local deadline discarded a valid provider completion19.5s later. Keep outer/provider/client budgets aligned, bound lingering work and distinguish timeout/busy/config errors from product ambiguity.
+
+2026-11-02 MUSE-INSIGHT-SCHEMA-001: JSON-object responseformat guarantees syntax only, not applicationfields. An internal ProviderRequest.output_schema is ineffective unless the transport sends it to the model. Transmit explicit exactschema; keep strict downstream validation and test actual HTTPpayload, not merely requestobjects.

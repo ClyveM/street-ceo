@@ -47,6 +47,14 @@ For the Owner-approved longer-wait demo, catalogue interpretation can wait up to
 The terminal shows the actual provider and API durations. Waiting longer gives
 a slow response time to arrive; it does not guarantee a catalogue match.
 
+Straightforward sales totals and top-selling-product questions can be answered
+from connected sales reports without a model call. These answers identify their
+source as connected shop records, with the selected period and ranking basis.
+“Most selling” means units sold unless the question explicitly asks for revenue.
+Ties and no-sales periods must be shown honestly. Other supported model-backed
+questions still use Muse; its structured response must pass validation before
+being displayed. Model output is not accepted merely because it is valid JSON.
+
 Payloads reuse the investigation sanitizer: credentials, binary data and basic
 personal information are redacted, output is bounded and terminal control
 characters must not execute. The display shows what speech recognition supplied;

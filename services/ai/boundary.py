@@ -778,11 +778,27 @@ class StructuredAI:
             task="business_insight",
             system_instruction=(
                 "Return one structured insight only. Use only supplied evidence IDs and values. "
-                "Do not invent facts, prices, accounting treatment, or actions that post data."
+                "Do not invent facts, prices, accounting treatment, or actions that post data. "
+                "Return exactly kind, title, summary, evidence_ids, confidence, suggested_action. "
+                "Do not return an insight field. suggested_action must be a non-empty string, "
+                "never null; suggest a safe review action when no change is needed. "
+                "Cite at least one supplied evidence_id and use a numeric confidence from 0 to 1."
             ),
             untrusted_input=_text(request.question, "question", 300),
             trusted_context={"evidence": trusted},
-            output_schema={"type": "object", "required": ["kind", "title", "summary", "evidence_ids", "confidence", "suggested_action"]},
+            output_schema={
+                "type": "object", "additionalProperties": False,
+                "required": ["kind", "title", "summary", "evidence_ids", "confidence", "suggested_action"],
+                "properties": {
+                    "kind": {"type": "string", "enum": sorted(_INSIGHT_KINDS - {"unavailable"})},
+                    "title": {"type": "string", "minLength": 1, "maxLength": 120},
+                    "summary": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "evidence_ids": {"type": "array", "minItems": 1, "items": {
+                        "type": "string", "enum": [e.evidence_id for e in request.evidence]}},
+                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    "suggested_action": {"type": "string", "minLength": 1, "maxLength": 300},
+                },
+            },
         )
         result = self._call(provider_request)
         if result.source == "fallback":

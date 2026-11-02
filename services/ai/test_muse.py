@@ -61,6 +61,37 @@ class MuseTests(unittest.TestCase):
         self.assertEqual(result.kind, "sales_trend")
         self.assertEqual(http.calls[0][1]["headers"]["Authorization"], "Bearer secret")
         self.assertEqual(http.calls[0][1]["json"]["response_format"], {"type": "json_object"})
+        system = http.calls[0][1]["json"]["messages"][0]["content"]
+        schema = json.loads(system.split("with every required field and no extra fields:\n", 1)[1])
+        self.assertEqual(set(schema["required"]), {
+            "kind", "title", "summary", "evidence_ids", "confidence", "suggested_action"})
+        self.assertFalse(schema["additionalProperties"])
+        properties = schema["properties"]
+        self.assertEqual(properties["kind"]["enum"], ["cash", "general", "margin", "run_out", "sales_trend"])
+        self.assertEqual(properties["evidence_ids"]["items"]["enum"], ["sales-30d"])
+        self.assertEqual(properties["suggested_action"]["type"], "string")
+        self.assertEqual(properties["confidence"], {"type": "number", "minimum": 0, "maximum": 1})
+        self.assertIn("never null", system)
+
+    def test_captured_partial_insight_and_invalid_full_shapes_remain_rejected(self):
+        full = {"kind": "sales_trend", "title": "Sales", "summary": "Recorded sales are available.",
+                "evidence_ids": ["sales-30d"], "confidence": 0.8, "suggested_action": "Review recorded sales."}
+        invalid = [
+            # The production incident's shape must not silently become accepted.
+            {"insight": "sales_total is available", "evidence_ids": ["sales-30d"]},
+            {**full, "suggested_action": None},
+            {**full, "insight": "extra provider field"},
+            {**full, "evidence_ids": ["invented-evidence"]},
+            {**full, "kind": "sales_total"},
+            {**full, "confidence": "0.8"},
+        ]
+        for value in invalid:
+            with self.subTest(value=value):
+                response = {"choices": [{"message": {"content": json.dumps(value)}}]}
+                provider = MetaMuseProvider("secret", "model", FakeHttp(response))
+                result = ask_muse("What were my sales?", self.evidence, ai=StructuredAI(provider))
+                self.assertEqual(result.kind, "unavailable")
+                self.assertIn("invalid provider response", result.summary)
 
     def test_missing_provider_is_explicit_not_fabricated(self):
         result = ask_muse("What was my profit?", self.evidence, ai=StructuredAI(None))
