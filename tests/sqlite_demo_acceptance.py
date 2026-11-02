@@ -522,3 +522,48 @@ def test_quantity_reply_cannot_reinterpret_paid_review_or_mutate_saved_receipt(d
     assert result.status_code == 409
     assert stock(app) == before_stock
     assert request(app, "GET", SALES).json() == [saved]
+
+
+def test_cash_close_stale_preview_reopen_retry_and_late_sale_leave_frozen_amounts(demo):
+    app = demo()
+    close_route = f"/api/v1/shops/{SHOP}/cash-close"
+    preview = request(app, "GET", close_route + "/preview").json()
+    day = preview["business_date"]
+    assert preview["requires_opening"] and preview["expected_cash_cents"] is None
+    opening = {"business_date": day, "opening_cash_cents": 2000, "actor": "QA", "reason": "synthetic counted opening", "confirmed": True}
+    assert request(app, "POST", close_route + "/opening", opening, "qa-opening").status_code == 201
+    rejected_reset = request(app, "POST", f"/api/v1/shops/{SHOP}/cash-movements", {"kind": "opening_balance", "occurred_at": day + "T00:00:00Z", "amount_cents": 9999, "tender": "cash", "actor": "QA", "reason": "must not bypass reviewed opening"}, "generic-reset")
+    assert rejected_reset.status_code == 409
+    sale = request(app, "POST", SALES, {**basket(2), "amount_received_cents": 500}, "close-sale")
+    assert sale.status_code == 201, sale.text
+    preview = request(app, "GET", close_route + "/preview?business_date=" + day).json()
+    assert preview["expected_cash_cents"] == 2300  # total300, not tender500.
+    body = {"business_date": day, "cash_counted_cents": 2300, "actor": "QA", "notes": "synthetic count", "confirmed": True, "preview_version": preview["preview_version"]}
+    assert request(app, "POST", SALES, {**basket(), "amount_received_cents": 500}, "intervening-sale").status_code == 201
+    assert request(app, "POST", close_route, body, "frozen-close").status_code == 409
+    fresh = request(app, "GET", close_route + "/preview?business_date=" + day).json()
+    assert fresh["expected_cash_cents"] == 2450
+    body["preview_version"] = fresh["preview_version"]
+    saved = request(app, "POST", close_route, body, "frozen-close")
+    assert saved.status_code == 201, saved.text
+    frozen = saved.json()
+    assert frozen["cash_variance_cents"] == -150
+    assert frozen["bank_card_counted_cents"] is None and frozen["bank_card_variance_cents"] is None
+    reopened = demo()
+    assert request(reopened, "POST", close_route, body, "frozen-close").json() == frozen
+    assert request(reopened, "POST", close_route, {**body, "cash_counted_cents": 0}, "frozen-close").status_code == 409
+    assert request(reopened, "POST", SALES, {**basket(), "amount_received_cents": 500}, "late-sale").status_code == 201
+    post = request(reopened, "GET", close_route + "/preview?business_date=" + day).json()
+    assert post["expected_cash_cents"] == 2450 and post["saved_close"] == frozen
+    assert any("late" in item.lower() for item in post["warnings"])
+    assert request(reopened, "GET", close_route + "/" + day).json() == frozen
+
+
+def test_cash_only_close_requires_explicit_opening_and_cannot_fabricate_bank_zero(demo):
+    app = demo()
+    route = f"/api/v1/shops/{SHOP}/cash-close"
+    preview = request(app, "GET", route + "/preview").json()
+    body = {"business_date": preview["business_date"], "cash_counted_cents": 0, "actor": "QA", "confirmed": True, "preview_version": preview["preview_version"]}
+    assert request(app, "POST", route, body, "no-opening").status_code == 409
+    assert request(app, "POST", route, {**body, "bank_card_counted_cents": 0}, "fake-bank").status_code == 422
+    assert app.state.store.shops[UUID(SHOP)].cash_closes == {}

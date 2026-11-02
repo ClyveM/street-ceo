@@ -1,5 +1,19 @@
 # Connected APK demo acceptance — 2026-11-01
 
+## Owner-approved additions — 2026-11-02
+
+Basic mobile reports: monthly sales summary and sales by product for inclusive
+selected dates or last1/20/90 shop-local calendar days. Preserve historical
+evidence: quantities remain available, but old mixed-sale product amounts without
+saved line prices are unknown, not recalculated from current catalogue prices.
+
+Spoken “end my day” from idle Sell asks counted cash, asks opening cash if missing,
+compares against server-calculated recorded cash and shows shortage/overage or
+balanced. Confirm before saving; preserve uncertainty/retry and frozen snapshots.
+Bank is not counted/verified in this cash-only process. Unknown opening is not zero.
+Month-end review includes an optional stock-count step with Skip, not a forced count.
+See `docs/reports-and-close-acceptance.md` and the latest verification for delivery.
+
 Owner-approved scope: catalogue, manual and hands-free Apo sales, stock, sales
 history, SQLite durability, and persisted Muse request/response investigation.
 Offline sync, invoices, social, forecasting, and full accounting remediation are

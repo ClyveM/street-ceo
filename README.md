@@ -5,6 +5,11 @@ Zimbabwean tuckshop: catalogue → manual or hands-free Apo sale → stock → s
 history. FastAPI stores shop data in local SQLite. Meta/Muse helps with harder
 product interpretation; exact matches and safe local proposals work without a key.
 
+Mobile **Reports** provides monthly and product sales with date filters. From
+idle Sell, say **“end my day”** for a confirmed counted-cash comparison. Month-end
+review includes optional stock count or Skip. See
+[reports and closing](docs/reports-and-close-acceptance.md).
+
 ## Run it on your computer
 
 Install **Python 3.11+** (3.13 tested), **Node.js 22.18+ with npm**, and Git.

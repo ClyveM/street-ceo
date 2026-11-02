@@ -185,8 +185,10 @@ class CashMovementCreate(RetailModel):
 
     @model_validator(mode="after")
     def validate_amount(self) -> "CashMovementCreate":
-        if self.kind in {"opening_balance", "refund"} and self.amount_cents <= 0:
-            raise ValueError("opening balance and refund amounts must be positive")
+        if self.kind == "opening_balance" and self.amount_cents < 0:
+            raise ValueError("opening balance must not be negative")
+        if self.kind == "refund" and self.amount_cents <= 0:
+            raise ValueError("refund amount must be positive")
         if self.kind == "adjustment" and self.amount_cents == 0:
             raise ValueError("adjustment amount must not be zero")
         return self
@@ -196,6 +198,78 @@ class CashMovementRecord(CashMovementCreate):
     id: UUID
     shop_id: UUID
     created_at: datetime
+
+
+class CashOpeningCreate(RetailModel):
+    business_date: date
+    opening_cash_cents: int = Field(ge=0, strict=True)
+    actor: str = Field(min_length=1, max_length=80)
+    reason: str = Field(min_length=1, max_length=240)
+    confirmed: bool = Field(default=False, strict=True)
+
+    @field_validator("actor", "reason")
+    @classmethod
+    def meaningful_opening_text(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("opening actor/reason must not be blank")
+        return value
+
+
+class CashCloseCreate(RetailModel):
+    business_date: date
+    cash_counted_cents: int = Field(ge=0, strict=True)
+    actor: str = Field(min_length=1, max_length=80)
+    notes: str = Field(default="", max_length=500)
+    confirmed: bool = Field(default=False, strict=True)
+    preview_version: str = Field(min_length=64, max_length=64)
+
+    @field_validator("actor")
+    @classmethod
+    def meaningful_close_actor(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("close actor must not be blank")
+        return value
+
+
+class CashCloseBreakdown(RetailModel):
+    business_date: date
+    shop_timezone: str
+    opening_cash_cents: int | None
+    opening_source: str
+    opening_source_id: UUID | None = None
+    requires_opening: bool
+    requires_payment_review: bool = False
+    sales_cash_cents: int = 0
+    paid_expenses_cash_cents: int = 0
+    paid_purchases_cash_cents: int | None = 0
+    refunds_cash_cents: int = 0
+    adjustments_cash_cents: int = 0
+    expected_cash_cents: int | None
+    bank_card_counted_cents: None = None
+    bank_card_variance_cents: None = None
+    bank_status: Literal["not_counted"] = "not_counted"
+    source_ids: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
+class CashCloseRecord(CashCloseBreakdown):
+    id: UUID
+    audit_id: UUID
+    shop_id: UUID
+    cash_counted_cents: int
+    cash_variance_cents: int
+    actor: str
+    notes: str
+    confirmed_at: datetime
+    as_of_cutoff: datetime
+    source_version: str
+
+
+class CashClosePreview(CashCloseBreakdown):
+    preview_version: str
+    saved_close: CashCloseRecord | None = None
 
 
 class DayCloseCreate(RetailModel):

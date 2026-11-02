@@ -308,3 +308,11 @@ Fullactivation APIscopeownbrain. Verify scopedbare'one'/'1' response currentmiss
 QUANTITY-REPLY-API-001 explicitnarrowAIextension: services/ai/catalogue_voice.py clarificationtargetdataclass/qualifyingmissingqtyreturns only +relatedAItests ifneeded. No matchingthreshold/deadline/providerchanges. Structuredtarget onlysafeuniquesingleitem/providervalidated match; no groundingfromquestionstring or blindlyplausiblepartialunknown. QAindependentguard.
 
 QUANTITY-REPLY-API-001 complete2026-11-02: owncompile/diffPASS, parenthostfullservices+independent310PASS38.75s includingnew20. Structuredhandoffpersisted, no liveoriginalreview/restart. Rootcoordinatesactivation/phoneacceptance.
+
+
+## Assigned by Mutungamiri — 2026-11-02 REPORTS-CLOSE-API-001
+Fullactivation APIscope ownbrain. Ownerrequests mobilemonthlysalessummary/productsales betweeninclusiveuserdates+last1/20/90days; voiceEndmyday askscashonhand reconcilesopening+sales/movements difference,monthendstockcountoptional. Auditexistingdaycloseopening bug (sumsallopeningbeforeday; no same-daybaseline), coordinateRuzivo authoritativepolicy BEFOREchangingfinancialrules. Implement shopscoped read-onlyreports API boundedperiodslocaltimezone, currentnamevsreceipthistorytruth, missingCOGSexplicit, sales/tender/reversal semantics perreview. Extendcash-onlydailyclose safely separatebankunknown(nofakezero), explicitopeningrecord/source+count+confirmation,idempotency/restart/frozenrecovery, previewversionstalecheckifnecessary. Reuseexistingretail endpoints/contracts withoutbreakinglegacyUI. SendexactAPIcontractRunako early. No liveDBchanges/restart/escalation. TesttempDB+handoff.
+
+REPORTS-CLOSE-API-001 source frozen2026-11-02: exactcontractdoc, ownpure13PASS4.78s/compile/diffPASS; parentfullintegration+Ruzivoactualcodereview pending. No liveDB/restart.
+
+REPORTS-CLOSE-API-001 final financial blocker repaired2026-11-02: explicitopening generic bypass closed afterlegacyreplay; future actualcash guarded+previewexcluded; own15focusedPASS3.97s, parentaffectedtests/finalfinancialsignoffpending. Source frozen.

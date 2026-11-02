@@ -86,3 +86,30 @@ opening balances, daily close, warnings, assumptions, and production/tax questio
 - Fileschanged: finance memo implementationaddendum; own current-state/tasks/decisions/handoffs append only. No otherbrains/productchanges. Conditions illustrativeassumptions disclosed, root/QA regression+saferuntimeactivation before delivery; no fullledger/retrospectiveprofit/physicalAPK approval.
 - Next: parent record regression/runtimeevidence; re-review fixture/guard/audit/historicaltreatment changes. Handoff complete.
 - Fresh scoped documentation git diff --check passed; line-ending notices only.
+
+## 2026-11-02 — REPORTS-CLOSE-REVIEW-001 policy handoff
+- Activation current AGENTS/role/sixbrain/task/board/demo acceptance and prior financialhandoffs loaded. Scope docsfinance+ownbrain, productreadonly; prior handoff read. Dependencies Hwaroimplementation/RunakoUX/ChengetaiQA.
+- Approved implementation policy in docs/finance/policy-REPORTS-CLOSE-REVIEW-001.md. Current _day_close_breakdown allprioropening sum/sameday omission/priortrade omission is confirmed source defect, not approved for reuse.
+- Sent Hwaro/Runako/root authoritative rules: singlelatest openinganchor or priorCOUNTEDclose+subsequentnetactivity, preservepriorvariance warning, explicitzero allowed/noanchorunknown; cashsalesTOTAL nottendered, paidcashin/out/refunds/adjustments, stockUndo notrefund, banknull oncashonlyclose; variance=counted-expected, frozenasofsnapshot/stalepreviewconflict/idempotency/lateactivityvisible.
+- Reports: inclusive shoplocal dates/presets1/20/90, savedgrossreceipts; futurelineprice+costsnapshots; legacySINGLELINE savedtotal/knownCOGS exactattributable, MULTILINE missinglinehistory unallocated notcurrentprices/pro-rata; unknownmargin staysunknown, stockUndo separate notnetfinancialsale. OptionalmonthendSTOCKcount notcashclosegate; explicitstockadjustaudit, nofakecash/revenue; historicalstocknotcurrentstock.
+- Purchase valuationmicros mustnot silentlyfloor to paidtender; actualpaidminor preferred, legacyuncertainty disclosed/resolved, anyaggregate currencyrounding estimate explicitlylabelled/source/residual preserved.
+- Fileschanged newfinancepolicymemo and own current-state/tasks/decisions/handoffs appendonly. No product/otherbrain changes. No tests/livecalls/postings by Ruzivo; source inspection only. Implementationapproval pending stablecode+rootQA evidence; fullledger/production notapproved.
+- Next root free slot forQA, reactivate Ruzivo after implementation stable for exactrules/sourcecontrols review. Handoff complete.
+- Fresh documentation verification: policy memo exists; scoped git diff --check passed, line-ending notices only.
+
+## 2026-11-02 — REPORTS-CLOSE-REVIEW-001 actual-code checkpoint
+- Read stable reports.py/cash_close.py, app/model routes, REPORTS_CASH_CLOSE_CONTRACT, ownerSQLite/reporttests and independentpolicytests; ownfinance/brainwrites/productreadonly. Priorhandoff loaded.
+- SoleconfirmedBLOCKER: generic POSTcash-movements accepts NEWcashopening_balance bypassing confirmedopeningroute knownanchor/frozen safeguards. Rootagreed rejectnewcashopening there/directnewendpoint, preserve exactoldidempotentreplaysfirst; finalguard/regressionreviewfollowup required. No liveclosebeforeapproval.
+- Otherinspected controls conform: singlelatestbalanceanchor/priorcountcarry/interveningcash/priorvariancewarnings; saleTOTALnotTendered; fractionalpurchaseunknownblocked; banknull cashonly; strictconfirmedcounts; staleversion/retry/frozenlatewarning; legacyALLcashcomponents correctedengine andcash/fulldoublecloseguard, legacybankestimateswarnednotapproved. Reports savedlinesnapshot/inclusiveUTC/localdates/legacyunknownamounts andstockUndo disclosure correct; optionalstockcountseparate.
+- Policyclarification added: retrospective FIRSTmissingopening aftertrading explicitlydeclared/source/actor/confirm isallowed, notknownanchorreset nor derivedfromendcount.
+- Changed financepolicyactualreviewaddendum andown current-state/tasks/decisions/handoffs only. No product/otherbrain edits. No application/live/provider/postingtests byRuzivo. QAattributes root329Python+12purepolicy+5clientpasses; notownruns. Physicalvoice/close notclaimed; fullledger/production separate.
+- Next rootreactivateHwaro guard+regressions thenRuzivo finalreview; slotfreedforimplementation. AdditionalQA futurewithin-sameday movement cutoffquestion relayedroot as untestedfollowup, notaddedconfirmedblocker.
+- Fresh scoped documentation git diff --check passed; line-ending notices only.
+
+## 2026-11-02 — REPORTS-CLOSE-REVIEW-001 final implementation handoff
+- Reactivated from task/priorcheckpoint; actual finalguard source read in app.py/cash_close.py plusowner/independentregressions. Scope productreadonly/docsfinance+ownbrainwrites, no livepostings.
+- APPROVE WITH CONDITIONS newperiod/productreports+cash-onlyclose; soleconfirmedopeningbypassBLOCKER CLEARED. Genericroute exactoldreplayfirst, newcashopening409→explicitconfirmedendpoint, futureactualcash422; legacyfutureeffectiveevents excluded/warned untilactualtime andnotappliedsourceIDsbeforetime. FirstMISSINGopening retrospective explicitdeclaration allowed; knownanchor replacement forbidden.
+- Priorreviewed controls retained: singleanchor/countedcarry/priorvariancewarning/saleTOTAL/paidcashcomponents/unknownpaymentguards/banknull/staleversion/frozenlate/replay; savedhistoricalpricescosts+unknownlegacyallocations; stockUndo notfinancialrefund; optionalstockcountseparate.
+- Parentattributes15ownerreports/retailpasses includingfinalguards; earlier329Python predateslastguard, finalfullsuite stillrunning. Independentguardsource inspected. No ownapplication/live/provider/postingtests. Conditions rootfinalregression/runtimeAPK andphysicalphoneacceptance; legacybankestimates/fullledger/statutoryproduction notapproved.
+- Fileschanged financepolicyfinaladdendum andown current-state/tasks/decisions/handoffs appendonly; no product/otherbrains. Next rootintegratefinalevidence+packaging; re-review financialsemanticschanges. Handoffcomplete.
+- Fresh final scoped documentation git diff --check passed; line-ending notices only.

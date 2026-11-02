@@ -272,3 +272,9 @@ Fullactivation webUI+ownbrain scope, native speechread-only initially. Ownerscre
 QUANTITY-REPLY-UX-001 explicittemporarynativeextension: apps/android/android/app/src/main/java/com/streetceo/app/ApoSpeechPlugin.java speechReady readinessnotification only; ownweb speechbridge lifecycle/readiness. No permission/ASRlanguage/tuning/windowpolicy changes.
 
 QUANTITY-REPLY-UX-001 source COMPLETE/frozen2026-11-02:122frontendPASS,66moduleAPI8001build shop-D8flaUN9.js,5newlifecyclecases; actualready/foreground/promisehandlerguards. RootQA/nativepackage/physicalphone gatesseparate.
+
+
+## Assigned by Mutungamiri — 2026-11-02 REPORTS-CLOSE-UX-001
+Fullactivation webUI+ownbrain scope excludingoffline/nativeinitialread-only. Owner mobile reports monthlysales+salesbyproduct inclusivecustomdates presetslast1/20/90days; endmyday spokencommandwhileselling startsquestions countedcash/neededopening, comparesserverexpected &counteddiff,confirmbeforepersist,monthendoptionalcount notgate. ReuseHandsFreeVoice/speechLoop sharedpreference/noquestiontap, typingfallback. Routeendmyday beforeproductparser (alsoApo endmyday Napo andbarephrasewhileidle; don'tinterruptpending/uncertain sale). CoordinateHwaroAPI/Ruzivo policy, no bankbalancefakezero. Reports mobilecleanfilters; basicmonthendsummary optional stocktake link+Skip. ScopeappUI/contracts; nofinancialmathauthoritativeclient, noAPI/nativewrites. Handoff fullfrontendbuild explicit8001 labelREPORTS-CLOSE-001; rootAPKpackager.
+
+REPORTS-CLOSE-UX-001 source COMPLETE/frozen2026-11-02:129frontendPASS,69moduleAPI8001build shop-BlQoqAAb.js; finalcontractstubDOMhostrerun+QA/finance/nativepackagingparentgate. No physicalacceptanceclaim.

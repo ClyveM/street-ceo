@@ -42,3 +42,5 @@ Owner requested reasoning over imperfect recognition. Exactcommands remain deter
 2026-11-02 FAST-VOICE: Ownerrejects24scriticalsellingwait. Exactuniquecatalogue+strictobservednoise proposals localwithmandatoryYes, cloud6sboundedfallback, no broaderfuzzy/fruitstripping; honestprovenance. Androidtransientnav+stableinsetownerMainActivity, officialAndroidguide consulted. Evidence docs/demo-mvp-verification.md.
 
 2026-11-02 REPO-CLEAN: keep separatedteamapp localignored withexplicitopt-in, defaultshopbuild/API independent; preserveagentbrains andhistoricalnotes. Sourceonlyexport withfreshdependencies isdeliverygate, notdeveloperinstalledtree. Rootuserrequestedcleanup/publication. Builderbrief currentconnectedAPKscope supersedesOct29v0.
+
+2026-11-02 REPORTS-CLOSE: Owneradds basicreports+voicecashdayend+optionalmonthcount. FollowRuzivomemo balanceanchor/countdifference, missinghistoricalevidenceunknown, nobankreconclaim, stale/frozenclose/idempotency. Runtime17580 port8001; currentartifact verificationdoc authoritative.

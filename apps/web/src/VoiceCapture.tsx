@@ -1,3 +1,5 @@
+import { EndDayContent, useEndDay } from './EndDay'
+import { canStartEndDay, endDayCommand } from './reportsClose'
 import type { SpeechLoopState } from './speechLoop'
 import { voiceErrorSummary } from './voiceError'
 import { HandsFreeVoice } from './HandsFreeVoice'
@@ -16,7 +18,7 @@ import './quick-sale.css'
 const money = (value: number) => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, '0')}`
 type Phase = 'idle' | 'review' | 'match' | 'clarification' | 'tender' | 'success' | 'error' | 'reversed'
 
-export function VoiceCapture({ mode, blocked = false, connection = null, checkingConnection = false, onCheckConnection, onRequestBusy, onConfirmed, onUndo, onBusy }: { mode: SaleMode; blocked?: boolean; connection?: ShopReachability | null; checkingConnection?: boolean; onCheckConnection?(): void; onRequestBusy?(busy: boolean): void; onConfirmed: (receipt: QuickReceipt) => void; onUndo: () => Promise<void>; onBusy: (busy: boolean) => void }) {
+export function VoiceCapture({ mode, blocked = false, connection = null, checkingConnection = false, manualBasket = false, onStockCount, onCheckConnection, onRequestBusy, onConfirmed, onUndo, onBusy }: { mode: SaleMode; blocked?: boolean; connection?: ShopReachability | null; checkingConnection?: boolean; manualBasket?: boolean; onStockCount?(): void; onCheckConnection?(): void; onRequestBusy?(busy: boolean): void; onConfirmed: (receipt: QuickReceipt) => void; onUndo: () => Promise<void>; onBusy: (busy: boolean) => void }) {
   const [phase, setPhase] = useState<Phase>('idle'), [busy, setBusy] = useState(false), [listening, setListening] = useState(false)
   const [openingRecording, setOpeningRecording] = useState(false)
   const [command, setCommand] = useState(''), [transcript, setTranscript] = useState(''), [answer, setAnswer] = useState(''), [error, setError] = useState('')
@@ -39,7 +41,7 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
   const promptVersion = useRef(0)
   const [replyTurn, setReplyTurn] = useState(0)
   const [handsFreeStatus, setHandsFreeStatus] = useState<{ state: SpeechLoopState; message: string }>({ state: 'stopped', message: 'Microphone is starting…' })
-  const closeButton = useRef<HTMLButtonElement>(null)
+  const closeButton = useRef<HTMLButtonElement>(null), endDayButton=useRef<HTMLButtonElement>(null)
   const prompt = (message: string) => {
     if (!mounted.current) return
     const version = ++promptVersion.current
@@ -51,13 +53,16 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
       void speakPrompt(message).then(() => { if (mounted.current && version === promptVersion.current) { setSpeech('Response finished.'); setReplyTurn((turn) => turn + 1) } }).catch(() => { if (mounted.current && version === promptVersion.current) { setSpeech('Audio prompt unavailable. Read the visible response.'); setReplyTurn((turn) => turn + 1) } })
     }, 150)
   }
+  const endDay=useEndDay(prompt)
   useEffect(() => {
     mounted.current = true
     return () => { mounted.current = false; promptVersion.current++; controller.current?.abort(); if (recorder.current?.state === 'recording') recorder.current.stop(); stream.current?.getTracks().forEach((track) => track.stop()); void stopSpokenPrompt().catch(() => {}) }
   }, [])
-  useEffect(() => { onBusy(busy || listening || openingRecording || uncertain || ['tender', 'match', 'clarification'].includes(phase)) }, [busy, listening, openingRecording, uncertain, phase, onBusy])
-  useEffect(() => { onRequestBusy?.(busy); return () => onRequestBusy?.(false) }, [busy, onRequestBusy])
+  useEffect(() => { onBusy(busy || listening || openingRecording || uncertain || endDay.active || ['tender', 'match', 'clarification'].includes(phase)) }, [busy, listening, openingRecording, uncertain, phase, endDay.active, onBusy])
+  useEffect(() => { onRequestBusy?.(busy || endDay.busy); return () => onRequestBusy?.(false) }, [busy, endDay.busy, onRequestBusy])
+  useEffect(()=>()=>onBusy(false),[onBusy])
   useEffect(() => { if (open) { wakeDismissed.current = false; const previous = document.activeElement; closeButton.current?.focus(); return () => { if (wakeDismissed.current) { wakeDismissed.current = false; return }; if (previous instanceof HTMLElement) previous.focus() } } }, [open])
+  useEffect(()=>{if(endDay.active){setTypingFocused(false);endDayButton.current?.focus();return()=>{if(mounted.current){setTypingFocused(false);counterRoot.current?.focus({preventScroll:true})}}}},[endDay.active])
   const toggleHandsFree = () => { const next = !handsFreeEnabled; setHandsFreeEnabled(next); try { storeHandsFreePreference(localStorage, next) } catch { /* Session setting still applies. */ } }
   const startNextOnWake = () => {
     const current = { phase, open, enabled: handsFreeEnabled, hasReceipt: !!receipt, busy: busy || listening || openingRecording || speech === 'Playing question…' || speech === 'Requesting audio prompt…', blocked, uncertain }
@@ -106,6 +111,7 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
     else { setUncertain(false); setReceipt(result.sale); setLatestReceipt(result.sale); setQuestion(null); setPhase('success'); onConfirmed(result.sale); prompt(`Sale saved. Total ${money(result.sale.total_cents)}. Change ${money(result.sale.change_cents)}.${handsFreeState.current ? ' Say Apo for the next sale.' : ''}`) }
   }
   const process = async (raw: string, signal: AbortSignal, supplied?: VoiceReview, clarificationOf?: string, conversationReply = false) => {
+    if(endDayCommand(raw)) { if(canStartEndDay({phase,busy:false,blocked,uncertain,manualBasket})) { setOpen(false); await endDay.start(); return } setError('Finish or cancel the current basket before starting End my day.'); prompt('Finish or cancel the current basket first.'); return }
     const parsed = apoCommand(raw)
     operation.current = 'interpret'
     clarificationContext.current = clarificationOf
@@ -207,7 +213,7 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
   const paid = phase === 'success' && !!receipt && !uncertain
   const entered = tenderAnswer(answer)
   const outputActive = speech === 'Playing question…' || speech === 'Requesting audio prompt…'
-  const voicePaused = blocked || busy || listening || uncertain || typingFocused || outputActive
+  const voicePaused = blocked || busy || endDay.busy || listening || uncertain || typingFocused || outputActive
   const sourceLabel = review?.providerCalled === true ? 'Muse catalogue interpretation' : review?.resolutionSource === 'catalogue_parser' ? 'Exact catalogue match' : review?.resolutionSource === 'local_catalogue_proposal' ? 'Local catalogue proposal' : review?.resolutionSource === 'local_clarification' ? 'Catalogue clarification' : 'Source not supplied'
   const voiceToggle = <button type="button" className="voice-toggle" aria-pressed={handsFreeEnabled} aria-label={handsFreeEnabled ? 'Pause hands-free voice' : 'Resume hands-free voice'} onClick={toggleHandsFree}>{handsFreeEnabled ? 'Voice on · Pause' : 'Voice paused · Resume'}</button>
   const errorDisplay = error && <div className="voice-error"><p role="alert">{voiceErrorSummary(error, uncertain)}</p>{voiceErrorSummary(error, uncertain) !== error && <details><summary>More information</summary><p>{error}</p></details>}</div>
@@ -216,13 +222,15 @@ export function VoiceCapture({ mode, blocked = false, connection = null, checkin
   const typingBlur = () => { queueMicrotask(() => { if (mounted.current) setTypingFocused(isTypingTarget(document.activeElement)) }) }
   return <section className="quick-sale counter-panel" ref={counterRoot} tabIndex={-1} aria-label="Apo voice counter" onFocusCapture={typingFocus} onBlurCapture={typingBlur}>
     <div className="counter-heading"><div><p className="eyebrow">APO AT YOUR COUNTER</p><h3>Ready when you are.</h3></div><span className="counter-wave" aria-hidden="true">▂ ▆ ▃ ▅</span></div>
-    <HandsFreeVoice replyTurn={replyTurn} onListeningState={setHandsFreeStatus} enabled={handsFreeEnabled} onEnabledChange={setHandsFreeEnabled} onToggle={toggleHandsFree} showControl={!open} onWake={startNextOnWake} replyPrompt={phase === 'match' ? 'Say Yes, No, or Cancel.' : phase === 'clarification' ? 'Answer the question, or say Cancel.' : undefined} expectingPayment={phase === 'tender'} paused={voicePaused} onCommand={(raw) => { if (phase === 'match' || phase === 'clarification') { return submitCatalogueReply(raw) } else if (phase === 'tender') { return submitAnswer(paymentCommand(raw)) } else { setCommand(raw); return run(async (signal) => { await process(raw, signal) }) } }} />
+    <HandsFreeVoice replyTurn={replyTurn} onListeningState={setHandsFreeStatus} enabled={handsFreeEnabled} onEnabledChange={setHandsFreeEnabled} onToggle={toggleHandsFree} showControl={!open&&!endDay.active} onWake={startNextOnWake} replyPrompt={endDay.active ? 'Answer the cash check, or say Cancel.' : phase === 'match' ? 'Say Yes, No, or Cancel.' : phase === 'clarification' ? 'Answer the question, or say Cancel.' : undefined} expectingPayment={!endDay.active && phase === 'tender'} paused={voicePaused} onCommand={(raw) => { if(endDay.active)return endDay.handle(paymentCommand(raw)); if(endDayCommand(raw)){if(!canStartEndDay({phase,busy,blocked,uncertain,manualBasket})){setError('Finish or cancel the current basket before starting End my day.');prompt('Finish or cancel the current basket first.');return Promise.resolve()}setOpen(false);return endDay.start()} if (phase === 'match' || phase === 'clarification') { return submitCatalogueReply(raw) } else if (phase === 'tender') { return submitAnswer(paymentCommand(raw)) } else { setCommand(raw); return run(async (signal) => { await process(raw, signal) }) } }} />
     {typingFocused && <p className="counter-hint">Voice waits while you type. It resumes when you leave the field.</p>}
     {(blocked || busy || uncertain || phase === 'tender' || phase === 'match' || phase === 'clarification' || phase === 'error') && <div className={`voice-step ${uncertain ? 'recovery-card' : ''}`} role="status"><strong>{blocked ? 'Checking your manual sale' : uncertain ? 'Check the original sale' : busy ? 'Checking your basket…' : phase === 'match' ? 'Did Apo hear that right?' : phase === 'clarification' ? 'One quick question' : phase === 'tender' ? 'How was it paid?' : 'Let’s try that again.'}</strong><p>{blocked ? 'Voice will wait.' : uncertain ? 'No saved receipt received. Restore the connection, then recover this same request. Do not enter a new sale.' : busy ? 'Please wait for your shop’s response.' : phase === 'match' && review ? catalogueMatchQuestion(review) : phase === 'clarification' ? review?.clarificationQuestion ?? 'Say the basket with quantities and product names, or Cancel.' : phase === 'tender' ? questionUnavailable ? 'Reconnect, then say Retry or Cancel.' : question?.question : voiceErrorSummary(error)}</p></div>}
+    {!endDay.active && <button type="button" disabled={busy||listening||blocked||uncertain||manualBasket||!['idle','success'].includes(phase)} onClick={()=>{setOpen(false);void endDay.start()}}>End my day</button>}
     <details className="voice-fallback"><summary>Type instead</summary><label>Your command<textarea value={command} onChange={(event) => setCommand(event.target.value)} disabled={blocked || busy || listening || uncertain} rows={2} maxLength={1000} placeholder="Apo 1 Coke 2 Sugar Napo" /></label><button type="button" onClick={() => { void submitCommand() }} disabled={!command.trim() || blocked || busy || listening || uncertain}>Check basket</button><details><summary>Record a voice clip instead</summary>{talkButton}</details></details>
     {review && !open && <button type="button" className="counter-text-button" onClick={() => setOpen(true)}>{paid ? 'View receipt' : 'Open current basket'}</button>}
     {latestReceipt && !open && <details className="counter-last-sale"><summary>Last sale {money(latestReceipt.total_cents)} · change {money(latestReceipt.change_cents)}</summary><p>Received {money(latestReceipt.amount_received_cents)} · {latestReceipt.tender}</p><p>Receipt <code>{latestReceipt.id}</code></p></details>}
     {error && !open && <div>{errorDisplay}{uncertain ? <button type="button" disabled={busy || listening} onClick={() => { void recover() }}>Recover original request</button> : command.trim() && <button type="button" disabled={blocked || busy || listening} onClick={() => { void submitCommand() }}>Try again</button>}</div>}
+    {endDay.active && createPortal(<div className="quick-modal-backdrop"><section className="quick-modal end-day-sheet" role="dialog" aria-modal="true" aria-label="End my day cash check" onKeyDown={event=>{if(event.key==='Escape'){if(!endDay.busy&&!endDay.uncertain){event.preventDefault();endDay.done()}}else if(event.key==='Tab')modalKeys(event)}} onFocusCapture={typingFocus} onBlurCapture={typingBlur}><header><div><p className="eyebrow">STREET CEO</p></div><button ref={endDayButton} disabled={endDay.busy||endDay.uncertain} onClick={endDay.done}>{endDay.receipt?'Done':'Close'}</button></header><div className="counter-voice-bar">{voiceToggle}<span role="status" data-listening-state={handsFreeStatus.state}>{voicePaused?outputActive?'Apo is speaking…':'Checking…':handsFreeStatus.state==='listening'?'Listening — just answer. No Apo needed.':handsFreeStatus.message}</span></div><EndDayContent flow={endDay} onCount={onStockCount?()=>{endDay.done();onStockCount()}:undefined}/></section></div>,document.body)}
     {open && createPortal(<div className="quick-modal-backdrop"><section className={`quick-modal counter-modal ${paid ? 'counter-paid' : ''}`} role="dialog" aria-modal="true" aria-label={paid ? 'Saved sale receipt' : 'Apo sale basket'} onKeyDown={modalKeys} onFocusCapture={typingFocus} onBlurCapture={typingBlur}>
       <header className="counter-modal-heading"><div className="counter-brand"><img src="/street-ceo-logo.png" alt="" /><div><p className="counter-kicker">{paid ? 'ALL SAVED' : uncertain ? 'NEEDS CHECKING' : 'STREET CEO'}</p><h2>{paid ? 'Sale saved.' : phase === 'reversed' ? 'Stock reversed' : phase === 'match' ? 'These products?' : phase === 'clarification' ? 'One quick question' : phase === 'tender' ? 'Payment' : 'Your basket'}</h2></div></div><button ref={closeButton} className="counter-close" disabled={busy || listening} onClick={closeCounterModal} aria-label="Close Apo sale basket">{paid ? 'Done' : 'Close'}</button></header>
       <div className="counter-voice-bar">{voiceToggle}<span role="status" data-listening-state={handsFreeStatus.state}>{voicePaused ? busy ? 'Checking…' : outputActive ? 'Apo is speaking…' : typingFocused ? 'Waiting while you type…' : uncertain ? 'Recover the original request.' : 'Listening paused' : handsFreeStatus.state === 'listening' ? phase === 'clarification' ? 'Listening — answer the question, or Cancel. No Apo needed.' : phase === 'match' ? 'Listening — say Yes, No, or Cancel.' : phase === 'tender' ? 'Listening — say Cash, Bank, or Cancel.' : paid ? 'Listening — ready for your next Apo.' : 'Listening for Apo.' : handsFreeStatus.message}</span></div>

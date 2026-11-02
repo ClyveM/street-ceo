@@ -34,6 +34,16 @@ remove a possible product word. Missing data gets a question. Bank is recorded
 tender, not verified settlement. Persist sanitized correlated requests/responses;
 keep provider keys in the backend and secrets, traces and databases out of Git.
 
+Add basic mobile reports: monthly summary and product sales for inclusive dates
+or Today/20/90-day presets in the shop timezone. Keep old product amounts unknown
+where historical line prices are missing. Add a spoken “end my day” flow from
+idle Sell: counted cash → opening if unknown → server expected/count/difference
+→ explicit confirmation. Cash sales contribute sale total, not tendered amount;
+include recorded cash movements. Bank remains uncounted here. Preserve zero vs
+unknown, stale-preview checks, original retry keys and immutable saved closes.
+Month-end review offers optional Count stock or Skip, with no forced count or
+claim of a ledger period lock.
+
 Provide runnable source, setup instructions and tests. Demonstrate manual and two
 consecutive voice sales, correct stock/history, restart durability, unknown-product
 handling, underpayment and duplicate-request protection. If only a prototype is

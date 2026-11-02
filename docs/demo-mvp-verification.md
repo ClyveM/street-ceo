@@ -1,5 +1,54 @@
 # Connected SQLite APK demo — verified 2026-11-01
 
+## REPORTS-CLOSE-001 — mobile reports and spoken cash-close, 2026-11-02
+
+Apo listening/TTS runs in the Android foreground; the connected FastAPI runtime
+uses PC port8001 and SQLite. APK download helper remains port8081. New Reports
+tab includes month selection, saved monthly/product totals, inclusive custom
+dates and Today/last20/last90 presets resolved in shop time. Historical product
+amounts are not repriced: new receipts snapshot authoritative lines, legacy
+single-line totals are attributable and old mixed-line amounts stay unknown.
+
+Idle Sell accepts bare “end my day” or Apo-framed command. The shared hands-free
+flow asks counted cash, explicit opening if missing (zero valid), reviews expected
+cash and signed variance, and requests Yes before saving. Bank remains uncounted.
+One opening/count anchor plus recorded cash activity is used; no cumulative old
+opening sum, customer tender/change double count, silent variance adjustment or
+stock-only Undo refund. Missing/fractional payment evidence blocks false balancing.
+Snapshots, stale-preview conflict, frozen late-activity warnings and exact retry
+recovery persist in SQLite. New generic cash openings cannot bypass confirmation;
+historical exact retries remain valid. Future-effective cash entries are rejected
+or excluded until effective. Month review offers Count stock or Skip without a
+forced count or ledger-period lock. Legacy full-bank form is hidden from demo tabs.
+
+Ruzivo approved the scoped treatment with conditions; legacy bank estimates and
+full ledger are outside approval. Final root full suite **333 passed33.56s**;
+frontend **129 passed**, independent clients **12 passed**, baseline **29
+passed20.169s**. Actual built-app browser simulation with fake speech and strictly
+intercepted API passed: cash-first, zero opening/Yes, shortage, confirm, uncertain
+503/same-key Retry, blocked Cancel while unknown, Done/nextApo, reports, 390/320
+widths and optional Skip/actual Stock take tab. It is not physical ASR evidence.
+
+Final build69modules, `shop-BlQoqAAb.js`, label REPORTS-CLOSE-001. APK
+**7,167,758 bytes**, SHA256
+`4e15536306d793875cd50d6e2523059ba28686d50f3f2094a688f6793d3255d0`.
+Offline Gradle, v1/v2 signatures, ZIP/all7 embedded assets, label/API8001 and
+download bytes passed. Download: http://192.168.10.213:8081/street-ceo.apk.
+
+API17580, same SQLite identity/file. Root live GET probes verified all three
+presets, monthly/custom dates, monthly/daily/tender/product-allocation totals and
+cash preview with missing opening explicitly unknown. Sales/products before and
+after were identical. A decoded comparison against a consistent pre-activation
+backup preserved every existing value, allowing only additive fields/maps.
+No live opening, cash movement or close was posted. Launcher inventory again
+required independent healthy runtime/command/start-log verification and generated
+state repair; unknown processes and download helper were preserved.
+
+Remaining: install the labelled APK and physically verify report/date navigation,
+“end my day” cash/opening/Yes/retry conversation, next sale and optional count.
+Current mobile deployment requires the reachable PC backend. Package/software
+gates do not establish phone acceptance or complete accounting certification.
+
 ## QUANTITY-REPLY-001 — activated and packaged 2026-11-02
 
 Owner reported that “one” was not accepted after a missing-quantity question.

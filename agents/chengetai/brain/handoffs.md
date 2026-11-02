@@ -295,3 +295,35 @@ QA reproduced submitted-handler background race, ownerfixed; latehiddenready gua
 ## 2026-11-02 — QUANTITY-REPLY-QA-001 final handoff — PASS
 
 Root fullservices+independentPython310 passed38.75s includes newquantityHTTP guards andowner20cases; baseline29 passed20.409s. Runako122frontendpassed1287.8ms/frozen66moduleAPI8001 shop-D8flaUN9.js; own39Python/14focusedNode pass recorded earlier. Sourceblockers backgroundduringpending andhiddenlateReady fixed/rechecked, no remaining concrete sourceissue. Report infra/quantity-reply-qa-001.md finalized. Root owns nativepackage/activation freshunpaidprobe/artifact evidence; physicalphone noApo/repeat/readiness and failurecause not inferred. No live/provider/runtime/escalation actions by QA; no active processes. Files changed tests/sqlite_demo_acceptance.py, tests/quantity_reply_acceptance.py, tests/quantity_reply_client.mjs, tiny authorized .github/workflows/quality.yml inclusion, report andownbrain. All evidence persisted; root may proceed.
+
+## 2026-11-02 — REPORTS-CLOSE-QA-001 checkpoint — independent PASS
+
+Fullactivation restored and acceptance/Ruzivopolicy read. Productread-only; writes own tests/infra/CI/brain. Added tests/reports_close_acceptance.py11pure cases, tests/reports_close_client.mjs5independent,2HTTPcashclose cases in sqlite_demo_acceptance.py, CI explicitinclusion and infra/reports-close-qa-001.md. Ownpure11passed1.48s; independent5+owner7Node12passed364.2933ms. No livefinance/provider/runtime/escalation actions.
+
+Crosscontract findings openingreasonprefix/SKUnull/othertender/fractionalpaymentnull addressed byowners; uniqueIDs/MTD andlegacyanchororderingwarning addressed. SourceEndDayidleguard/wholehandsfree/cashfirst/openingYes/closeYes/originalunknownkey/optionalSkip reviewed. Root HTTP/native integration andRuzivofinalactualimplementationapproval pending; no fullfinancial/device claim. No activeQA tools.
+
+## Additional source review caveat — pending owner disposition
+
+QA found RetailControl still exposes legacy Daily close -> /day-close and the known old additive-opening/floored-purchase calculator remains in that path. The new cash-only path does not reuse it, but the old UI is reachable through retail controls. Root/Runako notified: hide/disable or route the demo entry to reviewed new flow, or explicitly retain the legacy path outside acceptance with finance approval. Do not claim all reconciliation was repaired. This is separate from the passing new cash-close calculation tests. A DST23h calendar-boundary test was added; fresh pure12 passed1.80s.
+
+## Correction after full current legacy function read
+
+The earlier legacy cash concern was based on an incomplete function read. Current app.py _day_close_breakdown calls calculate_cash_preview, rejects missing opening/payment evidence409, and replaces all cash buckets before return. Preliminary additive cash/floored purchase values do not reach the cash result. There is no current legacy-cash blocker on that basis. Legacy BANK figures remain recorded-movement estimates with an explicit warning; those are outside the new cash-only null-bank reconciliation scope. Root and Ruzivo were informed with the current source distinction. Historical policy defect finding remains valid for the old implementation, not the corrected one.
+
+Root reports329 integrated Python passed41.53s including independent HTTP cashclose tests. Browser assertions reached completion but final CP1252 arrow printing caused exit1; root is rerunning corrected wrapper/final source, so that run is not claimed fully passed yet. Pure current12 passed1.80s; independent+ownerclient12 passed364.2933ms. Ruzivo is reviewing stable actual implementation; finalfinancegate pending.
+
+## Root frozen-build browser evidence
+
+Root reports final DOM simulated-ASR scenario PASS on retry6.8s: bare End my day, countedcash first, explicitzero opening/Yes, shortage0.50/finalYes,503 Retry with identical payload/key, Cancel blocked while unknown, bankunknown, Done→nextApo, monthly/product reports,390/320-width nooverflow, Skip and actualStocktake tab. First final rerun hit local page-start timeout; repeat passed. This is simulated browser/DOM evidence, not physical/native acoustic acceptance. Final backend narrow guard and Ruzivo implementation signoff remain pending.
+
+## Narrow guard recheck
+
+Current source verifies exact old generic cash-movement replay precedes new-input restrictions; new cash opening via generic route409 directs confirmed opening endpoint; future actual cash movement422. Preview excludes legacy future-effective events and warns. Independent fixed-clock futureevent regression passes: finalpure13 passed1.24s. Added generic-opening bypass409 assertion to independent HTTP close test for rootrun. CI includes final testfiles. Ruzivo informed with exact current guard; host affected regressions/final financial disposition pending.
+
+## 2026-11-02 — REPORTS-CLOSE-QA-001 final handoff — source/software PASS
+
+- Assignment complete within tests/infra/CI/ownbrain; productreadonly. Files changed independentpure13/client5,2HTTPcashclose tests in sqlite_demo_acceptance.py,CI inclusion, infra/reports-close-qa-001.md andownbrain. No livefinance/provider/reset/restart/host/package actions byQA.
+- Final ownpure13passed1.24s includes DST/calendarbounds/snapshots/legacyunknown/stockUndo/anchorcarry/variance/paidcomponents/fractionalunknown/latefutureevents; own5+owner7client12passed364.2933ms covers idleguards/nullbank/arithmetic/serverreason/deletedSKU/othertender/uncertainretry. Sourcecrosscontract issues ownerfixed. Earlierlegacycashclaim corrected afterfullfunction read: allcashbuckets nowcorrectedpreview; legacybank remains estimatesonly.
+- Root FINALPOSTGUARD333Python passed33.56s supersedes329pre-guard; root129frontend+12client/frozenDOMsimulatedASR PASS attributed. DOMcount/openingzeroYes/short0.50/finalYes/503samekey/Cancelunknownblocked/DoneApo/reports390320/Skipactualcounttab pass; notphysicalnativeASR.
+- Ruzivofinalactualcode APPROVEWITHCONDITIONS read: openingbypassblockercleared, exactoldreplayfirst/newgenericcashopening409/futureactualcash422/legacyfutureexcludedwarned; newcashonlybanknull/historyunknown/frozenretry safeguards. Fullledger/netprofit/statutoryproduction andlegacybankreconciliation excluded.
+- Final source/softwaregate PASS, no remaining scopedconcreteblocker. Root packaging/read-onlyruntime verification underway, exactartifact/physicalphone acceptance separate. Allreport/handoff saved, no activeQA processes, no furthercodechanges. Nextsession verifyrootfinalartifact/runtime andobserve Endmyday/report/count/Skip/recovery onphone; re-review anyfinancialsemanticschange.

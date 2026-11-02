@@ -54,6 +54,10 @@ from services.api.retail_control import (
     DayClosePreview,
     CashMovementCreate,
     CashMovementRecord,
+    CashOpeningCreate,
+    CashCloseCreate,
+    CashCloseRecord,
+    CashClosePreview,
     PurchaseConfirmation,
     PurchaseCreate,
     PurchaseLineResult,
@@ -175,6 +179,17 @@ class SaleCreate(ApiModel):
         return lines
 
 
+class SaleReceiptLine(ApiModel):
+    product_id: UUID
+    product_name: str
+    sku: str
+    quantity: int
+    unit_price_cents: int
+    line_total_cents: int
+    unit_cost_micros: int | None = None
+    line_cogs_micros: int | None = None
+
+
 class Sale(ApiModel):
     id: UUID
     shop_id: UUID
@@ -186,6 +201,7 @@ class Sale(ApiModel):
     change_cents: int = Field(default=0, ge=0)
     stock_after: dict[UUID, int] = Field(default_factory=dict)
     created_at: datetime
+    receipt_lines: list[SaleReceiptLine] = Field(default_factory=list)
 
 
 class DemoResetResponse(ApiModel):
@@ -235,6 +251,8 @@ class MuseAskResponse(ApiModel):
 @dataclass
 class _ShopRecord:
     shop: Shop
+    cash_closes: dict[date, CashCloseRecord] = field(default_factory=dict)
+    cash_close_idempotency: dict[str, tuple[str, CashCloseRecord]] = field(default_factory=dict)
     products: dict[UUID, Product] = field(default_factory=dict)
     idempotent_sales: dict[str, tuple[str, Sale]] = field(default_factory=dict)
     voice_requests: dict[str, tuple[str, VoiceResponse]] = field(default_factory=dict)
@@ -340,6 +358,7 @@ class InMemoryStore:
             amount_received_cents=amount_received_cents,
             change_cents=change_cents,
             created_at=datetime.now(timezone.utc),
+            receipt_lines=[SaleReceiptLine(product_id=product.id, product_name=product.name, sku=product.sku, quantity=line.quantity, unit_price_cents=product.unit_price_cents, line_total_cents=product.unit_price_cents * line.quantity, unit_cost_micros=product.unit_cost_micros, line_cogs_micros=product.unit_cost_micros * line.quantity if product.unit_cost_micros is not None else None) for product, line in zip(products, request.lines)],
         )
         for product, line in zip(products, request.lines):
             product.stock_qty -= line.quantity
@@ -568,6 +587,83 @@ def create_app(
     def voice_disabled() -> None:
         if not settings.voice_enabled:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="voice input is disabled")
+
+    @app.get("/api/v1/shops/{shop_id}/reports/sales")
+    def get_sales_report(record: _ShopRecord = Depends(shop_scope), start_date: date | None = None, end_date: date | None = None, preset: str | None = None, month: str | None = None) -> dict:
+        from services.api.reports import sales_report
+        try:
+            return sales_report(record, start_date, end_date, preset, month)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @app.get("/api/v1/shops/{shop_id}/cash-close/preview", response_model=CashClosePreview)
+    def preview_cash_close(record: _ShopRecord = Depends(shop_scope), business_date: date | None = None) -> CashClosePreview:
+        from services.api.cash_close import calculate_cash_preview
+        business_date = business_date or datetime.now(ZoneInfo(record.shop.timezone)).date()
+        return calculate_cash_preview(record, business_date)
+
+    @app.get("/api/v1/shops/{shop_id}/cash-close/{business_date}", response_model=CashCloseRecord)
+    def get_cash_close(business_date: date, record: _ShopRecord = Depends(shop_scope)) -> CashCloseRecord:
+        item = record.cash_closes.get(business_date)
+        if item is None:
+            raise HTTPException(status_code=404, detail="cash close not found")
+        return item
+
+    @app.post("/api/v1/shops/{shop_id}/cash-close/opening", response_model=CashMovementRecord, status_code=201)
+    def declare_cash_opening(request: CashOpeningCreate, record: _ShopRecord = Depends(shop_scope), idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None) -> CashMovementRecord:
+        from services.api.cash_close import calculate_cash_preview
+        key = require_voice_key(idempotency_key)
+        if not request.confirmed:
+            raise HTTPException(status_code=409, detail="opening declaration requires explicit confirmation")
+        fingerprint = hashlib.sha256(json.dumps(request.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
+        previous = record.cash_movement_idempotency.get(key)
+        if previous:
+            if previous[0] != fingerprint:
+                raise HTTPException(status_code=409, detail="opening idempotency key payload mismatch")
+            return previous[1]
+        if request.business_date in record.cash_closes or request.business_date in record.day_closes:
+            raise HTTPException(status_code=409, detail="closed date cannot receive a replacement opening")
+        preview = calculate_cash_preview(record, request.business_date)
+        if not preview.requires_opening:
+            raise HTTPException(status_code=409, detail="opening is already anchored; explicit corrections require separate review")
+        if request.business_date > datetime.now(ZoneInfo(record.shop.timezone)).date():
+            raise HTTPException(status_code=409, detail="future opening declaration is not supported")
+        occurred_at = datetime.combine(request.business_date, datetime.min.time(), ZoneInfo(record.shop.timezone)).astimezone(timezone.utc)
+        item = CashMovementRecord(id=uuid4(), shop_id=record.shop.id, kind="opening_balance", occurred_at=occurred_at, amount_cents=request.opening_cash_cents, tender="cash", actor=request.actor, reason=("Explicit late start-of-day opening declaration: " + request.reason)[:240], created_at=retail_utc_now())
+        record.cash_movements[item.id] = item
+        record.cash_movement_idempotency[key] = (fingerprint, item)
+        return item
+
+    @app.post("/api/v1/shops/{shop_id}/cash-close", response_model=CashCloseRecord, status_code=201)
+    def post_cash_close(request: CashCloseCreate, record: _ShopRecord = Depends(shop_scope), idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None) -> CashCloseRecord:
+        from services.api.cash_close import calculate_cash_preview
+        key = require_voice_key(idempotency_key)
+        if not request.confirmed:
+            raise HTTPException(status_code=409, detail="cash close requires explicit confirmation")
+        fingerprint = hashlib.sha256(json.dumps(request.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
+        previous = record.cash_close_idempotency.get(key)
+        if previous:
+            if previous[0] != fingerprint:
+                raise HTTPException(status_code=409, detail="cash close idempotency key payload mismatch")
+            return previous[1]
+        if request.business_date in record.cash_closes or request.business_date in record.day_closes:
+            raise HTTPException(status_code=409, detail={"code": "already_closed", "message": "Recover the saved close instead of submitting another count"})
+        if request.business_date > datetime.now(ZoneInfo(record.shop.timezone)).date():
+            raise HTTPException(status_code=409, detail="future cash close is not supported")
+        preview = calculate_cash_preview(record, request.business_date)
+        if preview.requires_opening or preview.expected_cash_cents is None:
+            raise HTTPException(status_code=409, detail={"code": "opening_or_payment_required", "message": "Resolve opening/payment evidence before closing"})
+        if request.preview_version != preview.preview_version:
+            raise HTTPException(status_code=409, detail={"code": "stale_preview", "message": "Recorded movements changed; review the refreshed expected cash"})
+        now = retail_utc_now()
+        close_id = uuid4()
+        data = preview.model_dump(exclude={"preview_version", "saved_close"})
+        if request.cash_counted_cents != preview.expected_cash_cents:
+            data["warnings"] = [*data["warnings"], "Counted cash differs from expected recorded cash; variance requires review."]
+        item = CashCloseRecord(**data, id=close_id, audit_id=close_id, shop_id=record.shop.id, cash_counted_cents=request.cash_counted_cents, cash_variance_cents=request.cash_counted_cents-preview.expected_cash_cents, actor=request.actor, notes=request.notes, confirmed_at=now, as_of_cutoff=now, source_version=preview.preview_version)
+        record.cash_closes[request.business_date] = item
+        record.cash_close_idempotency[key] = (fingerprint, item)
+        return item
 
     def voice_replay(record: _ShopRecord, key: str, fingerprint: str) -> VoiceResponse | None:
         previous = record.voice_requests.get(key)
@@ -1418,6 +1514,16 @@ def create_app(
         for purchase in record.purchases.values():
             if purchase.status == "confirmed" and purchase.purchase_date == business_date and purchase.tender in purchases:
                 purchases[purchase.tender] += purchase.total_cost_micros // 10_000
+        from services.api.cash_close import calculate_cash_preview
+        cash_preview = calculate_cash_preview(record, business_date)
+        if cash_preview.opening_cash_cents is None or cash_preview.expected_cash_cents is None:
+            raise HTTPException(status_code=409, detail="Opening/payment evidence is missing; use the cash-close preview and explicit opening declaration")
+        opening["cash"] = cash_preview.opening_cash_cents
+        sales["cash"] = cash_preview.sales_cash_cents
+        expenses["cash"] = cash_preview.paid_expenses_cash_cents
+        purchases["cash"] = cash_preview.paid_purchases_cash_cents
+        refunds["cash"] = cash_preview.refunds_cash_cents
+        adjustments["cash"] = cash_preview.adjustments_cash_cents
         return {
             "opening_cash_cents": opening["cash"], "opening_bank_card_cents": opening["bank"],
             "sales_cash_cents": sales["cash"], "sales_bank_card_cents": sales["bank"],
@@ -1428,6 +1534,7 @@ def create_app(
             "expected_cash_cents": opening["cash"] + sales["cash"] - expenses["cash"] - purchases["cash"] - refunds["cash"] + adjustments["cash"],
             "expected_bank_card_cents": opening["bank"] + sales["bank"] - expenses["bank"] - purchases["bank"] - refunds["bank"] + adjustments["bank"],
             "shop_timezone": record.shop.timezone,
+            "warnings": [warning for warning in cash_preview.warnings if not warning.startswith("Bank/card")] + ["Legacy bank/card figures are recorded-movement estimates, not verified settlement; use cash-only close when bank is uncounted."],
         }
 
     @app.post("/api/v1/shops/{shop_id}/cash-movements", response_model=CashMovementRecord, status_code=status.HTTP_201_CREATED)
@@ -1446,6 +1553,10 @@ def create_app(
             if old_fingerprint != fingerprint:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="cash movement idempotency key payload mismatch")
             return old_record
+        if request.tender == "cash" and request.kind == "opening_balance":
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="New cash opening balances require explicit confirmation through /cash-close/opening")
+        if request.tender == "cash" and request.occurred_at > retail_utc_now():
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Actual cash movements cannot have a future occurred_at")
         item = CashMovementRecord(id=uuid4(), shop_id=record.shop.id, created_at=retail_utc_now(), **request.model_dump())
         record.cash_movements[item.id] = item
         record.cash_movement_idempotency[key] = (fingerprint, item)
@@ -1474,6 +1585,8 @@ def create_app(
         if not idempotency_key or not idempotency_key.strip():
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Idempotency-Key is required")
         key = idempotency_key.strip()
+        if request.business_date in record.cash_closes:
+            raise HTTPException(status_code=409, detail="cash-only close already exists; recover its saved receipt")
         fingerprint = hashlib.sha256(json.dumps(request.model_dump(mode="json"), sort_keys=True).encode()).hexdigest()
         previous = record.day_close_idempotency.get(key)
         if previous:
@@ -1499,7 +1612,7 @@ def create_app(
             bank_card_variance_cents=request.bank_card_counted_cents - int(breakdown["expected_bank_card_cents"]),
             notes=request.notes, actor=request.actor, confirmed_at=retail_utc_now(),
             shop_timezone=record.shop.timezone, calculation_basis="full_recorded_movements",
-            warnings=[],
+            warnings=list(breakdown.get("warnings", [])),
         )
         record.day_closes[request.business_date] = item
         record.day_close_idempotency[key] = (fingerprint, item)

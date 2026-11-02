@@ -26,12 +26,14 @@ part of Street CEO. Do not add agent desks or development chat to the shop.
 | Saved receipt | Read at a glance | Total, Tendered and large Change; next-Apo hint |
 | Stock/catalogue | Product availability | Name, SKU, selling price, stock; unit cost in details |
 | Sales history | Inspect a saved sale | Items, quantities, total, tender, cash received, change, time and cost availability |
+| Reports | Review trading | Monthly summary, product quantities/amounts, inclusive dates and Today/20/90-day presets |
+| End my day | Count and compare cash | Counted cash, opening provenance, recorded expected cash, shortage/overage and explicit save |
 | Profile | Configure and investigate | Shop connection, voice/pronunciation setup and recent request details |
 
 Use the existing `apps/web/public/street-ceo-logo.png`. Carry its friendly market
 character through navy text, green/teal controls and small warm gold accents.
 Use a light background, clear sans-serif type, generous spacing, rounded cards
-and large touch targets. Current navigation is Today, Sell, Stock and Profile.
+and large touch targets. Current navigation is Today, Sell, Stock, Reports and Profile.
 
 Receipt hierarchy: saved state → items → Total/Tendered → large Change. Put IDs,
 server addresses, build information, transcripts and long explanations under
@@ -104,6 +106,34 @@ Validate IDs, quantities and complete item coverage. Timeout, malformed output,
 unknowns and ambiguity return non-actionable questions. Distinguish slow, busy,
 not configured and failed provider states. Do not promise sub-second external AI;
 server benchmark timings exclude recognition and spoken output.
+
+## Reports, day-end and month-end
+
+Provide mobile reports for monthly recorded sales and sales by product. Accept
+inclusive custom dates, a selected calendar month, or last1/20/90 days including
+today in the shop timezone. Show resolved dates and Cash/Bank totals separately.
+Keep legacy mixed-sale product amounts unknown when line-price snapshots are
+absent; future sales save authoritative line prices/costs. Current catalogue
+prices must not rewrite historical reporting. Stock-only Undo is not a refund.
+
+From idle Sell or a completed receipt, “end my day” starts a hands-free cash-close
+conversation. Ask cash counted on hand first and opening cash if no trusted
+baseline exists. Zero is explicit, never assumed. Reuse one balance anchor and
+carry forward recorded cash activity; never sum old opening balances. A first
+late declaration of missing opening is explicit/audited, not inferred from the
+closing count. Do not silently replace an established opening.
+
+The server compares opening + cash sale totals + recorded cash in − recorded
+cash out against counted cash. Sales contribute total after change, not gross
+tendered cash. Include recorded paid expenses/purchases and explicit refunds.
+Show and speak counted, expected and counted−expected shortage/overage; ask Yes
+before saving. Bank is uncounted/unknown here. Never post a balancing adjustment
+automatically. Revalidate stale previews, preserve retry keys and freeze saved
+closes; flag subsequent activity rather than rewrite the original result.
+
+Month-end is a guided monthly summary with optional Count stock or Skip. It does
+not force a stock count or claim statutory/ledger period closure. Reports and
+closing must not interrupt a pending or uncertain sale.
 
 ## Starter data and costs
 

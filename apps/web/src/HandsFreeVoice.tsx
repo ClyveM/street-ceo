@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { isNativeAndroid, openSpeech } from './speechRecognition'
 import { conflictingAliases, PRONUNCIATION_KEY, readPronunciation, validAlias, WakeCommand, words } from './wakePhrase'
+import { endDayCommand } from './reportsClose'
 import { startSpeechLoop, type SpeechLoopState } from './speechLoop'
 import { readHandsFreePreference, storeHandsFreePreference } from './counterSession'
 
@@ -30,6 +31,7 @@ export function HandsFreeVoice({ paused, stopRequest = 0, setupOnly = false, exp
         if (!final) { setStatus(learning ? `Heard: ${text}` : replyPrompt || expectingPayment ? `Answer: ${text}` : machine.current.awake ? `Command: ${machine.current.body}${text}` : `Waiting for Apo · heard: ${text}`); return false }
         if (learning) { finished = true; setCandidate(words(text)); setStatus('Check what the recognizer heard before saving.'); return true }
         if ((expectingPayment || replyPrompt) && text.trim()) { finished = true; return Promise.resolve(command.current(text)).then(() => true) }
+        if (!machine.current.awake && endDayCommand(text)) return Promise.resolve(command.current(text)).then(() => true)
         const result = machine.current.acceptEvent(text, latest.current)
         if (result.woke) wake.current?.()
         setStatus(machine.current.awake ? `Command: ${machine.current.body} · say Napo to finish.` : 'Waiting for Apo…')

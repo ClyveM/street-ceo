@@ -1,6 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 from uuid import uuid4
 from copy import deepcopy
+from zoneinfo import ZoneInfo
 
 import pytest
 from fastapi import HTTPException
@@ -10,6 +11,7 @@ from services.api.costs import ExpenseCreate
 from services.api.persistence import Settings
 from services.api.retail_control import (
     CashMovementCreate,
+    CashOpeningCreate,
     DayCloseCreate,
     PurchaseCreate,
     PurchaseLineCreate,
@@ -142,6 +144,7 @@ def test_day_close_requires_confirmation_and_returns_cash_bank_variances():
     shop_id = store.seed_demo_shop()
     app = create_app(store, Settings())
     record = store.shops[shop_id]
+    route(app, "/api/v1/shops/{shop_id}/cash-close/opening", "POST")(CashOpeningCreate(business_date=date.today(), opening_cash_cents=0, actor="tester", reason="Explicit known zero opening", confirmed=True), record, "known-opening")
     coke = next(product for product in record.products.values() if product.sku == "COKE-300")
     sale = route(app, "/shops/{shop_id}/sales", "POST")
     sale(SaleCreate(lines=[SaleLine(product_id=coke.id, quantity=1)], tender="cash"), record, "close-sale-cash")
@@ -176,19 +179,12 @@ def test_day_close_full_breakdown_and_idempotent_cash_movements():
     today = date.today()
     now = datetime.now(timezone.utc)
     movement = route(app, "/api/v1/shops/{shop_id}/cash-movements", "POST")
-    opening = movement(CashMovementCreate(
-        kind="opening_balance", occurred_at=now - timedelta(days=1), amount_cents=1_000,
-        tender="cash", actor="owner", reason="opening float",
-    ), record, "movement-opening")
-    assert movement(CashMovementCreate(
-        kind="opening_balance", occurred_at=now - timedelta(days=1), amount_cents=1_000,
-        tender="cash", actor="owner", reason="opening float",
-    ), record, "movement-opening") == opening
-    with pytest.raises(HTTPException, match="payload mismatch"):
-        movement(CashMovementCreate(
-            kind="opening_balance", occurred_at=now - timedelta(days=1), amount_cents=900,
-            tender="cash", actor="owner", reason="changed opening float",
-        ), record, "movement-opening")
+    opening_route = route(app, "/api/v1/shops/{shop_id}/cash-close/opening", "POST")
+    opening_request = CashOpeningCreate(business_date=today - timedelta(days=1), opening_cash_cents=1000, actor="owner", reason="opening float", confirmed=True)
+    opening = opening_route(opening_request, record, "movement-opening")
+    assert opening_route(opening_request, record, "movement-opening") == opening
+    with pytest.raises(HTTPException):
+        opening_route(opening_request.model_copy(update={"opening_cash_cents": 900}), record, "movement-opening")
     movement(CashMovementCreate(
         kind="refund", occurred_at=now, amount_cents=20, tender="cash", actor="owner", reason="customer refund",
     ), record, "movement-refund")
@@ -228,7 +224,7 @@ def test_day_close_full_breakdown_and_idempotent_cash_movements():
     assert preview.adjustments_bank_card_cents == -5
     assert preview.expected_cash_cents == 1_100
     assert preview.expected_bank_card_cents == 135
-    assert preview.warnings == []
+    assert any("Legacy bank/card" in warning for warning in preview.warnings)
 
     close = route(app, "/api/v1/shops/{shop_id}/day-close", "POST")
     request = DayCloseCreate(
@@ -250,6 +246,7 @@ def test_day_close_get_readback_and_missing_date():
     shop_id = store.seed_demo_shop()
     app = create_app(store, Settings())
     record = store.shops[shop_id]
+    route(app, "/api/v1/shops/{shop_id}/cash-close/opening", "POST")(CashOpeningCreate(business_date=date.today(), opening_cash_cents=0, actor="tester", reason="Explicit known zero opening", confirmed=True), record, "known-opening")
     today = date.today()
     close = route(app, "/api/v1/shops/{shop_id}/day-close", "POST")
     get_close = route(app, "/api/v1/shops/{shop_id}/day-close/{business_date}", "GET")

@@ -42,3 +42,7 @@ When adding local short circuits, syntheticprovider schema/failure tests must ex
 ## 2026-11-02 — QUANTITY-REPLY-QA-001
 A final-answer latch must suppress duplicate dispatch without suppressing foreground/background updates. Async-handler completion must not rearm a hidden app. Readiness needs the same visibility guard as start/text, and must come from actualrecognizerready rather than permission/startpromise. Independent realbridge+turn composition reproduced and verified ownerfixes; phonecause remains separate.
 
+
+## 2026-11-02 — REPORTS-CLOSE-QA-001
+Read complete financialcalculator control flow before flagging preliminary values: later validatedcashoverride replaced legacycash result, and QA correctedpartialread. Test API/UI shapes using authoritative auditreason normalization, nullhistoricalSKU/unknownpayment andother-tender totals. New guardedendpoint is insufficient ifgenericmutation can bypass it; preserve exactoldreplay before rejecting newcashopenings/futureactuals. Source/tests/DOM do not establish physicalphone orbank/fullledger acceptance.
+
