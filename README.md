@@ -57,6 +57,20 @@ to values enabled for your Meta account. Restart the API. Keys stay on the
 backend; never put them in `VITE_` variables. Without a key, manual sales and
 exact/local catalogue paths remain usable; cloud-only checks report unavailable.
 
+Handwritten daily-sheet reading additionally requires an image-capable
+`LLAMA_VISION_MODEL` enabled for your account. Uploads produce editable proposals;
+review actual quantities, selling amounts and cash/bank totals before confirming.
+The demo accepts only today's open business day and unrecorded sales whose stock
+has not already been deducted or covered by a later count. Daily sheets are
+aggregates, not invented customer receipts; unsupported historical costs remain
+unknown. See [capture and sharing acceptance](docs/capture-sharing-acceptance.md).
+
+Under Reports, CSV exports contain text data; the companion PDF contains the
+Street CEO logo. The updated APK opens Android's share chooser. A browser can
+download CSV or open the print dialog to save the branded PDF. Exports preserve
+the selected period, currency and incomplete-data labels. Product images saved
+to the shop can load on the sale screen after restart.
+
 The API development terminal shows local versus Muse handling, timing and
 sanitized request/response details. See [terminal activity logging](docs/terminal-muse-logging.md)
 for output modes and watching the background demo server.

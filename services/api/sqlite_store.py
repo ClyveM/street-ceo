@@ -47,9 +47,9 @@ class SQLiteStore(InMemoryStore):
 
     @staticmethod
     def _model_registry() -> dict[str, type[BaseModel]]:
-        from services.api import app, costs, retail_control, social_data, voice_boundary
+        from services.api import app, costs, retail_control, social_data, voice_boundary, paper_sales
         return {f"{value.__module__}.{value.__name__}": value
-                for module in (app, costs, retail_control, social_data, voice_boundary)
+                for module in (app, costs, retail_control, social_data, voice_boundary, paper_sales)
                 for value in vars(module).values()
                 if isinstance(value, type) and issubclass(value, BaseModel)}
 
@@ -153,7 +153,8 @@ class SQLiteTransactionMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request, call_next):
         from services.ai.tracing import SQLiteTraceStore, trace_context
-        traced = request.method == "POST" and ("/voice/" in request.url.path or request.url.path.endswith("/muse"))
+        paper_extract = '/daily-sales-batches/' in request.url.path and request.url.path.endswith('/extract')
+        traced = request.method == "POST" and ("/voice/" in request.url.path or request.url.path.endswith("/muse") or paper_extract)
         correlation_id = str(uuid4())
         operation = request.url.path.rsplit("/", 1)[-1]
         shop_id = request.headers.get("x-shop-id")
@@ -162,7 +163,7 @@ class SQLiteTransactionMiddleware(BaseHTTPMiddleware):
         payload = None
         if traced:
             # Audio is deliberately excluded even before the sanitizer sees it.
-            if operation != "audio":
+            if operation != "audio" and not paper_extract:
                 try:
                     payload = await request.json()
                 except Exception:

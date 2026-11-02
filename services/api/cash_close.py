@@ -13,6 +13,9 @@ def cash_events(record):
     for sale in {sale.id: sale for _, sale in record.idempotent_sales.values()}.values():
         if sale.tender == "cash":
             events.append({"id": str(sale.id), "date": sale.created_at.astimezone(zone).date(), "at": sale.created_at, "posted": sale.created_at, "amount": sale.total_cents, "kind": "sales"})
+    from .paper_sales import confirmed_batches
+    for batch in confirmed_batches(record):
+        events.append({'id':str(batch.id),'date':batch.business_date,'at':batch.confirmed_at,'posted':batch.confirmed_at,'amount':batch.cash_cents,'kind':'sales'})
     for expense in record.expenses.values():
         if expense.status == "confirmed" and expense.tender == "cash":
             events.append({"id": str(expense.id), "date": expense.occurred_on, "at": datetime.combine(expense.occurred_on, datetime.min.time(), zone), "posted": expense.confirmed_at or expense.created_at, "amount": -expense.amount_cents, "kind": "expenses"})

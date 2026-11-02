@@ -6,6 +6,7 @@ export function validReportDates(start: string,end: string,isDate: (value:string
 export function reportDateLabel(value: string): string { return new Intl.DateTimeFormat('en-GB', {day:'numeric',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(`${value}T12:00:00Z`)) }
 export function rankedProducts(products: SalesReport['products']): SalesReport['products'] { return [...products].sort((a,b)=>b.quantity_sold-a.quantity_sold || a.product_name.localeCompare(b.product_name)) }
 export function missingCostMessage(summary: SalesReport['summary']): string | null {
+ if((summary.missing_cogs_daily_summary_count??0)>0)return `Cost missing for ${summary.missing_cogs_daily_summary_count} daily ${summary.missing_cogs_daily_summary_count===1?'summary':'summaries'}${summary.missing_cogs_sale_count?` and ${summary.missing_cogs_sale_count} sales`:''}. Profit is incomplete.`
  if(summary.missing_cogs_sale_count > 0) return `Cost missing for ${summary.missing_cogs_sale_count} ${summary.missing_cogs_sale_count === 1 ? 'sale' : 'sales'}. Profit is incomplete.`
  return summary.cogs_micros === null ? 'Some saved costs are unknown. Profit is incomplete.' : null
 }

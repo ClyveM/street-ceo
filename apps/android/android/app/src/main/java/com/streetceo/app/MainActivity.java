@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(ApoSpeechPlugin.class);
+        registerPlugin(StreetReportExportPlugin.class);
         super.onCreate(savedInstanceState);
         // ApoSpeech requests permission when foreground listening starts.
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

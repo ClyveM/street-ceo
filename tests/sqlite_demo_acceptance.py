@@ -490,9 +490,16 @@ def test_missing_quantity_mixed_unknown_cannot_target_or_partially_select_first_
     resolver = lambda transcript, products: resolve_catalogue_voice(transcript, products, provider=None)
     app = demo(resolver)
     first = request(app, "POST", VOICE + "/transcript", {"transcript": "coke and unicorn"}, "mixed-question").json()
-    assert first.get("clarification_product_id") is None and first["lines"] == []
+    assert first["clarification_product_id"] == PRODUCT and first["lines"] == []
+    assert len(first["pending_items"]) == 2 and not first["retained_lines"]
+    assert first["pending_items"][0]["product_id"] == PRODUCT
+    assert first["pending_items"][1]["heard"] == "unicorn"
     answer = request(app, "POST", VOICE + "/transcript", {"transcript": "one", "clarification_of": first["request_id"]}, "mixed-answer").json()
     assert answer["lines"] == [] and answer["status"] == "needs_clarification"
+    assert [(line["product_id"],line["quantity"]) for line in answer["retained_lines"]] == [(PRODUCT,1)]
+    assert len(answer["pending_items"]) == 1 and answer["pending_items"][0]["heard"] == "unicorn"
+    partial = request(app,"POST",VOICE+"/commit",{"review_id":answer["request_id"],"lines":[{"product_id":PRODUCT,"quantity":1}],"tender":"bank","match_confirmed":True},"partial-mixed")
+    assert partial.status_code == 409
     assert stock(app) == 18 and request(app, "GET", SALES).json() == []
 
 

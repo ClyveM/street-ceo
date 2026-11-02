@@ -2,7 +2,8 @@ export type SaleMode = 'quick' | 'review'
 export const SALE_MODE_KEY = 'street-ceo-sale-mode-v1'
 export function readSaleMode(storage?: Pick<Storage, 'getItem'>): SaleMode { try { return storage?.getItem(SALE_MODE_KEY) === 'review' ? 'review' : 'quick' } catch { return 'quick' } }
 export type QuickLine = { product_id: string; product_name: string; quantity: number }
-export type VoiceReview = { reviewId: string; shopId: string; transcript: string; status: string; lines: QuickLine[]; canCommit: boolean; requiresMatchConfirmation?: boolean; matchConfirmed?: boolean; resolutionSource?: string; clarificationQuestion?: string; providerCalled?: boolean }
+export type PendingVoiceItem = { slot_id:number; heard:string; quantity:number|null; product_id:string|null; product_name:string|null }
+export type VoiceReview = { reviewId: string; shopId: string; transcript: string; status: string; lines: QuickLine[]; canCommit: boolean; requiresMatchConfirmation?: boolean; matchConfirmed?: boolean; resolutionSource?: string; clarificationQuestion?: string; providerCalled?: boolean; retainedLines?: QuickLine[]; pendingItems?: PendingVoiceItem[] }
 export type TenderAnswer = { tender: 'cash' | 'bank'; amount_received_cents?: number }
 export type TenderQuestion = { kind: 'question'; status: 'needs_tender'; review_id: string; question: string; amount_due_cents: number; allowed_tenders: ('cash' | 'bank')[]; missing: string[] }
 export type QuickReceipt = { id: string; shop_id: string; lines: { product_id: string; quantity: number }[]; tender: 'cash' | 'bank'; total_cents: number; amount_received_cents: number; change_cents: number; stock_after: Record<string, number>; created_at: string }
@@ -115,14 +116,20 @@ export function parseVoiceReview(value: unknown, shopId: string): VoiceReview {
   if (record(value) && ['unavailable', 'rejected'].includes(String(value.status))) throw new QuickSaleError(text(value.error) ? value.error : 'That command could not be safely understood. Please try again.', false, text(value.error_code) ? value.error_code : undefined)
   if (!record(value) || value.shop_id !== shopId || !text(value.request_id) || !text(value.transcript) || !text(value.status) || !Array.isArray(value.lines)) throw new QuickSaleError('The voice response could not be verified. Nothing has been confirmed.')
   const lines = value.lines as QuickLine[]
-  if (lines.some((line) => !record(line) || !text(line.product_id) || !text(line.product_name) || !minor(line.quantity) || line.quantity === 0) || new Set(lines.map((line) => line.product_id)).size !== lines.length) throw new QuickSaleError('The selected products or quantities could not be verified.')
+  if (lines.some((line) => !record(line) || !text(line.product_id) || !text(line.product_name) || !minor(line.quantity) || line.quantity === 0) || lines.length > 100 || new Set(lines.map((line) => line.product_id)).size !== lines.length) throw new QuickSaleError('The selected products or quantities could not be verified.')
+  const retained = value.retained_lines, pendingItems = value.pending_items
+  if(retained!==undefined||pendingItems!==undefined){
+    if(!Array.isArray(retained)||!Array.isArray(pendingItems)||retained.length+pendingItems.length>100||retained.some(line=>!record(line)||!text(line.product_id)||!text(line.product_name)||!minor(line.quantity)||line.quantity===0)||new Set(retained.map(line=>line.product_id)).size!==retained.length||pendingItems.some(item=>!record(item)||!minor(item.slot_id)||item.slot_id>99||typeof item.heard!=='string'||item.heard.length>500||!(item.quantity===null||minor(item.quantity))||!(item.product_id===null&&item.product_name===null||text(item.product_id)&&text(item.product_name)))||new Set(pendingItems.map(item=>item.slot_id)).size!==pendingItems.length)throw new QuickSaleError('The retained basket or pending item could not be verified. Nothing has been confirmed.')
+    if(value.status==='needs_clarification'&&pendingItems.length===0&&retained.length>0)throw new QuickSaleError('The pending basket context is incomplete.')
+    if(value.status!=='needs_clarification'&&(retained.length>0||pendingItems.length>0))throw new QuickSaleError('Pending products cannot be treated as a complete basket.')
+  }
   const saleIntent = record(value.intent) && value.intent.action === 'record_sale' && value.intent.needs_confirmation === true
   const requiresMatch = value.requires_match_confirmation === true
   if (value.requires_match_confirmation !== undefined && typeof value.requires_match_confirmation !== 'boolean' || value.provider_called != null && typeof value.provider_called !== 'boolean' || value.resolution_source != null && typeof value.resolution_source !== 'string') throw new QuickSaleError('The catalogue interpretation metadata could not be verified.')
   if (value.status === 'needs_match_confirmation' && (!requiresMatch || !saleIntent || !lines.length || !text(value.clarification_question))) throw new QuickSaleError('The proposed catalogue match could not be verified.')
   if (value.status === 'needs_clarification' && (!text(value.clarification_question) || lines.length > 0)) throw new QuickSaleError('The clarification question could not be verified.')
   const canCommit = value.status === 'needs_confirmation' && !requiresMatch && lines.length > 0 && saleIntent
-  return { reviewId: value.request_id, shopId, transcript: value.transcript, status: value.status, lines, canCommit, requiresMatchConfirmation: requiresMatch, resolutionSource: typeof value.resolution_source === 'string' ? value.resolution_source : undefined, clarificationQuestion: text(value.clarification_question) ? value.clarification_question : undefined, providerCalled: typeof value.provider_called === 'boolean' ? value.provider_called : undefined }
+  return { reviewId: value.request_id, shopId, transcript: value.transcript, status: value.status, lines, canCommit, requiresMatchConfirmation: requiresMatch, resolutionSource: typeof value.resolution_source === 'string' ? value.resolution_source : undefined, clarificationQuestion: text(value.clarification_question) ? value.clarification_question : undefined, ...(Array.isArray(retained)?{retainedLines:retained as QuickLine[],pendingItems:pendingItems as PendingVoiceItem[]}:{}), providerCalled: typeof value.provider_called === 'boolean' ? value.provider_called : undefined }
 }
 export function parseQuickReceipt(value: unknown, review: VoiceReview): QuickReceipt {
   if (!record(value) || !text(value.id) || value.shop_id !== review.shopId || !['cash', 'bank'].includes(String(value.tender)) || !minor(value.total_cents) || !minor(value.amount_received_cents) || !minor(value.change_cents) || !instant(value.created_at) || !Array.isArray(value.lines) || !record(value.stock_after) || value.lines.length !== review.lines.length) throw new QuickSaleError('The sale receipt is unverified. Recover it using the original request reference.', true)
@@ -162,7 +169,7 @@ export function createQuickSaleClient(getConfig: () => { baseUrl: string; shopId
   }
   return {
     async interpret(transcript: string, key: string, signal?: AbortSignal, clarificationOf?: string) {
-      if (!transcript.trim() || transcript.length > 1000) throw new QuickSaleError('Use a command of 1–1,000 characters.')
+      if (!transcript.trim() || transcript.length > 16000) throw new QuickSaleError('Use a command of 1–16,000 characters.')
       const { value, shopId } = await call('/transcript', { transcript: transcript.trim(), ...(clarificationOf ? { clarification_of: clarificationOf } : {}) }, key, signal)
       return parseVoiceReview(value, shopId)
     },

@@ -61,7 +61,7 @@ def test_scoped_single_item_quantity_reuses_durable_target_without_second_resolu
 
 
 @pytest.mark.parametrize("heard", ["chips unicorn", "putado chips naples unicorn", "putado chips naples and unicorn", "Potato chips and bread"])
-def test_unresolved_extra_words_or_items_never_receive_single_quantity_target(heard):
+def test_unresolved_extra_words_or_items_never_become_actionable_partial_basket(heard):
     catalogue = [
         {"product_id": CHIPS, "name": "Potato chips", "sku": "CHIPS-100"},
         {"product_id": "bread", "name": "Bread loaf", "sku": "BREAD-700"},
@@ -69,7 +69,40 @@ def test_unresolved_extra_words_or_items_never_receive_single_quantity_target(he
     result = resolve_catalogue_voice(heard, catalogue, provider=MissingQuantityProvider())
     assert result.status == "needs_clarification"
     assert result.lines == ()
-    assert result.clarification_product_id is None
+    if ' and ' in heard:
+        # The new retained-basket flow may ask a focused quantity for the
+        # first grounded item, while preserving every other unresolved slot.
+        assert result.clarification_product_id == CHIPS
+        assert result.retained_lines == ()
+        assert len(result.pending_items) == 2
+        assert [item.slot_id for item in result.pending_items] == [0, 1]
+        assert all(item.quantity is None for item in result.pending_items)
+        assert result.pending_items[0].product_id == CHIPS
+        assert result.pending_items[1].heard == ('bread' if heard == 'Potato chips and bread' else 'unicorn')
+        assert result.pending_items[1].product_id == ('bread' if heard == 'Potato chips and bread' else None)
+        assert 'How many Potato chips?' in result.question
+    else:
+        assert result.clarification_product_id is None
+
+
+@pytest.mark.parametrize('heard', ['Potato chips and bread', 'putado chips naples and unicorn'])
+def test_focused_quantity_keeps_other_pending_item_and_cannot_commit_partial(tmp_path, monkeypatch, heard):
+    monkeypatch.setenv('STREET_CEO_TRACE_DATABASE', str(tmp_path / 'traces.sqlite3'))
+    provider = MissingQuantityProvider()
+    resolver = lambda text, products: resolve_catalogue_voice(text, products, provider=provider)
+    app = build(tmp_path / 'shop.sqlite3', resolver)
+    route = f'/api/v1/shops/{SHOP}/voice'
+    initial = call(app, 'POST', route+'/transcript', 'start', {'transcript': heard}).json()
+    assert len(initial['pending_items']) == 2 and initial['lines'] == []
+    follow = call(app, 'POST', route+'/transcript', 'quantity', {'transcript': 'one', 'clarification_of': initial['request_id']}).json()
+    assert follow['status'] == 'needs_clarification' and follow['lines'] == []
+    assert follow['retained_lines'] == [{'product_id': CHIPS, 'product_name': 'Potato chips', 'quantity': 1}]
+    assert len(follow['pending_items']) == 1
+    assert follow['pending_items'][0]['heard'] == ('bread' if heard == 'Potato chips and bread' else 'unicorn')
+    rejected = call(app, 'POST', route+'/commit', 'partial', {'review_id': follow['request_id'], 'lines': [{'product_id': CHIPS, 'quantity': 1}], 'tender': 'cash', 'amount_received_cents': 100, 'match_confirmed': True})
+    assert rejected.status_code == 409
+    assert app.state.store.shops[UUID(SHOP)].idempotent_sales == {}
+    app.state.store.close()
 
 
 @pytest.mark.parametrize("change", ["delete", "rename", "sku"])

@@ -55,3 +55,7 @@
 .counter-connection-alert p { line-height: 1.6; }
 .counter-connection-alert button { min-height: 44px; border: 1px solid #c8ab82; border-radius: 8px; background: #fff; padding: 8px 12px; color: #785631; font: inherit; }
 @media(max-width:360px) { .counter-modal { padding: 15px; border-radius: 20px; } .counter-brand > img { width: 43px; height: 43px; } .counter-modal .counter-modal-heading h2 { font-size: 23px; } .counter-modal .counter-close { min-width: 54px; padding: 9px; } .counter-heading h3 { font-size: 21px; } }
+
+.sale-product-photo{width:100%;height:100%;object-fit:cover;border-radius:inherit}.sale-basket-product{display:flex;gap:10px;align-items:center;min-width:0}.sale-basket-photo{width:36px;height:36px;object-fit:cover;border-radius:9px;flex-shrink:0}.sale-basket-product>span{min-width:0;overflow-wrap:anywhere}
+
+.retained-basket-context{background:#f2f7e9;border:1px solid #dce8cf;border-radius:13px;padding:14px;margin:16px 0;font-size:12px;line-height:1.7;color:#71905c}.retained-basket-context details{margin:10px 0}.retained-basket-context summary{min-height:44px;cursor:pointer;padding:10px 0}.retained-basket-context ol{padding-left:19px;overflow-wrap:anywhere}

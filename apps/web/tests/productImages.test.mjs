@@ -1,13 +1,31 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { readFile } from 'node:fs/promises'
-import { validateProductImage, imageUploadFilename, parseProductImage, uploadProductImage, MAX_PRODUCT_IMAGE_BYTES } from '../src/productImages.ts'
+import { validateProductImage, imageUploadFilename, parseProductImage, uploadProductImage, MAX_PRODUCT_IMAGE_BYTES, listStoredProductImages, fetchStoredProductImage, productPhotoAlt } from '../src/productImages.ts'
 
 const png = await readFile(new URL('./fixtures/product.png', import.meta.url))
 const file = new File([png], 'My shop photo.png', { type: 'image/png' })
 const config = { baseUrl: 'https://shop.example', shopId: '8b287d40-2e1a-4fe7-94d1-e58c37cb1256' }
 const productId = '7f047ccf-5498-4463-b168-247c529083fa'
 const metadata = { id: 'image-1', shop_id: config.shopId, product_id: productId, filename: 'My_shop_photo.png', content_type: 'image/png', size_bytes: file.size, sha256: 'a'.repeat(64), storage_backend: 'memory', storage_ref: 'memory://product-images/image-1', uploaded_at: '2026-10-31T00:00:00Z' }
+
+test('stored shop photos use scoped metadata and private bytes, not public image URLs',async()=>{
+ const digest=await crypto.subtle.digest('SHA-256',png)
+ const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('')
+ const saved={...metadata,sha256:hash},calls=[]
+ const fetcher=async(url,init)=>{calls.push({url,init});return url.endsWith('/product-images')?Response.json([saved]):new Response(png,{headers:{'Content-Type':'image/png',ETag:`"${hash}"`}})}
+ const records=await listStoredProductImages(config,fetcher)
+ const image=await fetchStoredProductImage(config,records[0],fetcher)
+ assert.equal(image.name,metadata.filename)
+ assert.equal(image.size,file.size)
+ assert.equal(calls[1].init.headers['X-Shop-ID'],config.shopId)
+ assert.match(calls[1].url,/\/image\/content$/)
+ assert.equal(calls[1].init.cache,'no-store')
+ assert.equal(productPhotoAlt('server','Bread'),'Stored shop photo for Bread')
+ assert.equal(productPhotoAlt(undefined,'Bread'),'Local preview for Bread')
+ await assert.rejects(fetchStoredProductImage(config,saved,async()=>new Response(png,{headers:{'Content-Type':'image/png',ETag:'"different"'}})),/changed/)
+ await assert.rejects(listStoredProductImages(config,async()=>Response.json([saved,saved])),/duplicate/)
+})
 
 test('validates supported type, size, and matching file signature', async () => {
   await validateProductImage(file)

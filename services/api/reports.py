@@ -55,8 +55,10 @@ def sales_report(record, start_date=None, end_date=None, preset=None, month=None
     end = datetime.combine(end_date + timedelta(days=1), datetime.min.time(), zone).astimezone(timezone.utc)
     unique = {sale.id: sale for _, sale in record.idempotent_sales.values()}
     receipts = sorted((sale for sale in unique.values() if start <= sale.created_at < end and sale.created_at <= now), key=lambda sale: sale.created_at)
-    daily = defaultdict(lambda: {"sales_total_cents": 0, "transaction_count": 0})
-    monthly = defaultdict(lambda: {"sales_total_cents": 0, "transaction_count": 0})
+    from .paper_sales import confirmed_batches
+    batches = [item for item in confirmed_batches(record) if start_date <= item.business_date <= min(end_date,today) and item.confirmed_at and item.confirmed_at <= now]
+    daily = defaultdict(lambda: {"sales_total_cents": 0, "transaction_count": 0, "daily_summary_count": 0})
+    monthly = defaultdict(lambda: {"sales_total_cents": 0, "transaction_count": 0, "daily_summary_count": 0})
     products = {}
     warnings = []
     if end_date > today:
@@ -97,6 +99,19 @@ def sales_report(record, start_date=None, end_date=None, preset=None, month=None
                 item["known_cogs_micros"] += cost
         if not valid_snapshots and len(sale.lines) > 1:
             unallocated_revenue += sale.total_cents
+    for batch in batches:
+        business_date=batch.business_date.isoformat()
+        for bucket in (daily[business_date], monthly[business_date[:7]]):
+            bucket['sales_total_cents'] += batch.total_cents
+            bucket['daily_summary_count'] += 1
+        tenders['cash'] += batch.cash_cents
+        tenders['bank'] += batch.bank_cents
+        for line in batch.lines:
+            item=products.setdefault(str(line.product_id), {'product_id':str(line.product_id),'product_name':line.product_name,'sku':line.sku,'label_source':'daily_summary_snapshot','quantity_sold':0,'known_revenue_cents':0,'unknown_revenue_line_count':0,'known_cogs_micros':0,'unknown_cogs_line_count':0})
+            item.update(product_name=line.product_name,sku=line.sku,label_source='daily_summary_snapshot')
+            item['quantity_sold'] += line.quantity
+            item['known_revenue_cents'] += line.line_total_cents
+            item['unknown_cogs_line_count'] += 1
     for item in products.values():
         item["revenue_cents"] = None if item["unknown_revenue_line_count"] else item["known_revenue_cents"]
         item["cogs_micros"] = None if item["unknown_cogs_line_count"] else item["known_cogs_micros"]
@@ -108,8 +123,10 @@ def sales_report(record, start_date=None, end_date=None, preset=None, month=None
         warnings.append("Legacy multi-product receipts lack line prices; product revenue is partial/unknown, never estimated from current prices.")
     if unknown_cogs:
         warnings.append("Some saved receipt costs are unknown; complete COGS/profit cannot be inferred from current product costs.")
-    if any(item["label_source"] != "latest_receipt_snapshot" for item in products.values()):
+    if batches:
+        warnings.append('Daily sales sheets are separate summaries, not customer transactions. Their historical COGS is unknown; gross profit is incomplete.')
+    if any(item["label_source"] not in {"latest_receipt_snapshot", "daily_summary_snapshot"} for item in products.values()):
         warnings.append("Some product labels use the current catalogue because the old receipt did not save a label.")
     return {"start_date": start_date.isoformat(), "end_date": end_date.isoformat(), "coverage_end_date": min(end_date, today).isoformat(), "coverage": coverage, "as_of": now.isoformat(), "shop_timezone": record.shop.timezone, "currency": record.shop.currency,
-            "summary": {"sales_total_cents": sum(sale.total_cents for sale in receipts), "transaction_count": len(receipts), "cash_sales_cents": tenders["cash"], "bank_sales_cents": tenders["bank"], "other_tender_sales_cents": sum(value for key, value in tenders.items() if key not in {"cash", "bank"}), "cogs_micros": None if unknown_cogs else known_cogs, "known_cogs_micros": known_cogs, "missing_cogs_sale_count": unknown_cogs, "unallocated_product_revenue_cents": unallocated_revenue, **_gross_profit(sum(sale.total_cents for sale in receipts), None if unknown_cogs else known_cogs)},
+            "summary": {"sales_total_cents": sum(sale.total_cents for sale in receipts)+sum(batch.total_cents for batch in batches), "transaction_count": len(receipts), "daily_summary_count":len(batches), "cash_sales_cents": tenders["cash"], "bank_sales_cents": tenders["bank"], "other_tender_sales_cents": sum(value for key, value in tenders.items() if key not in {"cash", "bank"}), "cogs_micros": None if unknown_cogs or batches else known_cogs, "known_cogs_micros": known_cogs, "missing_cogs_sale_count": unknown_cogs, "missing_cogs_daily_summary_count":len(batches), "unallocated_product_revenue_cents": unallocated_revenue, **_gross_profit(sum(sale.total_cents for sale in receipts)+sum(batch.total_cents for batch in batches), None if unknown_cogs or batches else known_cogs)},
             "daily": [{"business_date": key, **value} for key, value in sorted(daily.items())], "monthly": [{"month": key, **value} for key, value in sorted(monthly.items())], "products": sorted(products.values(), key=lambda item: item["product_id"]), "stock_reversal_count": len(reversals), "warnings": warnings}

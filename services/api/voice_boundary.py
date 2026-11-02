@@ -19,7 +19,7 @@ class VoiceModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-MAX_TRANSCRIPT_CHARS = 1000
+MAX_TRANSCRIPT_CHARS = 16000
 MAX_AUDIO_BYTES = 5 * 1024 * 1024
 
 
@@ -47,6 +47,15 @@ class VoiceSaleLine(VoiceModel):
     quantity: int = Field(gt=0)
 
 
+class VoicePendingItem(VoiceModel):
+    slot_id: int = Field(ge=0, lt=100)
+    heard: str = Field(max_length=500)
+    quantity: int | None = Field(default=None, ge=0)
+    product_id: UUID | None = None
+    product_name: str | None = None
+    product_sku: str | None = None
+
+
 class VoiceResponse(VoiceModel):
     request_id: UUID
     shop_id: UUID
@@ -54,7 +63,7 @@ class VoiceResponse(VoiceModel):
     status: str
     transcript: str | None = None
     intent: VoiceIntent | None = None
-    lines: list[VoiceSaleLine] = Field(default_factory=list)
+    lines: list[VoiceSaleLine] = Field(default_factory=list, max_length=100)
     error: str | None = None
     error_code: str | None = None
     requires_match_confirmation: bool = False
@@ -65,6 +74,8 @@ class VoiceResponse(VoiceModel):
     clarification_product_id: UUID | None = None
     clarification_product_name: str | None = None
     clarification_product_sku: str | None = None
+    retained_lines: list[VoiceSaleLine] = Field(default_factory=list, max_length=100)
+    pending_items: list[VoicePendingItem] = Field(default_factory=list, max_length=100)
 
 
 class VoiceSaleCommitLine(VoiceModel):
@@ -199,6 +210,8 @@ def parse_catalogue_sale(transcript: str, products: Sequence[Any]) -> list[Voice
         if not token or int(match.group(1)) <= 0:
             return None
         pairs.append((match.group(1), token))
+    if len(pairs) > 100:
+        return None
     lines: list[VoiceSaleLine] = []
     used: set[UUID] = set()
     for quantity_text, token in pairs:

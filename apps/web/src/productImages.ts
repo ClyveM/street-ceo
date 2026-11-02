@@ -53,3 +53,22 @@ export async function uploadProductImage(config: { baseUrl: string; shopId: stri
   if (!response.ok) throw new Error(response.status === 404 ? 'The product-image service or product is unavailable (404). Your preview is still local.' : `Image upload failed (${response.status}). Your preview is still local.`)
   try { return parseProductImage(await response.json(), config.shopId, productId) } catch { throw new Error('Could not verify the image receipt. Check the backend before uploading again.') }
 }
+
+export async function listStoredProductImages(config:{baseUrl:string;shopId:string},fetcher:typeof fetch=fetch,signal?:AbortSignal):Promise<ProductImageMetadata[]> {
+ const response=await fetcher(`${config.baseUrl.replace(/\/$/,'')}/api/v1/shops/${encodeURIComponent(config.shopId)}/product-images`,{headers:{Accept:'application/json','X-Shop-ID':config.shopId},signal,cache:'no-store'})
+ if(!response.ok)throw new Error('Stored shop photos could not be loaded.')
+ const values:unknown=await response.json();if(!Array.isArray(values))throw new Error('Stored shop photo index is unreadable.')
+ const ids=new Set<string>();return values.map(value=>{if(!value||typeof value.product_id!=='string'||!value.product_id.trim())throw new Error('Stored image product reference is missing.');const item=parseProductImage(value,config.shopId,value?.product_id);if(ids.has(item.product_id))throw new Error('Stored photo index contains duplicate products.');ids.add(item.product_id);return item})
+}
+export async function fetchStoredProductImage(config:{baseUrl:string;shopId:string},metadata:ProductImageMetadata,fetcher:typeof fetch=fetch,signal?:AbortSignal):Promise<File> {
+ if(metadata.shop_id!==config.shopId)throw new Error('Photo shop scope differs.')
+ const response=await fetcher(`${config.baseUrl.replace(/\/$/,'')}/api/v1/shops/${encodeURIComponent(config.shopId)}/products/${encodeURIComponent(metadata.product_id)}/image/content`,{headers:{Accept:metadata.content_type,'X-Shop-ID':config.shopId},signal,cache:'no-store'})
+ if(!response.ok)throw new Error('Stored shop photo is unavailable.')
+ const mime=response.headers.get('Content-Type')?.split(';')[0],etag=response.headers.get('ETag')?.replace(/^W\//,'').replace(/"/g,'')
+ if(mime!==metadata.content_type||etag&&etag!==metadata.sha256)throw new Error('Stored photo changed. Refresh it before relying on this preview.')
+ const blob=await response.blob();if(blob.size!==metadata.size_bytes||blob.size>MAX_PRODUCT_IMAGE_BYTES)throw new Error('Stored photo size differs from its receipt.')
+ await validateProductImage(blob)
+ if(globalThis.crypto?.subtle){const digest=await crypto.subtle.digest('SHA-256',await blob.arrayBuffer());const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');if(hash!==metadata.sha256)throw new Error('Stored photo checksum differs from its receipt.')}
+ return new File([blob],metadata.filename,{type:metadata.content_type})
+}
+export function productPhotoAlt(source:string|undefined,name:string):string { return `${source==='server'?'Stored shop photo':'Local preview'} for ${name}` }

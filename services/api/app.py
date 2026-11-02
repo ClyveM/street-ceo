@@ -13,6 +13,7 @@ from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from services.api.persistence import (
     RepositoryConflict,
@@ -75,6 +76,7 @@ from services.api.voice_boundary import (
     VoiceSaleCommitRequest,
     VoiceSaleCommitLine,
     VoiceSaleLine,
+    VoicePendingItem,
     VoiceSaleReversal,
     VoiceTenderQuestion,
     VoiceSaleUndoRequest,
@@ -217,6 +219,7 @@ class DemoResetResponse(ApiModel):
 class ShopSummary(ApiModel):
     sales_total_cents: int = Field(ge=0)
     transaction_count: int = Field(ge=0)
+    daily_summary_count: int = Field(default=0, ge=0)
     low_stock_count: int = Field(ge=0)
     sales_change_percent: float | None = None
     insight: str
@@ -257,6 +260,11 @@ class _ShopRecord:
     idempotent_sales: dict[str, tuple[str, Sale]] = field(default_factory=dict)
     voice_requests: dict[str, tuple[str, VoiceResponse]] = field(default_factory=dict)
     voice_reviews: dict[UUID, VoiceResponse] = field(default_factory=dict)
+    voice_clarification_children: dict[UUID, UUID] = field(default_factory=dict)
+    daily_sales_batches: dict = field(default_factory=dict)
+    daily_source_images: dict[UUID, bytes] = field(default_factory=dict)
+    daily_batch_stock_audits: list = field(default_factory=list)
+    daily_batch_idempotency: dict = field(default_factory=dict)
     voice_review_commits: dict[UUID, tuple[str, str, Sale]] = field(default_factory=dict)
     voice_sale_ids: set[UUID] = field(default_factory=set)
     voice_sale_reversals: dict[UUID, VoiceSaleReversal] = field(default_factory=dict)
@@ -481,6 +489,7 @@ def create_app(
     image_ai: StructuredAI | None = None,
     invoice_ai: StructuredAI | None = None,
     voice_catalogue_resolver: object | None = _AUTO_CATALOGUE_RESOLVER,
+    paper_extractor: object | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_env()
     store = store or build_repository(settings)
@@ -495,6 +504,7 @@ def create_app(
         ],
         allow_methods=["GET", "POST", "OPTIONS"],
         allow_headers=["*"],
+        expose_headers=['ETag','X-Product-Image-ID','X-Correlation-ID'],
     )
     app.state.store = store
     app.state.voice_interpreter = voice_interpreter
@@ -503,6 +513,7 @@ def create_app(
     app.state.image_ai = image_ai
     app.state.invoice_ai = invoice_ai
     app.state.voice_catalogue_resolver = voice_catalogue_resolver
+    app.state.paper_extractor = paper_extractor
     if settings.local_team_enabled:
         try:
             from services.api.local_team import mount_local_team
@@ -571,6 +582,9 @@ def create_app(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
         except RuntimeError as exc:
             raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="repository unavailable") from exc
+
+    from services.api.paper_sales import mount_paper_sales
+    mount_paper_sales(app, shop_scope)
 
     @app.get("/api/v1/shops/{shop_id}/investigations/requests")
     def recent_investigation_requests(
@@ -703,6 +717,24 @@ def create_app(
             provider_called = bool(resolution.provider_called)
             source = resolution.source
             question = str(resolution.question or "Please say the quantity and catalogue name for every item.")[:1000]
+            if getattr(resolution, 'pending_items', ()):
+                if len(resolution.retained_lines) + len(resolution.pending_items) > 100 or len({item.slot_id for item in resolution.pending_items}) != len(resolution.pending_items):
+                    raise ValueError('invalid retained basket size or slots')
+                retained = []
+                used = set()
+                for line in resolution.retained_lines:
+                    product = record.products.get(UUID(str(line.product_id)))
+                    if product is None or product.id in used or type(line.quantity) is not int or line.quantity <= 0:
+                        raise ValueError('invalid retained line')
+                    used.add(product.id)
+                    retained.append(VoiceSaleLine(product_id=product.id, product_name=product.name, quantity=line.quantity))
+                pending = []
+                for item in resolution.pending_items:
+                    product = record.products.get(UUID(str(item.product_id))) if item.product_id else None
+                    pending.append(VoicePendingItem(slot_id=item.slot_id, heard=item.heard, quantity=item.quantity,
+                                                   product_id=product.id if product else None, product_name=product.name if product else None,
+                                                   product_sku=product.sku if product else None))
+                return retained_clarification(record, transcript, retained, pending, source, provider_called, input_kind)
             if resolution.status == "proposed":
                 proposed = []
                 used = set()
@@ -716,7 +748,7 @@ def create_app(
                     proposed.append(VoiceSaleLine(product_id=product.id, product_name=product.name, quantity=quantity))
                 if not proposed:
                     raise ValueError("empty catalogue proposal")
-                question = "Did you mean " + ", ".join(f"{line.quantity} {line.product_name}" for line in proposed) + "? Please say yes or no."
+                question = ("Did you mean " + ", ".join(f"{line.quantity} {line.product_name}" for line in proposed))[:900] + "? Please say yes or no."
                 intent = VoiceIntent(action="record_sale", item=proposed[0].product_name, quantity=proposed[0].quantity, needs_confirmation=True)
                 return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_match_confirmation", transcript=transcript, intent=intent, lines=proposed, requires_match_confirmation=True, clarification_question=question, resolution_source=source, provider_called=provider_called)
             clarification_product_id = getattr(resolution, "clarification_product_id", None)
@@ -731,6 +763,84 @@ def create_app(
         except Exception:
             question = "I could not confirm every product. Please say the quantity and exact catalogue name for every item, for example one Coke."
             return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_clarification", transcript=transcript, clarification_question=question, error=question, error_code="product_not_found", clarification_code="resolution_unavailable", resolution_source="unavailable", provider_called=provider_called)
+
+    def retained_clarification(record, transcript, retained, pending, source, provider_called=False, input_kind='transcript'):
+        active = pending[0]
+        if active.product_id:
+            question = f"How many {active.product_name}? Say just the quantity."
+        else:
+            question = f"I kept {len(retained)} understood item(s). What product did you mean by '{active.heard}'? Say only this item"
+            question += " and its quantity." if not active.quantity else f"; I heard quantity {active.quantity}."
+        return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status='needs_clarification',
+                             transcript=transcript, retained_lines=retained, pending_items=pending, clarification_question=question[:1000],
+                             error=question[:1000], error_code='quantity_required' if active.product_id else 'product_not_found',
+                             clarification_code='missing_quantity' if active.product_id else 'unresolved_item',
+                             clarification_product_id=active.product_id, clarification_product_name=active.product_name,
+                             clarification_product_sku=active.product_sku,
+                             resolution_source=source, provider_called=provider_called)
+
+    def continue_retained_basket(previous, transcript, record):
+        active = previous.pending_items[0]
+        retained = list(previous.retained_lines)
+        pending = list(previous.pending_items)
+        # All retained identities still must exist; never drop a deleted item.
+        if any(line.product_id not in record.products for line in retained):
+            raise HTTPException(status_code=409, detail='A retained product was deleted. Cancel and review a new basket.')
+        import re
+        if re.fullmatch(r'remove (?:this )?item[.!?]*', transcript.strip(), re.I):
+            return finish_retained_basket(previous, record, retained, pending[1:], 'local_explicit_removal', False)
+        if re.search(r'\b(?:and|plus)\s*[,;.!?]*$', transcript, re.I):
+            return retained_clarification(record, previous.transcript, retained, pending, 'local_clarification')
+        quantity = parse_quantity_reply(transcript)
+        if active.product_id and quantity is not None:
+            product = record.products.get(active.product_id)
+            if product is None:
+                raise HTTPException(status_code=409, detail='Clarification product was deleted. Cancel and review a new basket.')
+            if product.name != active.product_name or active.product_sku is not None and product.sku != active.product_sku:
+                raise HTTPException(status_code=409, detail='Clarification product changed; name the product again in a new basket.')
+            reply_lines = [VoiceSaleLine(product_id=product.id, product_name=product.name, quantity=quantity)]
+            source, called = 'local_clarification', False
+        else:
+            focused = transcript
+            if active.quantity and parse_catalogue_sale(focused, record.products.values()) is None:
+                # A product-only answer may reuse the independently heard quantity.
+                from services.ai.catalogue_voice import _segments
+                if all(segment['quantity'] is None for segment in _segments(focused)):
+                    focused = f'{active.quantity} {focused}'
+            reply_lines = parse_catalogue_sale(focused, record.products.values())
+            source, called = 'local_clarification', False
+            if not reply_lines:
+                reply = resolve_catalogue_response(focused, record, 'transcript')
+                reply_lines = reply.lines
+                source, called = reply.resolution_source, reply.provider_called
+                if not reply_lines and reply.clarification_product_id:
+                    pending[0] = active.model_copy(update={'heard': focused[:500], 'product_id': reply.clarification_product_id, 'product_name': reply.clarification_product_name, 'product_sku': reply.clarification_product_sku, 'quantity': None})
+        if len(reply_lines or []) != 1:
+            return retained_clarification(record, previous.transcript, retained, pending, source, called)
+        line = reply_lines[0]
+        if line.product_id in {item.product_id for item in retained}:
+            response = retained_clarification(record, previous.transcript, retained, pending, source, called)
+            response.clarification_question = 'That product is already retained. Please identify the unresolved item, or Cancel to start a new basket.'
+            return response
+        retained.append(line)
+        pending.pop(0)
+        return finish_retained_basket(previous, record, retained, pending, source, called)
+
+    def finish_retained_basket(previous, record, retained, pending, source, called):
+        if pending:
+            return retained_clarification(record, previous.transcript, retained, pending, source, called)
+        if not retained:
+            return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind='transcript', status='rejected',
+                                 transcript=previous.transcript, error='No basket items remain. No sale was recorded. Start a new sale.',
+                                 error_code='empty_basket', resolution_source=source)
+        if any(line.quantity > record.products[line.product_id].stock_qty for line in retained):
+            raise HTTPException(status_code=409, detail='Insufficient stock in the retained basket. No sale was recorded; review stock before starting a new basket.')
+        retained = [VoiceSaleLine(product_id=line.product_id, product_name=record.products[line.product_id].name, quantity=line.quantity) for line in retained]
+        question = 'Review the complete basket: ' + ', '.join(f'{line.quantity} {line.product_name}' for line in retained)
+        return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind='transcript', status='needs_match_confirmation',
+                             transcript=previous.transcript, lines=retained, requires_match_confirmation=True,
+                             intent=VoiceIntent(action='record_sale', item=retained[0].product_name, quantity=retained[0].quantity),
+                             clarification_question=(question[:900] + '. Say yes to confirm all items, or Cancel.'), resolution_source=source, provider_called=called)
 
     @app.post("/api/v1/shops/{shop_id}/voice/transcript", response_model=VoiceResponse)
     def interpret_voice_transcript(
@@ -754,6 +864,15 @@ def create_app(
             previous = next((response for _, response in record.voice_requests.values() if response.request_id == request.clarification_of), None)
             if previous is None or previous.status != "needs_clarification":
                 raise HTTPException(status_code=409, detail="clarification context is missing or not applicable")
+            if previous.pending_items:
+                if previous.request_id in record.voice_clarification_children:
+                    raise HTTPException(status_code=409, detail='This clarification was already answered. Continue with the latest basket or retry the original request key.')
+                response = continue_retained_basket(previous, transcript, record)
+                record.voice_requests[key] = (fingerprint, response)
+                record.voice_clarification_children[previous.request_id] = response.request_id
+                if response.status == 'needs_match_confirmation':
+                    record.voice_reviews[response.request_id] = response
+                return response
             if previous.clarification_code == "missing_quantity":
                 quantity = parse_quantity_reply(transcript)
                 if quantity is not None and previous.clarification_product_id is not None:
@@ -1255,6 +1374,23 @@ def create_app(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="product image not found")
         return item
 
+    @app.get('/api/v1/shops/{shop_id}/product-images', response_model=list[ProductImageMetadata])
+    def list_product_images(record: _ShopRecord = Depends(shop_scope)):
+        latest = {}
+        for item in sorted(record.product_images.values(), key=lambda value:(value.uploaded_at,str(value.id))):
+            if item.product_id in record.products and item.shop_id == record.shop.id:
+                latest[item.product_id] = item
+        return [latest[key] for key in sorted(latest,key=str)]
+
+    @app.get('/api/v1/shops/{shop_id}/products/{product_id}/image/content')
+    def read_product_image_content(product_id: UUID, record: _ShopRecord = Depends(shop_scope)):
+        item = get_product_image(product_id, record)
+        contents = record.product_image_bytes.get(item.id)
+        if contents is None:
+            raise HTTPException(404, 'Stored product image content is unavailable')
+        return Response(contents, media_type=item.content_type, headers={'Cache-Control':'private, no-store',
+                        'X-Content-Type-Options':'nosniff','ETag':'"'+item.sha256+'"','X-Product-Image-ID':str(item.id)})
+
     @app.post("/api/v1/shops/{shop_id}/social/draft", response_model=SocialDraftResponse)
     def request_social_draft(
         request: SocialDraftRequest,
@@ -1329,9 +1465,8 @@ def create_app(
 
     @app.get("/shops/{shop_id}/summary", response_model=ShopSummary)
     def get_summary(record: _ShopRecord = Depends(shop_scope)) -> ShopSummary:
-        today = datetime.now(timezone.utc).date()
-        todays_sales = [sale for _, sale in record.idempotent_sales.values() if sale.created_at.date() == today]
-        total = sum(sale.total_cents for sale in todays_sales)
+        from services.api.reports import sales_report
+        summary = sales_report(record, preset='last1')['summary']
         low_stock = sum(1 for product in record.products.values() if product.stock_qty < 8)
         fastest = min(record.products.values(), key=lambda product: product.stock_qty, default=None)
         insight = (
@@ -1339,7 +1474,8 @@ def create_app(
             if fastest and fastest.stock_qty < 8 else
             "Stock is holding steady. Keep recording sales to build today’s live picture."
         )
-        return ShopSummary(sales_total_cents=total, transaction_count=len(todays_sales), low_stock_count=low_stock, sales_change_percent=None, insight=insight)
+        return ShopSummary(sales_total_cents=summary['sales_total_cents'], transaction_count=summary['transaction_count'],
+                           daily_summary_count=summary['daily_summary_count'], low_stock_count=low_stock, sales_change_percent=None, insight=insight)
 
     @app.post("/api/v1/shops/{shop_id}/purchases", response_model=PurchaseRecord, status_code=status.HTTP_201_CREATED)
     def create_purchase(request: PurchaseCreate, record: _ShopRecord = Depends(shop_scope)) -> PurchaseRecord:
@@ -1512,6 +1648,10 @@ def create_app(
         sales = {"cash": 0, "bank": 0}
         for sale in (sale for _, sale in record.idempotent_sales.values() if during(sale.created_at)):
             sales[sale.tender] += sale.total_cents
+        from services.api.paper_sales import confirmed_batches
+        for batch in confirmed_batches(record):
+            if batch.business_date == business_date:
+                sales['bank'] += batch.bank_cents
         expenses = {"cash": 0, "bank": 0}
         for expense in record.expenses.values():
             if expense.status == "confirmed" and expense.occurred_on == business_date and expense.tender in expenses:
@@ -1636,21 +1776,29 @@ def create_app(
         if repository_answer is not None:
             return MuseAskResponse(**repository_answer)
         period_start = _muse_period_start(lowered, now)
-        sales = [
-            sale for _, sale in record.idempotent_sales.values()
-            if sale.created_at >= period_start
-        ]
+        zone = ZoneInfo(record.shop.timezone)
+        if 'today' in lowered:
+            period_start = datetime.combine(now.astimezone(zone).date(), datetime.min.time(), zone).astimezone(timezone.utc)
+        elif 'this month' in lowered:
+            period_start = datetime.combine(now.astimezone(zone).date().replace(day=1), datetime.min.time(), zone).astimezone(timezone.utc)
+        sales = [sale for sale in {sale.id:sale for _,sale in record.idempotent_sales.values()}.values()
+                 if period_start <= sale.created_at <= now]
+        from services.api.paper_sales import confirmed_batches
+        batches = [batch for batch in confirmed_batches(record)
+                   if period_start <= datetime.combine(batch.business_date, datetime.min.time(), zone) <= now]
         period_name = _muse_period_name(lowered)
-        sales_cents = sum(sale.total_cents for sale in sales)
+        sales_cents = sum(sale.total_cents for sale in sales)+sum(batch.total_cents for batch in batches)
         evidence = (
             Evidence(f"sales-{period_name}", "sales_total", float(sales_cents), "cents", period_name),
             Evidence(f"transactions-{period_name}", "transaction_count", float(len(sales)), "transactions", period_name),
         )
+        if batches:
+            evidence += (Evidence(f'daily-summaries-{period_name}','daily_summary_count',float(len(batches)),'daily sales sheets, not customer transactions',period_name),)
 
         asks_profit = any(token in lowered for token in ("profit", "margin", "cogs", "cost of goods", "expense"))
         if asks_profit:
             missing: list[str] = []
-            cogs_known = bool(sales) and all(sale.cogs_micros is not None for sale in sales)
+            cogs_known = bool(sales) and not batches and all(sale.cogs_micros is not None for sale in sales)
             confirmed_expenses = [
                 expense for expense in record.expenses.values()
                 if expense.status == "confirmed"
@@ -1681,6 +1829,7 @@ def create_app(
                     answer=(
                         f"I found {len(sales)} recorded transaction(s) and "
                         f"{_money(record.shop.currency, sales_cents)} in sales for {period_name}. "
+                        + (f"This includes {len(batches)} daily sales sheet(s) with unknown historical COGS, separate from customer transactions. " if batches else "") +
                         "I cannot calculate profit yet because some confirmed cost data is missing."
                     ),
                     title="Profit needs more confirmed cost data",

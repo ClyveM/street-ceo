@@ -61,7 +61,8 @@ def repository_sales_answer(question, record):
     money = lambda cents: f"{record.shop.currency} {cents / 100:.2f}"
     disclaimer = " Stock-only Undo does not reduce these gross recorded sales." if report['stock_reversal_count'] else ""
     if not ranking:
-        return result(f"Recorded gross sales for {period}: {money(summary['sales_total_cents'])} across {summary['transaction_count']} transaction(s).{disclaimer}", "Recorded sales summary", ids)
+        sheets=f" Plus {summary['daily_summary_count']} daily sales sheet(s), included in the sales amount but not the customer transaction count." if summary.get('daily_summary_count') else ''
+        return result(f"Recorded gross sales for {period}: {money(summary['sales_total_cents'])} across {summary['transaction_count']} transaction(s) (customer receipts).{sheets}{disclaimer}", "Recorded sales summary", ids)
     products = report['products']
     if not products:
         return result(f"No sales were recorded for {period}, so there is no best-selling product yet.", "No recorded sales", ids)
@@ -74,5 +75,5 @@ def repository_sales_answer(question, record):
     labels = ', '.join(row['product_name'] for row in winners)
     amount = money(best) if revenue else f"{best} unit(s)"
     title = "Top products are tied" if len(winners) > 1 else "Best-selling product"
-    label_note = " Some labels come from the current catalogue because older receipts lack saved names." if any(row['label_source'] != 'latest_receipt_snapshot' for row in winners) else ""
+    label_note = " Some labels come from the current catalogue because older receipts lack saved names." if any(row['label_source'] not in {'latest_receipt_snapshot','daily_summary_snapshot'} for row in winners) else ""
     return result(f"{'Tied for best-selling' if len(winners)>1 else 'Best-selling'} by {'recorded revenue' if revenue else 'quantity sold'} for {period}: {labels} — {amount} each.{label_note}{disclaimer}", title, ids)

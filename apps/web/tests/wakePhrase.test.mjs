@@ -35,7 +35,7 @@ test('idle chatter never submits; empty, oversized and timed out commands fail c
  assert.equal(m.accept('Apo Napo', canonical), null)
  assert.equal(m.accept('Apo 1 Coke', canonical, 0), null)
  assert.equal(m.accept('Napo', canonical, 21000), null)
- assert.equal(m.accept('Apo '+ 'coke '.repeat(200)+'Napo', canonical), null)
+ assert.equal(m.accept('Apo '+ 'coke '.repeat(4000)+'Napo', canonical), null)
 })
 test('confirmed pronunciation aliases are bounded phrases and preserve decimals', () => {
  const m = new WakeCommand(), aliases = { apo:'ah po', napo:'nah po' }

@@ -105,3 +105,9 @@ Clarificationmayacceptbareanswersorintentionalfullretry. Leadingknownwakeandterm
 2026-11-02 STOCK-TABLE: semanticclickabletable+keyboardproductbutton selectedinlinepanel keepsallactionswithoutrowclutter; exactintegercentprices andcurrencyfromverifiedGETshop only. Rootapprovedcostbusy/uncertaincallbackglobalnavguard preventslostoperationstate; Stockgreetinghidden noavatarbypass.
 
 2026-11-02 SALES-HISTORY-TABLE: readonlyDate/Payment/Total table +primaryreceipt productsqty/total/received/change. Optionalverifiedhistoricalnames preferred currentlabelsfallbackhonest; no repricing. Legacycashpaymentunknownnever0, exactzeroevidencepreserved. Invalidrowsnotdropped; generationguardloaded/cached/errorstates explicit.
+
+
+### 2026-11-02 DEMO-CAPTURE-EXPORT-UX-001 narrow recovery freeze
+- Root/Ruzivo authorized original-key retry recovery only for explicit409 paper_review_stale then fresh same-shop/same-ID nonconfirmed GET. UI offers explicit Review this summary again, writes/verifies retired old key/version tombstone, verifies pending marker removal, resets all acknowledgements and requires fresh review. Retired version cannot be confirmed or retried. Generic errors/auth/key mismatch/confirmed mismatch stay guarded.
+- Daily/monthly report count column now Receipts with separate daily-summary count, avoiding0 sales next to batch revenue.
+- Evidence:171 frontend tests PASS1103ms; tsc/Vite83modules PASS, final shop-DB1P-Fuv.js/shop-8Qthzhh1.css CAPTURE-SHARE-001 API8001. Root/QA/Ruzivo notified; no dist writes until concrete findings; no APK packaging until GO.

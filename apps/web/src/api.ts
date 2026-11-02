@@ -34,6 +34,7 @@ export type Sale = Omit<SaleRequest, 'amount_received_cents'> & {
 }
 
 export type ShopSummary = {
+  daily_summary_count?: number
   sales_total_cents: number
   transaction_count: number
   low_stock_count: number

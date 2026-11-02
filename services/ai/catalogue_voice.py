@@ -47,6 +47,14 @@ class CatalogueVoiceLine:
 
 
 @dataclass(frozen=True)
+class CataloguePendingItem:
+    slot_id: int
+    heard: str
+    quantity: int | None = None
+    product_id: str | None = None
+
+
+@dataclass(frozen=True)
 class CatalogueVoiceResolution:
     status: str
     lines: tuple[CatalogueVoiceLine, ...] = ()
@@ -56,6 +64,8 @@ class CatalogueVoiceResolution:
     reason: str | None = None
     requires_confirmation: bool = True
     clarification_product_id: str | None = None
+    retained_lines: tuple[CatalogueVoiceLine, ...] = ()
+    pending_items: tuple[CataloguePendingItem, ...] = ()
 
 
 @lru_cache(maxsize=2)
@@ -195,6 +205,9 @@ def _local_resolution(segments: list[dict[str, Any]], catalogue: Mapping[str, Ma
 
 def _clarify(segments: list[dict[str, Any]], catalogue: Mapping[str, Mapping[str, str]], *,
              provider_called: bool, source: str, reason: str, unavailable: bool = False) -> CatalogueVoiceResolution:
+    partial = _retained_clarification(segments, catalogue, provider_called=provider_called, source=source, reason=reason)
+    if partial is not None:
+        return partial
     for segment in segments:
         matches = [product for product in catalogue.values() if _plausible(segment["heard"], product)]
         if segment["quantity"] is None and len(matches) == 1:
@@ -214,6 +227,36 @@ def _clarify(segments: list[dict[str, Any]], catalogue: Mapping[str, Mapping[str
                                     provider_called=provider_called, source=source, reason=reason)
 
 
+def _retained_clarification(segments, catalogue, *, provider_called, source, reason, validated=None):
+    """Keep independently grounded slots as non-actionable context, never a sale."""
+    if not segments or len(segments) > 100:
+        return None
+    retained, pending, used = [], [], set()
+    for segment in segments:
+        local = _local_resolution([segment], catalogue, segment['heard'])
+        line = local.lines[0] if local is not None and local.status == 'proposed' else None
+        target = local.clarification_product_id if local is not None else None
+        if line is not None and line.quantity <= 0:
+            target, line = line.product_id, None
+        if validated and segment['segment_id'] in validated:
+            candidate = validated[segment['segment_id']]
+            line = CatalogueVoiceLine(candidate, segment['quantity']) if segment['quantity'] else None
+            target = candidate if segment['quantity'] is None else None
+        if line is not None and line.product_id not in used:
+            retained.append(line)
+            used.add(line.product_id)
+        else:
+            pending.append(CataloguePendingItem(segment['segment_id'], segment['heard'][:500], segment['quantity'], target))
+    if not pending or (not retained and len(segments) == 1):
+        return None
+    active = pending[0]
+    name = catalogue[active.product_id]['name'] if active.product_id in catalogue else None
+    question = f"How many {name}? Say just the quantity." if name else f"I kept {len(retained)} understood item(s). What product did you mean by '{active.heard}'? Say only this item" + (" and its quantity." if active.quantity is None else f"; I heard quantity {active.quantity}.")
+    return CatalogueVoiceResolution('needs_clarification', question=question, provider_called=provider_called, source=source,
+                                    reason='missing_quantity' if name else reason, clarification_product_id=active.product_id,
+                                    retained_lines=tuple(retained), pending_items=tuple(pending))
+
+
 def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any]], *,
                             provider: Any = _DEFAULT, timeout_seconds: float = DEFAULT_CATALOGUE_TIMEOUT_SECONDS,
                             allow_local_proposals: bool = True) -> CatalogueVoiceResolution:
@@ -225,7 +268,7 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
     they are not sale execution. Set allow_local_proposals=False for direct
     provider contract testing/investigation without a local short circuit.
     """
-    if not isinstance(transcript, str) or not transcript.strip() or len(transcript) > 1000:
+    if not isinstance(transcript, str) or not transcript.strip() or len(transcript) > 16000:
         return CatalogueVoiceResolution("needs_clarification", reason="invalid_transcript")
     if not 0 < timeout_seconds <= MAX_CATALOGUE_TIMEOUT_SECONDS:
         raise ValueError("timeout_seconds must be in (0, 24]")
@@ -234,7 +277,7 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
     except (ValueError, TypeError):
         return CatalogueVoiceResolution("unavailable", question="The catalogue is unavailable. Please check the shop connection.", source="unavailable", reason="invalid_catalogue")
     segments = _segments(transcript)
-    if not segments or len(segments) > 20 or any(segment["quantity"] == 0 for segment in segments):
+    if not segments or len(segments) > 100 or any(segment["quantity"] == 0 for segment in segments):
         return _clarify(segments, catalogue, provider_called=False, source="local_clarification", reason="invalid_quantity")
     if any(not segment["heard"] for segment in segments):
         return _clarify(segments, catalogue, provider_called=False, source="local_clarification", reason="missing_product")
@@ -242,6 +285,9 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
         local = _local_resolution(segments, catalogue, transcript)
         if local is not None:
             return local
+        partial = _retained_clarification(segments, catalogue, provider_called=False, source='local_clarification', reason='missing_quantity')
+        if partial is not None and all(item.product_id is not None for item in partial.pending_items):
+            return partial
     if provider is _DEFAULT:
         try:
             provider = _get_provider()
@@ -300,6 +346,19 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
             if proposal["resolution"] not in {"matched", "uncertain", "unknown", "ambiguous"}:
                 raise ValueError("invalid resolution")
             indexed[slot] = proposal
+        validated = {}
+        for slot, segment in enumerate(segments):
+            proposal = indexed[slot]
+            product_id = proposal['product_id']
+            if not isinstance(product_id, str) or product_id not in catalogue or proposal['resolution'] not in {'matched', 'uncertain'}:
+                continue
+            strength = _match_strength(segment['heard'], catalogue[product_id])
+            if strength > 0 and not any(other_id != product_id and _match_strength(segment['heard'], other) >= strength for other_id, other in catalogue.items()):
+                validated[slot] = product_id
+        if len(segments) > 1:
+            partial = _retained_clarification(segments, catalogue, provider_called=True, source='muse_catalogue', reason='product_not_found', validated=validated)
+            if partial is not None:
+                return partial
         lines = []
         for slot, segment in enumerate(segments):
             proposal = indexed[slot]
