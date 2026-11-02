@@ -84,3 +84,6 @@ Reserve stable Android bars/cutout outside WebView even while navigation hidden:
 
 ## 2026-11-02 REPO-SHOP-UX-001
 GenericapiUrl staysshopowned; optionalteamtransports confinedlocaloffice. Defaultbuild/typecheck/test neednoignoredteamfiles. Localofficepreservedbymove notdeletion. Diagramseparatescustomerflowfromruntimearchitecture andmobileusesfulltextorder insteadof shrinkingSVGlabels.
+
+## 2026-11-02 QUANTITY-REPLY-UX-001
+Voicepreferenceisnotmicrophonereadiness. Modalusesactualready/start/errorfeedback; speechReady isonlynativeextension. Terminalfinalduplicatesuppression lastsasynccommandturn, notforeveruntilincidentalReacteffectreset. PostTTSepochrearmsreplysafely; pendinghandler musttrackbackgroundevenafterrecognizerstop. Preservepaiduncertainty/confirmationcontracts.

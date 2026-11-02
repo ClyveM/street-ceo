@@ -1,6 +1,6 @@
 type Handle = { remove(): Promise<void> }
 type Plugin = { start(options: { language: string }): Promise<void>; stop(): Promise<void>; speak(options: { text: string }): Promise<void>; stopSpeaking(): Promise<void>; addListener(name: string, callback: (event: { text?: string; final?: boolean; message?: string; code?: number }) => void): Promise<Handle> }
-type Recognition = { lang: string; continuous: boolean; interimResults: boolean; onresult: ((event: { resultIndex: number; results: { length: number; [index: number]: { isFinal: boolean; 0: { transcript: string } } } }) => void) | null; onerror: ((event: { error: string }) => void) | null; onend: (() => void) | null; start(): void; abort(): void }
+type Recognition = { onstart?: (() => void) | null; lang: string; continuous: boolean; interimResults: boolean; onresult: ((event: { resultIndex: number; results: { length: number; [index: number]: { isFinal: boolean; 0: { transcript: string } } } }) => void) | null; onerror: ((event: { error: string }) => void) | null; onend: (() => void) | null; start(): void; abort(): void }
 type SpeechWindow = Window & { Capacitor?: { getPlatform?(): string; registerPlugin?(name: string): Plugin; Plugins?: { ApoSpeech?: Plugin } }; SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition }
 let nativeOwner: symbol | null = null, nativeRunning = false
 let nativeQueue: Promise<unknown> = Promise.resolve()
@@ -36,7 +36,7 @@ export async function speakPrompt(text: string): Promise<void> {
     window.speechSynthesis.speak(spoken)
   })
 }
-export async function openSpeech(callbacks: { text(text: string, final: boolean): void; error(message: string, fatal: boolean): void; end(): void; active?(value: boolean): void }) {
+export async function openSpeech(callbacks: { text(text: string, final: boolean): void; error(message: string, fatal: boolean): void; end(): void; active?(value: boolean): void; ready?(): void }) {
   const win = window as SpeechWindow, cap = win.Capacitor
   if (cap?.getPlatform?.() === 'android') {
     const plugin = nativeSpeech()
@@ -44,13 +44,15 @@ export async function openSpeech(callbacks: { text(text: string, final: boolean)
     const handles: Handle[] = [], owner = Symbol('speech session')
     let disposed = false
     const owned = () => !disposed && nativeOwner === owner
+    const lifecycleOwner = () => !disposed && (nativeOwner === owner || nativeOwner === null)
     const stop = () => queueNative(async () => { if (nativeOwner === owner) { nativeOwner = null; nativeRunning = false; await plugin.stop() } })
     try {
       handles.push(await plugin.addListener('speech', (event) => { if (owned()) callbacks.text(event.text ?? '', !!event.final) }))
       handles.push(await plugin.addListener('speechError', (event) => { if (owned()) { nativeRunning = false; callbacks.error(event.message ?? 'Speech recognition failed.', ![6, 7, 8].includes(event.code ?? -1)) } }))
       handles.push(await plugin.addListener('speechEnd', () => { if (owned()) { nativeRunning = false; callbacks.end() } }))
-      handles.push(await plugin.addListener('speechPaused', () => { if (owned()) { nativeRunning = false; callbacks.active?.(false) } }))
-      handles.push(await plugin.addListener('speechResumed', () => { if (owned()) callbacks.active?.(true) }))
+      handles.push(await plugin.addListener('speechReady', () => { if (owned()) callbacks.ready?.() }))
+      handles.push(await plugin.addListener('speechPaused', () => { if (lifecycleOwner()) { nativeRunning = false; callbacks.active?.(false) } }))
+      handles.push(await plugin.addListener('speechResumed', () => { if (lifecycleOwner()) callbacks.active?.(true) }))
       return {
         start: () => queueNative(async () => {
           if (disposed || nativeOwner === owner && nativeRunning) return
@@ -71,5 +73,6 @@ export async function openSpeech(callbacks: { text(text: string, final: boolean)
   recognition.onresult = (event) => { for (let i = event.resultIndex; i < event.results.length; i++) callbacks.text(event.results[i][0].transcript, event.results[i].isFinal) }
   recognition.onerror = (event) => callbacks.error(`Speech recognition: ${event.error}`, !['no-speech', 'aborted'].includes(event.error))
   recognition.onend = callbacks.end
-  return { start: async () => { recognition.start() }, stop: async () => { recognition.abort() }, dispose: async () => { recognition.onresult = null; recognition.onerror = null; recognition.onend = null; recognition.abort() } }
+  recognition.onstart = () => callbacks.ready?.()
+  return { start: async () => { recognition.start() }, stop: async () => { recognition.abort() }, dispose: async () => { recognition.onstart = null; recognition.onresult = null; recognition.onerror = null; recognition.onend = null; recognition.abort() } }
 }

@@ -170,7 +170,7 @@ public class ApoSpeechPlugin extends Plugin implements RecognitionListener {
         if (resumeCall != null) { resumeCall.reject("App closed before listening resumed."); resumeCall = null; }
         if (speaker != null) { speaker.shutdown(); speaker = null; speakerReady = false; }
     }); }
-    @Override public void onReadyForSpeech(Bundle params) {}
+    @Override public void onReadyForSpeech(Bundle params) { if (active) notifyListeners("speechReady", new JSObject()); }
     @Override public void onBeginningOfSpeech() {}
     @Override public void onRmsChanged(float rms) {}
     @Override public void onBufferReceived(byte[] buffer) {}

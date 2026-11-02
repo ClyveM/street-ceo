@@ -54,6 +54,7 @@ class CatalogueVoiceResolution:
     source: str = "local_clarification"
     reason: str | None = None
     requires_confirmation: bool = True
+    clarification_product_id: str | None = None
 
 
 @lru_cache(maxsize=2)
@@ -179,7 +180,7 @@ def _local_resolution(segments: list[dict[str, Any]], catalogue: Mapping[str, Ma
         if segment["quantity"] is None:
             if len(segments) == 1 and words in _aliases(catalogue[product_id]):
                 return CatalogueVoiceResolution("needs_clarification", question=f"How many {catalogue[product_id]['name']}?",
-                                                source="local_clarification", reason="missing_quantity")
+                                                source="local_clarification", reason="missing_quantity", clarification_product_id=product_id)
             return None
         if product_id in {line.product_id for line in lines}:
             return None
@@ -311,8 +312,15 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
                    for other_id, other in catalogue.items()):
                 return _clarify(segments, catalogue, provider_called=True, source="muse_catalogue", reason="ambiguous_product")
             if segment["quantity"] is None:
-                return CatalogueVoiceResolution("needs_clarification", question=f"How many {catalogue[product_id]['name']}? Please repeat the complete basket with quantities.",
-                                                provider_called=True, source="muse_catalogue", reason="missing_quantity")
+                # A quantity-only reply may reuse one grounded item, never an
+                # arbitrary partial phrase or one item from a larger basket.
+                words = tuple(re.findall(r"[a-z0-9]+", segment["heard"].lower()))
+                known_phrase = words in _aliases(catalogue[product_id])
+                observed_chips_noise = words == ("putado", "chips", "naples") and tuple(re.findall(r"[a-z]+", catalogue[product_id]["name"].lower())) == ("potato", "chips")
+                quantity_target = product_id if len(segments) == 1 and (known_phrase or observed_chips_noise) else None
+                quantity_question = f"How many {catalogue[product_id]['name']}?" + (" Say just the quantity." if quantity_target else " Please repeat the complete basket with quantities.")
+                return CatalogueVoiceResolution("needs_clarification", question=quantity_question,
+                                                provider_called=True, source="muse_catalogue", reason="missing_quantity", clarification_product_id=quantity_target)
             if product_id in {line.product_id for line in lines}:
                 raise ValueError("duplicate product segments")
             lines.append(CatalogueVoiceLine(product_id, segment["quantity"]))

@@ -300,3 +300,11 @@ STARTER-COGS-001 focusedvalidation2026-11-02: PASS12 own starter+cost suites aft
 Fullactivation services/api ownbrain scope. Userwantsseparatedteamviewapp excludedfromrepo/build. Audit app.py unconditionalteam/projectofficeimports+routes; refactor optionalmount module so ignoredteamimplementation canremainlocalbutcleanclonestarts StreetCEO withoutteamcode. Rootowns.gitignore; sendexactteamonlypathsmanifest. Keep agentsbrain/projectdocumentation tracked. Teamfeatureslocaloptional explicitlyenabled, defaultStreetCEOnooffice/team endpoints. PreserveSQLite/Muse/voice/pricing/costs. ExistingAPItests team-only may moveignoredlocalmodule/testfolder; no deletinglocalfiles. Providebootstraprequirementsfreshcloneconfig, includetzdataifWindowsneeds. NoDBmutation/restart/escalation; focusedtests/handoff.
 
 REPO-SHOP-API-001 complete2026-11-02: optionalteam extracted/preserved, defaultshop startswithoutteamdependencies; focused26PASS/compile/diffPASS. Rootownsignore/index/publication. No liveDB/restart.
+
+
+## Assigned by Mutungamiri — 2026-11-02 QUANTITY-REPLY-API-001
+Fullactivation APIscopeownbrain. Verify scopedbare'one'/'1' response currentmissingqtyreview (exactchips vsASRputadochipsnaples), preserveproductcontext withoutrequiringApo/repeatwholebasket. roottraceoriginal15:30UTC nofollowup request sofrontendlikelyblocking; auditbackendexistingclarification prependsoldnoisytranscript leading tosecondMusewait evenrecognizedsingleproduct. Fixonlyconfirmed scopedcontextgap withsafeexplicitqty/allitems/noinvention/confirmation; tests tempDB. No liveoriginalreviewcommit/replay/restart/escalation. Handoff.
+
+QUANTITY-REPLY-API-001 explicitnarrowAIextension: services/ai/catalogue_voice.py clarificationtargetdataclass/qualifyingmissingqtyreturns only +relatedAItests ifneeded. No matchingthreshold/deadline/providerchanges. Structuredtarget onlysafeuniquesingleitem/providervalidated match; no groundingfromquestionstring or blindlyplausiblepartialunknown. QAindependentguard.
+
+QUANTITY-REPLY-API-001 complete2026-11-02: owncompile/diffPASS, parenthostfullservices+independent310PASS38.75s includingnew20. Structuredhandoffpersisted, no liveoriginalreview/restart. Rootcoordinatesactivation/phoneacceptance.

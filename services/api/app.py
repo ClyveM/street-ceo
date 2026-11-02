@@ -77,6 +77,7 @@ from services.api.voice_boundary import (
     VoiceTranscriptRequest,
     audio_fingerprint,
     parse_catalogue_sale,
+    parse_quantity_reply,
     decode_audio,
     normalize_intent,
     request_fingerprint,
@@ -622,7 +623,15 @@ def create_app(
                 question = "Did you mean " + ", ".join(f"{line.quantity} {line.product_name}" for line in proposed) + "? Please say yes or no."
                 intent = VoiceIntent(action="record_sale", item=proposed[0].product_name, quantity=proposed[0].quantity, needs_confirmation=True)
                 return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_match_confirmation", transcript=transcript, intent=intent, lines=proposed, requires_match_confirmation=True, clarification_question=question, resolution_source=source, provider_called=provider_called)
-            return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_clarification", transcript=transcript, clarification_question=question, error=question, error_code="quantity_required" if resolution.reason == "missing_quantity" else "product_not_found", clarification_code=resolution.reason, resolution_source=source, provider_called=provider_called)
+            clarification_product_id = getattr(resolution, "clarification_product_id", None)
+            if clarification_product_id is not None:
+                clarification_product_id = UUID(str(clarification_product_id))
+                if resolution.reason != "missing_quantity" or clarification_product_id not in record.products:
+                    raise ValueError("invalid clarification product")
+            clarification_product = record.products.get(clarification_product_id) if clarification_product_id else None
+            if clarification_product is not None:
+                question = f"How many {clarification_product.name}? Say just the quantity."
+            return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_clarification", transcript=transcript, clarification_question=question, error=question, error_code="quantity_required" if resolution.reason == "missing_quantity" else "product_not_found", clarification_code=resolution.reason, clarification_product_id=clarification_product_id, clarification_product_name=clarification_product.name if clarification_product else None, clarification_product_sku=clarification_product.sku if clarification_product else None, resolution_source=source, provider_called=provider_called)
         except Exception:
             question = "I could not confirm every product. Please say the quantity and exact catalogue name for every item, for example one Coke."
             return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status="needs_clarification", transcript=transcript, clarification_question=question, error=question, error_code="product_not_found", clarification_code="resolution_unavailable", resolution_source="unavailable", provider_called=provider_called)
@@ -644,16 +653,31 @@ def create_app(
         if replay is not None:
             return replay
         contextual = request.clarification_of is not None
+        context_lines = None
         if contextual:
             previous = next((response for _, response in record.voice_requests.values() if response.request_id == request.clarification_of), None)
             if previous is None or previous.status != "needs_clarification":
                 raise HTTPException(status_code=409, detail="clarification context is missing or not applicable")
             if previous.clarification_code == "missing_quantity":
-                import re
-                quantity_words = "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty"
-                if re.fullmatch(r"(?:[1-9]\d{0,3}|" + quantity_words + ")", transcript.lower()):
+                quantity = parse_quantity_reply(transcript)
+                if quantity is not None and previous.clarification_product_id is not None:
+                    product = record.products.get(previous.clarification_product_id)
+                    if product is None:
+                        raise HTTPException(status_code=409, detail="clarification product is no longer available")
+                    if product.name != previous.clarification_product_name or product.sku != previous.clarification_product_sku:
+                        raise HTTPException(status_code=409, detail="clarification product changed; please name the product again")
+                    if quantity > product.stock_qty:
+                        question = f"Only {product.stock_qty} {product.name} units are recorded in stock. What quantity do you want?"
+                        response = VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind="transcript", status="needs_clarification", transcript=previous.transcript, clarification_code="missing_quantity", clarification_product_id=product.id, clarification_product_name=product.name, clarification_product_sku=product.sku, clarification_question=question, error=question, error_code="insufficient_stock", resolution_source="local_clarification")
+                        record.voice_requests[key] = (fingerprint, response)
+                        return response
+                    context_lines = [VoiceSaleLine(product_id=product.id, product_name=product.name, quantity=quantity)]
+                    transcript = f"{quantity} {product.name}"
+                elif quantity is not None:
+                    # Old unstructured exact contexts remain compatible; noisy ones
+                    # still use the validated resolver rather than guessing an ID.
                     transcript = transcript + " " + (previous.transcript or "")
-        lines = parse_catalogue_sale(transcript, record.products.values())
+        lines = context_lines if context_lines is not None else parse_catalogue_sale(transcript, record.products.values())
         if lines and contextual:
             question = "Did you mean " + ", ".join(f"{line.quantity} {line.product_name}" for line in lines) + "? Please say yes or no."
             intent = VoiceIntent(action="record_sale", item=lines[0].product_name, quantity=lines[0].quantity, needs_confirmation=True)

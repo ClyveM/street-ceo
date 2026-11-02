@@ -37,11 +37,11 @@ def demo(tmp_path, monkeypatch):
         app.state.store.close()
 
 
-def request(app, method, path, body=None, key="sale"):
+def request(app, method, path, body=None, key="sale", shop_header=SHOP):
     async def run():
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as client:
             return await client.request(method, path, json=body,
-                                        headers={"X-Shop-ID": SHOP, "Idempotency-Key": key})
+                                        headers={"X-Shop-ID": shop_header, "Idempotency-Key": key})
     return asyncio.run(run())
 
 
@@ -441,3 +441,84 @@ def test_fast_local_proposal_requires_yes_has_no_mutation_and_replays_after_reop
     events = SQLiteTraceStore().read(response.headers["x-correlation-id"])
     local_event = next(event for event in events if event.get("source") == "local_catalogue_proposal")
     assert local_event["provider_called"] is False
+
+
+@pytest.mark.parametrize("reply", ["one", "1"])
+def test_bare_quantity_reply_reopens_exact_target_without_apo_and_requires_yes(demo, reply):
+    from services.ai.catalogue_voice import resolve_catalogue_voice
+    resolver = lambda transcript, products: resolve_catalogue_voice(transcript, products, provider=None)
+    app = demo(resolver)
+    first = request(app, "POST", VOICE + "/transcript", {"transcript": "potato chips"}, "chips-question").json()
+    assert first["status"] == "needs_clarification" and first["lines"] == []
+    target = "00000000-0000-0000-0000-000000000005"
+    assert first["clarification_product_id"] == target
+    reopened = demo(resolver)
+    body = {"transcript": reply, "clarification_of": first["request_id"]}
+    answer = request(reopened, "POST", VOICE + "/transcript", body, "chips-answer")
+    assert answer.status_code == 200, answer.text
+    proposal = answer.json()
+    assert proposal["status"] == "needs_match_confirmation" and proposal["requires_match_confirmation"] is True
+    assert [(line["product_id"], line["quantity"]) for line in proposal["lines"]] == [(target, 1)]
+    assert request(reopened, "POST", VOICE + "/transcript", body, "chips-answer").json() == proposal
+    paid = {"review_id": proposal["request_id"], "lines": [{"product_id": target, "quantity": 1}], "tender": "cash", "amount_received_cents": 500}
+    assert request(reopened, "POST", VOICE + "/commit", paid, "chips-unapproved").status_code == 409
+    assert reopened.state.store.shops[UUID(SHOP)].products[UUID(target)].stock_qty == 23
+    assert request(reopened, "GET", SALES).json() == []
+
+
+def test_model_qualified_single_noisy_missing_quantity_has_safe_target(demo):
+    from services.ai.catalogue_voice import resolve_catalogue_voice
+    target = "00000000-0000-0000-0000-000000000005"
+
+    class Qualified:
+        def complete(self, query):
+            return {"segments": [{"segment_id": 0, "product_id": target, "quantity": None, "resolution": "uncertain"}]}
+
+    resolver = lambda transcript, products: resolve_catalogue_voice(transcript, products, provider=Qualified(), allow_local_proposals=False)
+    app = demo(resolver)
+    first = request(app, "POST", VOICE + "/transcript", {"transcript": "putado chips naples"}, "noisy-chips").json()
+    assert first["clarification_product_id"] == target and first["provider_called"] is True
+    answer = request(app, "POST", VOICE + "/transcript", {"transcript": "one", "clarification_of": first["request_id"]}, "noisy-answer").json()
+    assert answer["status"] == "needs_match_confirmation"
+    assert [(line["product_id"], line["quantity"]) for line in answer["lines"]] == [(target, 1)]
+    assert answer["provider_called"] is False
+    assert request(app, "GET", SALES).json() == []
+
+
+def test_missing_quantity_mixed_unknown_cannot_target_or_partially_select_first_item(demo):
+    from services.ai.catalogue_voice import resolve_catalogue_voice
+    resolver = lambda transcript, products: resolve_catalogue_voice(transcript, products, provider=None)
+    app = demo(resolver)
+    first = request(app, "POST", VOICE + "/transcript", {"transcript": "coke and unicorn"}, "mixed-question").json()
+    assert first.get("clarification_product_id") is None and first["lines"] == []
+    answer = request(app, "POST", VOICE + "/transcript", {"transcript": "one", "clarification_of": first["request_id"]}, "mixed-answer").json()
+    assert answer["lines"] == [] and answer["status"] == "needs_clarification"
+    assert stock(app) == 18 and request(app, "GET", SALES).json() == []
+
+
+def test_quantity_context_cannot_cross_shop_or_use_deleted_product(demo):
+    from services.ai.catalogue_voice import resolve_catalogue_voice
+    resolver = lambda transcript, products: resolve_catalogue_voice(transcript, products, provider=None)
+    app = demo(resolver)
+    first = request(app, "POST", VOICE + "/transcript", {"transcript": "coke"}, "scope-question").json()
+    other = request(app, "POST", "/shops", {"name": "Isolated QA shop"}, "other-shop").json()["id"]
+    cross = request(app, "POST", f"/api/v1/shops/{other}/voice/transcript", {"transcript": "one", "clarification_of": first["request_id"]}, "cross-answer", shop_header=other)
+    assert cross.status_code == 409
+    with app.state.store.transaction():
+        del app.state.store.shops[UUID(SHOP)].products[UUID(PRODUCT)]
+    stale = request(app, "POST", VOICE + "/transcript", {"transcript": "one", "clarification_of": first["request_id"]}, "stale-answer")
+    assert stale.status_code == 409
+    assert request(app, "GET", SALES).json() == []
+
+
+def test_quantity_reply_cannot_reinterpret_paid_review_or_mutate_saved_receipt(demo):
+    app = demo()
+    body = review(app)
+    paid = request(app, "POST", VOICE + "/commit", body, "already-paid")
+    assert paid.status_code == 200, paid.text
+    saved = paid.json()
+    before_stock = stock(app)
+    result = request(app, "POST", VOICE + "/transcript", {"transcript": "one", "clarification_of": body["review_id"]}, "paid-quantity")
+    assert result.status_code == 409
+    assert stock(app) == before_stock
+    assert request(app, "GET", SALES).json() == [saved]

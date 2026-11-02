@@ -38,3 +38,7 @@ When adding local short circuits, syntheticprovider schema/failure tests must ex
 
 2026-11-02 launcher: post-shutdown CIM may transiently misreport Listen/PID0. Only discard a zero-owner row with independent validated same-port nonlistener corroboration; preserve nonzero/unknown owners and fail closed on ambiguity. Root retry restoration is observed; exact stale CIM capture remains unconfirmed.
 
+
+## 2026-11-02 — QUANTITY-REPLY-QA-001
+A final-answer latch must suppress duplicate dispatch without suppressing foreground/background updates. Async-handler completion must not rearm a hidden app. Readiness needs the same visibility guard as start/text, and must come from actualrecognizerready rather than permission/startpromise. Independent realbridge+turn composition reproduced and verified ownerfixes; phonecause remains separate.
+

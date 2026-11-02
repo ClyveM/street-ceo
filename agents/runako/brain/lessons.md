@@ -61,3 +61,6 @@ InstalledTypeScript7.0.2 rootmodule exportsversionmetadata, notlegacycreateSourc
 
 ## 2026-11-02 PRODUCT-DIAGRAM-001
 BrowsercanloadSVGyetPlaywrightscreenshot hangsafterfontsloaded. Bound browserwork and use directvectorPDF+Popplerrender for staticartifact. ReportLab hexcolorstrings require expandingthree-digit#fff to#ffffff to preserveSVGwhite; inspectactualfinalPNG beforeclaimingvisualpass. MobileHTMLchecks remainseparate fromvectorrender.
+
+## 2026-11-02 QUANTITY-REPLY-UX-001
+ASRfinished latchcanremainstuckifhandlerpromisediscardedandeffectdepsunchanged. Re-armafterhandlercompletiononlyifcurrentforegroundandnotdisposed. Stoppingnativeclearsownershipbeforependinghandlerends: keepstoppedcurrentlooplifecyclefeedbackbutresultsstrictowner; documenthidden guardsinclude lateReady, notonlyStart. Fake-native lifecycletestsneededbeyondparserfixtures. MissingAPIreplytracealonecannotproveexactdevicecause.

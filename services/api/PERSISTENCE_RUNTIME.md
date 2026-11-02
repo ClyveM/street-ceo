@@ -104,6 +104,23 @@ Tests can pass `create_app(..., voice_catalogue_resolver=None)` to explicitly
 disable model fallback, or inject a callable `(transcript, products) -> resolution`.
 The default sentinel enables the configured real resolver for application use.
 
+### Scoped quantity-only replies
+
+A safely grounded single-item missing-quantity response can include optional
+`clarification_product_id`, `clarification_product_name` and
+`clarification_product_sku`. The existing `clarification_of` request field then
+allows a bare positive quantity (digits 1–9999 or words one–twenty, with optional
+terminal sentence punctuation). The server reuses the stored product ID without
+another model call and still requires spoken match approval before payment.
+Current stock is checked; deleting or renaming the item/SKU invalidates context.
+
+The target is supplied only for a unique exact catalogue alias or the narrowly
+qualified observed chips phrase after a completed validated Muse match. Generic
+plausibility, provider failure, extra unknown words and multi-item baskets do not
+gain a single-product shortcut. Older responses without the optional fields keep
+their full prior transcript and validated resolver fallback; no product is inferred
+from question text. New fields default to null when reading older SQLite state.
+
 ## Deferred PostgreSQL adapter
 
 Set `STREET_CEO_STORE=postgres` and provide

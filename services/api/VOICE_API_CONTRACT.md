@@ -11,7 +11,8 @@ the path and accepts `{ "transcript": "..." }` with a maximum of 1,000
 characters. The response is a bounded object containing `request_id`,
 `shop_id`, `input_kind`, `status`, optional transcript, optional normalized
 intent, optional resolved `lines`, `error`, and `error_code`. A `record_sale`
-intent always has `status: "needs_confirmation"`; this endpoint never posts a
+intent is confirmation-only; exact matches use `status: "needs_confirmation"`,
+while uncertain proposals use `needs_match_confirmation`. This endpoint never posts a
 sale. A typed command containing multiple quantity/name pairs, such as
 `2 coke 2 sugar`, is resolved only against the shop catalogue: `coke` maps to
 `Coca-Cola 300ml` and `sugar` maps to `Sugar 1kg` in the seeded demo catalogue.
@@ -20,7 +21,7 @@ No price or stock fact is invented. The response remains confirmation-only.
 ## Confirmed voice sale
 
 `POST /api/v1/shops/{shop_id}/voice/commit` is the commit boundary. It requires
-`X-Shop-ID`, `Idempotency-Key`, `{review_id, lines, tender?, amount_received_cents?}`.
+`X-Shop-ID`, `Idempotency-Key`, `{review_id, lines, tender?, amount_received_cents?, match_confirmed?}`.
 Tender accepts only `cash` or `bank` when supplied. The `review_id` must refer to a preceding
 confirmation-ready transcript response, and the submitted lines must match
 that reviewed basket. The backend resolves every product ID inside the shop,
@@ -37,11 +38,14 @@ interpretation alone never posts a sale.
 Each review permits one successful commit. A second key for that review returns
 `409`; recovery must retry the original key and exact request. The original
 receipt replays even if catalogue prices subsequently change. This review-to-sale
-binding is process-local in the current demo and does not claim restart durability.
+binding persists with the reviewed response and receipt in the selected SQLite demo store.
 
-Closing Apo is the confirmation action; there is no second confirmation
-endpoint. The commit is accepted only for a prior `needs_confirmation` review,
-with the same product IDs and quantities, a shop-scoped catalogue, sufficient
+There is no separate match-confirmation endpoint. The commit accepts a prior
+`needs_confirmation` review or a `needs_match_confirmation` proposal approved
+with strict boolean `match_confirmed:true`. A proposal requires explicit spoken
+yes before tender/payment; missing approval returns `409` with
+`detail.code: "match_confirmation_required"`. Commit requires
+the same product IDs and quantities, a shop-scoped catalogue, sufficient
 stock, and an idempotency key. If tender is missing or ambiguous, the endpoint
 returns a structured `needs_tender` response with the allowed modes and the
 amount due; it does not post a sale. For cash, `amount_received_cents` is
@@ -54,8 +58,37 @@ reversal path. It requires `Idempotency-Key`, `{actor, reason, confirmed:true}`,
 accepts only a sale created through the voice commit boundary, restores the
 original quantities, and returns a separate `reversal_id`/`audit_id` receipt.
 Exact retries replay the reversal; changed retries return `409`; a second
-reversal of the same sale returns `409`. The in-memory MVP stores the reversal
-audit until restart; no refund or financial ledger posting is inferred.
+reversal of the same sale returns `409`. The demo stores the reversal
+audit in the selected SQLite demo store; no refund or financial ledger posting is inferred.
+
+## Scoped quantity-only clarification
+
+`POST /api/v1/shops/{shop_id}/voice/transcript` also accepts optional
+`clarification_of`, the request ID of a preceding `needs_clarification` response
+inside the same shop. A safely grounded single-product missing-quantity response
+includes optional `clarification_product_id`, `clarification_product_name` and
+`clarification_product_sku` snapshots, plus `clarification_code: "missing_quantity"`.
+Its question can ask for just the quantity; another Apo or complete basket is
+unnecessary. Example follow-up: `{ "transcript": "one", "clarification_of": "<id>" }`.
+
+Bare replies accept positive integers 1–9999 or words one–twenty, with optional
+terminal sentence punctuation. The server reuses the stored product ID without
+another resolution call, checks current stock and returns a grounded
+`needs_match_confirmation` proposal. Explicit yes remains mandatory before any
+payment/commit. No quantity is defaulted and no sale occurs during clarification.
+
+Only a qualified unique exact alias or the narrowly qualified observed chips
+phrase after a completed validated single-product Muse match can supply the safe
+target. Generic plausibility, unknown extra words,
+multi-item baskets and provider failure do not receive this shortcut. Missing
+context or deleted/renamed product names/SKUs return `409`; insufficient stock
+returns a clarification question without mutation. Use a new idempotency key for
+each follow-up; exact retries replay, changed payloads conflict.
+
+The three snapshot fields default to null for older persisted responses. Such
+responses retain their original transcript and validated resolver fallback;
+the server never extracts an assumed product ID from question text. Omitted or
+false `match_confirmed` preserves existing paid-request fingerprints.
 
 ## Audio
 

@@ -74,3 +74,5 @@ STARTER-COGS-001 complete software+runtime; see2026-11-02 handoff and docs/start
 FAST-VOICE-001/ANDROID-COUNTER-INSETS-001/FAST-COUNTER-QA-001 softwarecomplete+activated; physicalacceptanceremainsseparate, see2026-11-02 handoff.
 
 REPO-SHOP-UX-001/REPO-SHOP-API-001/REPO-CLEAN-QA-001/PRODUCT-DIAGRAM-001 andbuilderdocs COMPLETE: implemented,testedfreshsource,pushed6a4ff0a; remoteCIunverified(noaccess), physicalphoneacceptance separate.
+
+QUANTITY-REPLY-UX-001/API-001/QA-001 softwarecomplete, packagedactivated; physicalacceptanceremainsrequired.

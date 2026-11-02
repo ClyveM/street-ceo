@@ -140,3 +140,15 @@ Bootstrap+CI+manifest/security audit implemented; baseline29 and focused9pass. R
 ### REPO-CLEAN-QA-001 completed — final source/cleanexport PASS
 Root361source manifest+freshinstall+255pytest29baseline117web65build/freshSQLiteAPI pass, attributed. Own29baseline/focusedgates pass. Handoff/report persisted. Commitpush/remoteCI root; no active QA tasks.
 
+
+
+## Assigned by Mutungamiri — 2026-11-02 QUANTITY-REPLY-QA-001
+Fullactivation tests/infra ownbrain productreadonly. Runako ASRfinal/auto-rearm lifecycle, native speechReady event+truthfulmodal actualstate; Hwaro safe structuredmissingqtytarget+scopedbarequantity. Verify bareone/1 noApo exacttarget, noisymodelqualifiedtarget, no guessedmultibasket/unknowns/crossshop/staleID/paidmutation, canonicalconfirmationrequired. IndependentfakeASRreadiness/TTS/finalpause/resume/duplicateguardtests andAPIacceptance. RoothostASGI/build/provider/liveunpaidonly. No liveoriginalrequestreplay/restart/escalation. Persisthandoff.
+
+### QUANTITY-REPLY-QA-001 checkpoint — source/offline PASS
+39Python/14Nodepass; background/lateReady findingsfixed byowner. NewHTTP/CI ready rootintegration. Report infra/quantity-reply-qa-001.md; no phonecauseclaim.
+
+
+### QUANTITY-REPLY-QA-001 completed — final source/software PASS
+Root310Python/29baseline/owner122frontend pass, own39Python14Node pass. Final report/handoff persisted; root package/unpaidprobe/physicalphone acceptance separate. No activeQA processes.
+

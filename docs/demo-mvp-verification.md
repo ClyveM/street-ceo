@@ -1,5 +1,49 @@
 # Connected SQLite APK demo — verified 2026-11-01
 
+## QUANTITY-REPLY-001 — activated and packaged 2026-11-02
+
+Owner reported that “one” was not accepted after a missing-quantity question.
+Latest matching trace at15:30UTC showed the question but no follow-up transcript.
+That does not establish the exact acoustic/device cause. Source review and
+fake-native tests confirmed terminal-turn rearm and readiness-feedback gaps.
+
+Recognition now rearms after answer processing, question output and output
+failure, even when intermediate React pause states coalesce. Duplicate finals,
+disposed callbacks, hidden/background states remain guarded. Native readiness
+is signalled by `onReadyForSpeech`; the modal shows starting, listening, captured
+answer or error from actual recognizer state, not preference alone.
+
+Qualified single-product missing-quantity reviews persist optional product ID,
+name and SKU context. Bare `one` or `1` reuses that context without Apo or a
+second model call and still requires product approval before payment. Unknown,
+multi-item and weak matches receive no trusted target. Deleted/changed products
+and wrong-shop context fail closed. Older reviews without fields remain readable
+and keep their original full-transcript fallback; no invented historical target.
+
+Evidence: root full Python/independent API suite **310 passed38.75s**, baseline
+**29 passed20.409s**; frontend **122 passed**, independent native/lifecycle
+**14 passed**. Final build66modules, `shop-D8flaUN9.js`, QUANTITY-REPLY-001.
+Offline native Gradle compile, v1/v2 signature, ZIP/current embedded assets,
+native speechReady DEX event, no office bundle and download-byte checks passed.
+
+APK **7,161,277 bytes**, SHA256
+`44b7351350c147777e1438a6ccb949cb9f5155de61fd88d130c92df0cac653ee`.
+Download: http://192.168.10.213:8081/street-ceo.apk.
+
+API38020 uses the same SQLite file and identity. Actual fresh unpaid checks:
+chips→one and chips→1 both returned Potato chips quantity1 requiring approval in
+118ms and143ms; approval returned the payment question. Before/after products
+and sales were identical. Original user review was not replayed or committed.
+
+Launcher started the new API but inventory omitted its PID and trusted-state
+verification refused completion. Root independently verified runtime/readiness,
+exact process command and matching launcher start-log PID, then repaired only
+the generated runtime record. Unknown services and APK helper were preserved.
+
+Remaining: install this labelled APK, wait for Listening after the question,
+answer “one”, confirm if asked and provide payment. Actual phone microphone,
+TTS-to-answer transition and repeated sale acceptance still need observation.
+
 ## FAST-COUNTER-001 — active backend and new Android APK, 2026-11-02
 
 Owner rejected a 24-second product check and reported app navigation behind the

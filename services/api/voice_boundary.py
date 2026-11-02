@@ -62,6 +62,9 @@ class VoiceResponse(VoiceModel):
     resolution_source: str | None = None
     provider_called: bool = False
     clarification_code: str | None = None
+    clarification_product_id: UUID | None = None
+    clarification_product_name: str | None = None
+    clarification_product_sku: str | None = None
 
 
 class VoiceSaleCommitLine(VoiceModel):
@@ -159,6 +162,16 @@ def normalize_intent(raw: Any) -> VoiceIntent:
     if not isinstance(confirmation, bool):
         raise ValueError("invalid confirmation flag")
     return VoiceIntent(action=action, item=item, quantity=quantity, price_override_minor=price, needs_confirmation=True)
+
+
+def parse_quantity_reply(transcript: str) -> int | None:
+    """A bare explicit positive whole quantity, never an inferred default."""
+    text = re.sub(r"[.!?]+$", "", transcript.strip().lower()).strip()
+    words = {word: number for number, word in enumerate(("zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"))}
+    quantity = words.get(text)
+    if quantity is None and re.fullmatch(r"[1-9]\d{0,3}", text):
+        quantity = int(text)
+    return quantity if quantity is not None and quantity > 0 else None
 
 
 def parse_catalogue_sale(transcript: str, products: Sequence[Any]) -> list[VoiceSaleLine] | None:
