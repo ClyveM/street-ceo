@@ -1,2 +1,2 @@
 /** Visible identifier for the phone recovery candidate; APK checksum remains the exact artifact identity. */
-export const DEMO_BUILD_LABEL = 'PRODUCT-PROFIT-001'
+export const DEMO_BUILD_LABEL = 'STOCK-TABLE-001'

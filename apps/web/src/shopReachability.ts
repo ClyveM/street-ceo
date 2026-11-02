@@ -1,4 +1,4 @@
-export type ShopReachability = { status: 'connected' | 'unavailable'; checkedAt: number; address: string; detail: string }
+export type ShopReachability = { status: 'connected' | 'unavailable'; checkedAt: number; address: string; detail: string; currency?: string }
 export function localShopGuidance(address: string): string {
   try {
     const host = new URL(address).hostname
@@ -24,7 +24,7 @@ export async function checkShopReachability(config: { baseUrl: string; shopId: s
     if (!shop.ok) throw new Error(`The configured shop is unavailable (${shop.status}).`)
     const [readiness, record] = await Promise.all([ready.json(), shop.json()])
     if (readiness?.status !== 'ready' || record?.id !== config.shopId) throw new Error('The server did not verify the configured shop.')
-    return { status: 'connected', checkedAt: Date.now(), address, detail: 'Readiness and this shop were verified from this device. A completed receipt still confirms each sale.' }
+    return { currency: typeof record.currency === 'string' && /^[A-Z]{3}$/.test(record.currency) ? record.currency : undefined, status: 'connected', checkedAt: Date.now(), address, detail: 'Readiness and this shop were verified from this device. A completed receipt still confirms each sale.' }
   } catch (failure) {
     const detail = failure instanceof Error && /^(The shop server|The configured shop|The server did not)/.test(failure.message) ? failure.message : 'Could not verify this shop from this device. A network indicator alone does not confirm access to the shop server.'
     return { status: 'unavailable', checkedAt: Date.now(), address, detail }

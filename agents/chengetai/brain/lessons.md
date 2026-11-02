@@ -50,3 +50,6 @@ Read complete financialcalculator control flow before flagging preliminary value
 ## 2026-11-02 — NAPO-RETRY-QA-001
 A reply-mode directfinal path can bypass wake-frame normalization even when idleframing works. Test question→full/splitframedretry using realhelpers and recognizerrestarts. Prefer longestvalidpersonalalias overdefaultprefix, keep ordinaryproductwords, and preserve exactlegacytypedcompat without adding arbitraryglobalendaliases. Sourcefix is not proof of completephonecause.
 
+
+## 2026-11-02 — STOCK-TABLE-QA-001 blocking checkpoint
+Actualbuiltminimal freshStock→Coke→Edit→onevalidcostdraft reproduced4liveproduct-cost-editor nodes/forms, no reviewreceipt, onePOST only; data/qa-stock-table-20261102/cost-editor-live.html +cost-minimal.png. Runakoindependentlyreproduced andidentifiedduplicate siblingReactkeys ProductCostEditor/ProductImageControl bothselected.id, namespacefixunderway. QA gateholdingcostpath untilfinalrebuiltDOM confirmsoneeditor before/busy/review/confirmed/unknown transitions. EarlierstaticPythonHTTPconnectionreset impeded harnessstartup; directrealassetfulfil isolatedtransport, no productcrashclaimfromstartup. Table/search/keyboard/readonly/localpreview passed. RootnumericwholevaluesCSSfix also awaitingfinalscreens. No livefinancialmutations.

@@ -216,3 +216,9 @@ IndependentQA Hwaro exactread-onlysummary/productgrossprofit/margin andRunakoSal
 
 ### PRODUCT-PROFIT-QA-001 completed — PASS
 46API2.17s/10client246.91ms/finalBfx1YKMZ+B8gz1mm9builtProfit+Sales/EndDayDOMpass;320390singlelinemargins/screensdata/qa-product-profit-20261102. Missingcostmetadata-omittedguardfixed/retested. Handoffpersisted noactiveQA; rootfinance/visual/packagego.
+
+## Assigned by Mutungamiri — 2026-11-02 STOCK-TABLE-QA-001
+Independent Stock UI clickabletable test320390 actualbuiltDOM/mockAPI screenshotsroot. Preserve Stockcounts/retailcost/purchase/imageactions, rowtapreadonly opensdetails, keyboardEnter/Space/Close focus, searchnameSKU/clear/empty, longproductnames/quantity/price nooverflow, lowstock visible, selecteddetails refreshed aftercataloguechanges, costmutation/disabled/demo guards. No API/mathchanges. Tests/ scope readonlyimplementation. Regress ReportsProfit/StockCount basicnavigation ifappropriate. Followactivation/persistbrainhandoff; finalbuildfreeze beforetests; rootpackagingaftervisualgate. No cloud/livefinancialmutations.
+
+### STOCK-TABLE-QA-001 completed — PASS
+13focused495.11ms +actualDOM320390/rowkeyboard/search/readonly/photo/costdraftackconfirm/currentrefresh/unknownlatch/demo guards pass. DuplicateReactkeys realbugfixednamespacesandONEeditorassertionspass finalBWNPadqH/DquULXt2. Screensdata/qa-stock-table-20261102. Handoffpersisted noactiveQA; packaginggoafterrootvisual.

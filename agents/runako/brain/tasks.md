@@ -312,3 +312,10 @@ Owner addsProfitbyproduct Reports. Runakoapps/web Reportsscopeclienttypes/parser
 PRODUCT-PROFIT-UX-001 sourcefrozen150frontendPASS/build74modules shop-aJiWshyF.js; QAfinance/screens/rootGO pending.
 
 PRODUCT-PROFIT-UX-001 software/packagecomplete7174651bytes SHA256843db5f53cd586cb17a4c4f422a2ec92b4eddcfba7a1b05011a331eae57abee6; samekey/7assetsPASS; physicalacceptanceOwner.
+
+## Assigned by Mutungamiri — 2026-11-02 STOCK-TABLE-UX-001
+Owner says Stock APKformatting embarrassing asksclickabletable. Runakoapps/web StockCatalog/newstockCSS/helpers/tests/buildInfo +minimalAppstockwelcomehide clean asReports ifneeded. Preserve products/actions/costeditor/imagecontrol/stockcount/retailcontrol. Compactbrandheader+smallsummary, Start/Openstockcountcompactlink notlargehero, searchable actualtable columnsProduct/Onhand/Sellprice (shopcurrency label no inventedcurrency), lowstockbadge readable, nameSKUwrap. Taprow/productbuttonopens productdetailpanel (accessiblekeyboardclose/focus), costdetail+purchase/costcorrection/imageactions movedoutofallrows into selecteddetails, no stockchangefromrowtap. Preserve imagefeedback/costmutationguard/refreshselectedproductdata/no duplicates. No backend/native/mathchange. ExistingReports/StockCountflows remain. Screenshot320390 +keyboard/longnames/prices/emptyfilter/error/costediting no silentlostpending mutation. Followactivation6brains/docsboard, sourcebuildtests freezeQA. Androidgeneratedpackagingafterrootgo samekey/API8001 labelSTOCK-TABLE-001. Persisthandoff.
+
+STOCK-TABLE-UX-001 sourcefrozen153frontendPASS/build76modules shop-cpAvRe4C.js; QA/screens/rootGO pending.
+
+STOCK-TABLE-UX-001 software/packagecomplete7175921bytes SHA256c69fd17958c94c049aaa7880bfe65892f2f301cdd568c0a9b03a79988c0ade73; samekey/7assetsPASS; physicalacceptanceOwner.
