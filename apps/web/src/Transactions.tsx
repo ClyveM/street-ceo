@@ -1,14 +1,38 @@
-import { formatMoney, type Product, type Sale } from './api'
-import { savedReceiptLines, savedReceiptPayment } from './receiptHistory'
+import { useEffect, useRef, useState } from 'react'
+import type { Product, Sale } from './api'
+import { receiptMoney, receiptTender, savedReceiptLines, savedReceiptPayment, sortedSavedReceipts } from './receiptHistory'
+import './sales-history.css'
+const dateLabel=(stamp:string)=>new Date(stamp).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})
+const timeLabel=(stamp:string)=>new Date(stamp).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})
 
-function SavedReceipt({ sale, products }: { sale: Sale; products: Product[] }) {
-  let lines
-  try { lines = savedReceiptLines(sale, products) }
-  catch { return <p role="alert">Saved receipt lines are unavailable. Reference: <code>{sale.id}</code></p> }
-  const payment = savedReceiptPayment(sale)
-  return <div className="saved-receipt"><dl><dt>Full receipt reference</dt><dd><code>{sale.id}</code></dd><dt>Recorded at</dt><dd><time dateTime={sale.created_at}>{new Date(sale.created_at).toLocaleString()}</time></dd><dt>Payment method</dt><dd>{sale.tender === 'cash' ? 'Cash' : 'Bank · recorded tender, settlement unverified'}</dd><dt>Amount received</dt><dd>{payment.received === null ? 'Not supplied' : formatMoney(payment.received)}</dd><dt>Change</dt><dd>{payment.change === null ? 'Not supplied' : formatMoney(payment.change)}</dd></dl>{sale.tender === 'cash' && payment.received === null && <p className="muted">This older receipt did not save the cash received. Exact payment and change cannot be established from it.</p>}<h4>Saved items and stock after this sale</h4><ul>{lines.map((line, index) => <li key={`${line.productId}-${index}`}><div><strong>{line.label}</strong><span>{line.currentName ? 'Current catalogue name' : 'Product reference'} · quantity {line.quantity}</span><code>{line.productId}</code></div><p>Stock after sale <strong>{line.stockAfter === null ? 'Not saved' : line.stockAfter}</strong></p></li>)}</ul><p className="muted">Names are current catalogue labels. Quantities and stock snapshots are saved receipt values; stock may have changed since this sale.</p></div>
+function SavedReceipt({sale,products,currency}:{sale:Sale;products:Product[];currency?:string}) {
+ let lines:ReturnType<typeof savedReceiptLines>|null=null
+ try { lines=savedReceiptLines(sale,products) } catch { /* Saved totals remain visible; malformed item details are never invented. */ }
+ const payment=savedReceiptPayment(sale),amount=(cents:number)=>`${currency?`${currency} `:''}${receiptMoney(cents)}${currency?'':' (shop currency)'}`
+ return <>
+  <div className="history-receipt-total"><span>Sale total</span><strong>{amount(sale.total_cents)}</strong><p>{receiptTender(sale.tender)} · {dateLabel(sale.created_at)} at {timeLabel(sale.created_at)}</p></div>
+  <div className="history-payment"><div><span>Amount received</span><strong>{payment.received===null?'Not supplied':amount(payment.received)}</strong></div><div><span>Change</span><strong>{payment.change===null?'Not supplied':amount(payment.change)}</strong></div></div>
+  {sale.tender==='cash'&&payment.received===null&&<p className="history-legacy-note">This older receipt did not save cash received. Exact payment and change are unknown.</p>}
+  <section className="history-receipt-products"><h4>Products sold</h4>{lines?<ul>{lines.map((line,index)=><li key={`${line.productId}-${index}`}><div><strong>{line.label}</strong><small>{line.historicalName?'Saved product name':line.currentName?'Current catalogue name':'Product reference'}</small></div><span>× {line.quantity}</span></li>)}</ul>:<p className="history-error" role="alert">Saved product details could not be verified. No items have been guessed.</p>}</section>
+  <details className="history-receipt-more"><summary>Receipt reference & stock snapshot</summary><dl><dt>Full receipt reference</dt><dd><code>{sale.id}</code></dd><dt>Recorded at</dt><dd><time dateTime={sale.created_at}>{new Date(sale.created_at).toLocaleString()}</time></dd></dl>{sale.tender==='bank'&&<p>Bank is recorded tender; settlement is not verified.</p>}{lines&&<ul>{lines.map((line,index)=><li key={`${line.productId}-${index}`}>{line.label}: stock after sale {line.stockAfter===null?'not saved':line.stockAfter} · product reference <code>{line.productId}</code></li>)}</ul>}<p>Quantities and stock snapshots come from the saved receipt. Stock may have changed since. No current price or cost is used to reconstruct this sale.</p></details>
+ </>
 }
-
-export function Transactions({ sales, products, error, onBack }: { sales: Sale[]; products: Product[]; error: string; onBack: () => void }) {
-  return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className="tool-hero social-tool"><span className="tool-glyph">↗</span><p className="eyebrow">SALES HISTORY</p><h2>Transactions</h2><p>Open a saved receipt to inspect its items, payment and stock snapshot.</p></div><section className="transaction-list">{error && <p role="alert" className="cost-error">{error}</p>}{sales.length ? sales.map((sale) => <details className="transaction-receipt" key={sale.id}><summary className="transaction-row"><div><strong>{formatMoney(sale.total_cents)}</strong><span>{new Date(sale.created_at).toLocaleString()} · {sale.tender}</span><small>View saved receipt</small></div><code>{sale.id.slice(0, 8)}</code></summary><SavedReceipt sale={sale} products={products} /></details>) : error ? null : <div className="placeholder"><strong>No transactions recorded yet</strong><span>Complete a sale from the Sell page and it will appear here.</span></div>}</section></section>
+export function Transactions({sales,products,error,onBack,currency,shopId,loading=false,onRefresh}:{sales:Sale[];products:Product[];error:string;onBack():void;currency?:string;shopId?:string;loading?:boolean;onRefresh?():Promise<unknown>}) {
+ const [selectedId,setSelectedId]=useState<string|null>(null),panel=useRef<HTMLElement>(null),buttons=useRef(new Map<string,HTMLButtonElement>()),back=useRef<HTMLButtonElement>(null)
+ let rows:Sale[]|null=null,validationError=''
+ try { rows=sortedSavedReceipts(sales,shopId) } catch(failure) { validationError=failure instanceof Error?failure.message:'Saved history could not be verified.' }
+ const selected=rows?.find(sale=>sale.id===selectedId)
+ useEffect(()=>{if(selectedId){panel.current?.focus({preventScroll:true});panel.current?.scrollIntoView({block:'start'})}},[selectedId])
+ const open=(id:string)=>{setSelectedId(id);if(id===selectedId){panel.current?.focus({preventScroll:true});panel.current?.scrollIntoView({block:'start'})}}
+ const close=()=>{const id=selectedId;setSelectedId(null);requestAnimationFrame(()=>{(id?buttons.current.get(id):null)?.focus();if(!id||!buttons.current.has(id))back.current?.focus()})}
+ const failure=validationError||error
+ return <section className="sales-history-page">
+  <header className="history-heading"><div><p className="eyebrow">EVERY SALE, KEPT SAFE</p><h2>Sales history</h2></div><button ref={back} onClick={onBack}>← Back to Today</button></header>
+  <div className="history-toolbar"><p>Tap a sale to view its saved receipt.</p>{onRefresh&&<button disabled={loading} onClick={()=>{void onRefresh()}}>↻ Refresh</button>}</div>
+  {loading&&<p className="history-loading" role="status">Loading saved receipts…</p>}
+  {failure&&<section className="history-error" role="alert"><strong>History could not be fully loaded.</strong><p>{failure}</p>{!validationError&&rows&&rows.length>0&&<p>Previously loaded receipts are shown below.</p>}{onRefresh&&<button disabled={loading} onClick={()=>{void onRefresh()}}>Try again</button>}</section>}
+  {rows&&rows.length>0&&<div className="history-table-wrap" role="region" aria-label="Sales history table, scroll horizontally for wide values" tabIndex={0}><table className="sales-history-table"><colgroup><col className="history-date-column"/><col className="history-payment-column"/><col className="history-total-column"/></colgroup><thead><tr><th scope="col">Date</th><th scope="col">Payment</th><th scope="col">Total<small>{currency??'Shop currency'}</small></th></tr></thead><tbody>{rows.map(sale=><tr key={sale.id} data-selected={sale.id===selectedId||undefined} onClick={()=>open(sale.id)}><td><button ref={node=>{if(node)buttons.current.set(sale.id,node);else buttons.current.delete(sale.id)}} onClick={event=>{event.stopPropagation();open(sale.id)}} aria-controls="history-selected-receipt" aria-expanded={sale.id===selectedId} aria-label={`Open receipt ${sale.id}`}><strong>{dateLabel(sale.created_at)}</strong><span>{timeLabel(sale.created_at)}</span></button></td><td><span className={`history-tender ${sale.tender==='cash'?'cash':'bank'}`}>{receiptTender(sale.tender)}</span></td><td className="history-total-value">{receiptMoney(sale.total_cents)}</td></tr>)}</tbody></table></div>}
+  {!loading&&!failure&&rows?.length===0&&<div className="history-empty"><span aria-hidden="true">↗</span><h3>Your first sale starts the story.</h3><p>No saved sales yet. Complete a sale from Sell and find its receipt here.</p></div>}
+  {selectedId&&<section ref={panel} tabIndex={-1} id="history-selected-receipt" className="history-selected-receipt" aria-label="Saved sale receipt" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();close()}}}><header><div><p className="eyebrow">YOUR SAVED RECEIPT</p><h3>Sale details</h3></div><button onClick={close} aria-label="Close saved receipt">Close</button></header>{selected?<SavedReceipt sale={selected} products={products} currency={currency}/>:<p role="alert">This receipt is not in the latest verified history. Refresh to check it again.</p>}</section>}
+ </section>
 }

@@ -103,3 +103,5 @@ Clarificationmayacceptbareanswersorintentionalfullretry. Leadingknownwakeandterm
 2026-11-02 PRODUCT-PROFIT: sharedReportsperiods/optionaladditivefields preserveSalesoldbackend, missingprofitIncomplete. BigIntvalidate exactGP/signedHALF_UPbasispoints. MoneycentHALF_UP tinyknownlossmarkedLoss<USD0.01 withexact6details. Grossprofitbeforeexpenses, no allocation/netclaim.
 
 2026-11-02 STOCK-TABLE: semanticclickabletable+keyboardproductbutton selectedinlinepanel keepsallactionswithoutrowclutter; exactintegercentprices andcurrencyfromverifiedGETshop only. Rootapprovedcostbusy/uncertaincallbackglobalnavguard preventslostoperationstate; Stockgreetinghidden noavatarbypass.
+
+2026-11-02 SALES-HISTORY-TABLE: readonlyDate/Payment/Total table +primaryreceipt productsqty/total/received/change. Optionalverifiedhistoricalnames preferred currentlabelsfallbackhonest; no repricing. Legacycashpaymentunknownnever0, exactzeroevidencepreserved. Invalidrowsnotdropped; generationguardloaded/cached/errorstates explicit.

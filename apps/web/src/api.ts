@@ -30,6 +30,7 @@ export type Sale = Omit<SaleRequest, 'amount_received_cents'> & {
   created_at: string
   amount_received_cents?: number | null
   change_cents?: number
+  receipt_lines?: { product_id: string; product_name: string; quantity: number; sku?: string; unit_price_cents?: number; line_total_cents?: number }[]
 }
 
 export type ShopSummary = {

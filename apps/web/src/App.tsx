@@ -40,6 +40,8 @@ function App() {
   const [shopSummary, setShopSummary] = useState<ShopSummary | null>(null)
   const [sales, setSales] = useState<Sale[]>([])
   const [salesError, setSalesError] = useState('')
+  const [salesLoading,setSalesLoading]=useState(true)
+  const salesGeneration=useRef(0)
   const [saleReview, setSaleReview] = useState(false), [salePending, setSalePending] = useState(false)
   const [cashReceived, setCashReceived] = useState(''), [saleUncertain, setSaleUncertain] = useState(false), [manualReceipt, setManualReceipt] = useState<Sale | null>(null)
   const [voiceBusy, setVoiceBusy] = useState(false)
@@ -58,8 +60,10 @@ function App() {
   const [connection, setConnection] = useState<ShopReachability | null>(null), [checkingConnection, setCheckingConnection] = useState(true), [connectionCheck, setConnectionCheck] = useState(0)
   const [welcome, setWelcome] = useState(() => formatShopWelcome(Date.now()))
   const refreshSales = async () => {
-    try { const records = await apiClient.listSales(); setSales(records); setSalesError(''); return true }
-    catch { setSalesError('Could not load transactions. A failed request does not mean there were no sales.'); return false }
+    const id=++salesGeneration.current;setSalesLoading(true)
+    try { const records = await apiClient.listSales(); if(id===salesGeneration.current){setSales(records);setSalesError('')} return true }
+    catch { if(id===salesGeneration.current)setSalesError('Could not load transactions. A failed request does not mean there were no sales.'); return false }
+    finally { if(id===salesGeneration.current)setSalesLoading(false) }
   }
 
   useEffect(() => {
@@ -162,7 +166,7 @@ function App() {
     <main className="page">
       {(view === 'profile' || view === 'settings') && <section className={`shop-connection-summary ${connection?.status === 'unavailable' ? 'unavailable' : ''}`} aria-label="Shop server connection"><p>Build <strong>{DEMO_BUILD_LABEL}</strong></p><p>Shop server: <code>{connection?.address ?? 'Checking configured address…'}</code></p><p>{connection ? <>Last checked <time dateTime={new Date(connection.checkedAt).toISOString()}>{new Date(connection.checkedAt).toLocaleTimeString()}</time>{checkingConnection ? ' · checking again…' : ' · tap the status above to recheck'}</> : 'Verifying readiness and your shop from this device…'}</p>{connection?.status === 'unavailable' && <><p role="status">{connection.detail}</p><p>{localShopGuidance(connection.address)}</p></>}</section>}
       {view !== 'profile' && view !== 'settings' && connection?.status === 'unavailable' && <details className="counter-connection-alert"><summary>Shop unavailable · connection help</summary><p>{connection.detail}</p><p>{localShopGuidance(connection.address)}</p><p>Server <code>{connection.address}</code> · checked {new Date(connection.checkedAt).toLocaleTimeString()}</p><button type="button" disabled={checkingConnection} onClick={() => setConnectionCheck((value) => value + 1)}>Check again</button></details>}
-      {view !== 'sell' && view !== 'profile' && view !== 'reports' && view !== 'stock-count' && view !== 'stock' && <section className="welcome"><div><p className="eyebrow"><time dateTime={welcome.dateKey} title={welcome.timeZone}>{welcome.date}</time></p><h1>{welcome.greeting}, Tendai.</h1><p className="muted">Here’s how your shop is doing today.</p></div><button type="button" className="avatar profile-avatar" disabled={voiceBusy || salePending || saleUncertain || countBlocking || stockBlocking} aria-label="Open Profile" onClick={() => setView('profile')}>T</button></section>}
+      {view !== 'sell' && view !== 'profile' && view !== 'reports' && view !== 'stock-count' && view !== 'stock' && view !== 'transactions' && <section className="welcome"><div><p className="eyebrow"><time dateTime={welcome.dateKey} title={welcome.timeZone}>{welcome.date}</time></p><h1>{welcome.greeting}, Tendai.</h1><p className="muted">Here’s how your shop is doing today.</p></div><button type="button" className="avatar profile-avatar" disabled={voiceBusy || salePending || saleUncertain || countBlocking || stockBlocking} aria-label="Open Profile" onClick={() => setView('profile')}>T</button></section>}
       {isDemo && <div className="demo-banner"><span>✦</span><span><strong>Demo mode</strong> · Showing starter catalogue data. Connect the API to use live shop data.</span></div>}
       {connectionNotice && view === 'profile' && <div className="notice" role="status">{connectionNotice}</div>}
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
@@ -175,7 +179,7 @@ function App() {
       {view === 'alerts' && <StockAlerts products={products} onBack={() => setView('today')} onOpenStock={() => setView('stock')} />}
       {view === 'stock-count' && <StockCountPage products={products} isDemo={isDemo} onBack={()=>setView('stock')} onChanged={refreshCostProducts} onBlockingChange={setCountBlocking}/>}
       {view === 'reports' && <Reports onBack={()=>setView('today')} onCount={openStockCount}/>}
-      {view === 'transactions' && <Transactions sales={sales} products={isDemo ? [] : products} error={salesError} onBack={() => setView('today')} />}
+      {view === 'transactions' && <Transactions currency={connection?.status==='connected'?connection.currency:undefined} shopId={getApiConfig().shopId} loading={salesLoading} onRefresh={refreshSales} sales={sales} products={isDemo ? [] : products} error={salesError} onBack={() => setView('today')} />}
       {view === 'muse' && <AskMuse onBack={() => setView('today')} />}
       {view === 'social' && <SocialUpdate products={products} isDemo={isDemo} images={productImages} onBack={() => setView('today')} />}
       {view === 'profitability' && <Profitability summary={shopSummary} onBack={() => setView('today')} />}

@@ -26,6 +26,15 @@ part of Street CEO. Do not add agent desks or development chat to the shop.
 | Saved receipt | Read at a glance | Total, Tendered and large Change; next-Apo hint |
 | Stock/catalogue | Product availability | Name, SKU, selling price, stock; unit cost in details |
 | Sales history | Inspect a saved sale | Items, quantities, total, tender, cash received, change, time and cost availability |
+
+Sales history uses a compact, tappable Date/time / Payment / Total table. A row
+opens a read-only receipt showing saved products and quantities, total, amount
+received and change. Prefer validated saved product labels when available;
+identify current-catalogue labels or product-reference fallbacks for legacy
+receipts. Never reconstruct receipt amounts from current prices. Missing legacy
+payment data remains unknown, and bank tender is not verified settlement. Row
+navigation needs keyboard access and focus return, and loading/error/empty
+history must remain distinct. Amounts use the verified shop currency when known.
 | Reports | Review trading | Monthly summary, product quantities/amounts, inclusive dates and Today/20/90-day presets |
 | End my day | Count and compare cash | Counted cash, opening provenance, recorded expected cash, shortage/overage and explicit save |
 | Profile | Configure and investigate | Shop connection, voice/pronunciation setup and recent request details |

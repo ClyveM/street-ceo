@@ -319,3 +319,10 @@ Owner says Stock APKformatting embarrassing asksclickabletable. Runakoapps/web S
 STOCK-TABLE-UX-001 sourcefrozen153frontendPASS/build76modules shop-cpAvRe4C.js; QA/screens/rootGO pending.
 
 STOCK-TABLE-UX-001 software/packagecomplete7175921bytes SHA256c69fd17958c94c049aaa7880bfe65892f2f301cdd568c0a9b03a79988c0ade73; samekey/7assetsPASS; physicalacceptanceOwner.
+
+## Assigned by Mutungamiri — 2026-11-02 SALES-HISTORY-TABLE-UX-001
+Ownerasks APKfolderlink clarified andSalesHistoryclickabletable tap→products/total/amounttendered/change. Runakoapps/web Transactions/receiptHistory/types/styles/tests/buildInfo +minimalApppropscurrency/loading/refresh/welcomehide transactions ifneeded; nobackend/native/mathmutation. Cleanactualtable Date/Payment/Total (fullreference/detailsecondary), wholeamounts/qty/nooverflow, keyboardproductreceiptbutton+rowtap detailfocusclose. Receiptcard authoritative savedtotal, method, received/change unknownlegacy notinvent0; productsqty savedreceipt_lines labels ifvalidoptional otherwise honestcurrentcatalogue/IDfallback nevercurrentprice costreprice. Existinghelperpaymentsemantics preserve. Readonly no sales/stock/cashrequests. Loading/error/empty distinct, onRefresh mayexistinglistSales fromApp optionalnoextraneous. Currencyfromverifiedconnection likeStock fallbackshopcurrency. Existinghistorycurrentrecordrefreshselection notstale. Followactivation6brains/docsboard. BuildtestsfreezeQA actual320390screens, generatedAndroidpackagingafterrootgo samecert/API8001 SALES-HISTORY-TABLE-001. No livefinancialposts/cloud. Persisthandoff.
+
+SALES-HISTORY-TABLE-UX-001 sourcefrozen157frontendPASS/build77modules shop-CWFztYnL.js; QA/screens/rootGO pending.
+
+SALES-HISTORY-TABLE-UX-001 software/packagecomplete7177667bytes SHA25629935451ee963589c266dea510a78a123fcb83d59c172af0b1782e5778672b9f; samekey/7assetsPASS; physicalacceptanceOwner.

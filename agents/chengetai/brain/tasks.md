@@ -222,3 +222,11 @@ Independent Stock UI clickabletable test320390 actualbuiltDOM/mockAPI screenshot
 
 ### STOCK-TABLE-QA-001 completed — PASS
 13focused495.11ms +actualDOM320390/rowkeyboard/search/readonly/photo/costdraftackconfirm/currentrefresh/unknownlatch/demo guards pass. DuplicateReactkeys realbugfixednamespacesandONEeditorassertionspass finalBWNPadqH/DquULXt2. Screensdata/qa-stock-table-20261102. Handoffpersisted noactiveQA; packaginggoafterrootvisual.
+
+## Assigned by Mutungamiri — 2026-11-02 SALES-HISTORY-TABLE-QA-001
+IndependentReadonlySalesHistorytable/receiptdetails APIamounts unchanged. Tests/ scope readonlyimplementation. Followactivation6brains/docsboard. MockactualDOM320390 table/datepaymenttotal/tapandkeyboard/focusclose, productsqty/total/tenderreceivedchange/legacycashmissing unknownvs0/banksettlementnote/snapshotlabelorcurrentfallback/renamed/deletedproducts/no currentpricereprice. Loading/error/empty/refresh stale recordclear; longlabels/largeamountswhole/pagebounds; currencycorrect. Assert0POST. RegressStock/Reportsnavappropriate. Awaitfrozenbuild; screenshotpathsroot; packagingaftervisualgate. No cloud/livefinancialmutation. Persisthandoff.
+
+### SALES-HISTORY-TABLE-QA-001 completed — PASS
+10client264.99ms+actualCWFztYnL/c83LHZFtDOM320390 receipttruth/snapshot/legacyunknownvs0/read-onlykeyboard/error/loading/empty/refreshstale-focus/0POSTpass. Screensdata/qa-sales-history-20261102. Handoffpersisted noactiveQA; rootvisual/package separate.
+
+SALES-HISTORY-TABLE-QA-001 longreceiptfollowup resolvedPASS: finalB9k06aeq/CdW9NWd_ fullDOMrerun inclnatural7product320390headergeometry/titleClose96pxoffset+allfunctionalchecks. Screensreceipt-long-tap-{320,390}.png updated. NoactiveQA, readyrootvisual/package.
