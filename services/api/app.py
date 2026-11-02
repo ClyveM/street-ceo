@@ -1437,6 +1437,12 @@ def create_app(
         record.stock_takes[item.id] = item
         return item
 
+    @app.get("/api/v1/shops/{shop_id}/stock-takes", response_model=list[StockTakeRecord])
+    def list_stock_takes(record: _ShopRecord = Depends(shop_scope)) -> list[StockTakeRecord]:
+        """Saved drafts and confirmed counts, newest first with a stable ID tie-break."""
+        unique = {item.id: item for item in record.stock_takes.values() if item.shop_id == record.shop.id}
+        return sorted(unique.values(), key=lambda item: (item.created_at, str(item.id)), reverse=True)
+
     @app.get("/api/v1/shops/{shop_id}/stock-takes/{stock_take_id}", response_model=StockTakeRecord)
     def get_stock_take(stock_take_id: UUID, record: _ShopRecord = Depends(shop_scope)) -> StockTakeRecord:
         item = record.stock_takes.get(stock_take_id)

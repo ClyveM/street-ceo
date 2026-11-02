@@ -97,3 +97,5 @@ Clarificationmayacceptbareanswersorintentionalfullretry. Leadingknownwakeandterm
 2026-11-02 SHORT-VOICE-TRAIN: additive v1napoAliases keepslegacyaliases; five reviewed samples atomic onfifth withduplicatescount, max10personalvariants. No fuzzyglobalnepal. Speechseparatefromvisiblepaymentquestion; savedreceiptvoice exactlySale saved.
 
 2026-11-02 REPORTS-POLISH: Todaydefault explicitlylabelled; selection-keyed report preventsstale periodmislabel; draftsseparate. Grosssales notprofit; incompletecostvisible whilecoverage/auditdetailssecondary. PreserveEndDaystylesunchanged. MonthstockcountonlyinMonthreview.
+
+2026-11-02 STOCK-COUNT-HISTORY: dedicatedpageoneflow, GETlist+freshitemonopen, expected_snapshot authoritative/currentlabelsdisclosed. Draftresumealwaysfreshack; uncertainconfirmationmustreloadverified andrefreshcatalogueifconfirmed, navigationblockeduntilknown. Historydifferencescountproductsnotnetunits.

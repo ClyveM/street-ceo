@@ -69,8 +69,15 @@ export function parsePurchase(value: unknown, shopId: string): PurchaseRecord {
 export function parseStockTake(value: unknown, shopId: string): StockTakeRecord {
   ensure(isRecord(value) && nonblank(value.id, 100) && value.shop_id === shopId && ['draft', 'confirmed'].includes(String(value.status)) && stamp(value.created_at) && (value.confirmed_at === null || stamp(value.confirmed_at)), 'Unreadable count receipt. Check saved state before retrying.')
   validateStockTake(value as unknown as StockTakeInput)
+  ensure(value.status === 'draft' ? value.confirmed_at === null : stamp(value.confirmed_at), 'Stock count status and confirmation date disagree.')
   ensure(isRecord(value.expected_snapshot) && (value.lines as StockTakeInput['lines']).every((line) => integer((value.expected_snapshot as Record<string, unknown>)[line.product_id])), 'Stock count is missing its verified comparison baseline.')
   return value as unknown as StockTakeRecord
+}
+
+export function parseStockTakeHistory(value: unknown, shopId: string): StockTakeRecord[] {
+  ensure(Array.isArray(value), 'Stock count history could not be verified.')
+  const ids = new Set<string>()
+  return value.map(item => { const record = parseStockTake(item,shopId); ensure(!ids.has(record.id),'Stock count history contains duplicate receipts.'); ids.add(record.id); return record }).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id))
 }
 
 export function parseClosePreview(value: unknown, date: string): DayClosePreview {
@@ -111,6 +118,7 @@ export function createRetailClient(getConfig: () => { baseUrl: string; shopId: s
       return value as unknown as PurchaseResult
     },
     async createStockTake(input: StockTakeInput) { validateStockTake(input); const { value, shopId } = await call('/stock-takes', input); const saved = parseStockTake(value, shopId); ensure(saved.status === 'draft' && JSON.stringify(saved.lines) === JSON.stringify(input.lines) && saved.count_date === input.count_date && saved.mode === input.mode, 'Saved count differs from your review.'); return saved },
+    async listStockTakes() { const { value, shopId } = await call('/stock-takes'); return parseStockTakeHistory(value,shopId) },
     async getStockTake(id: string) { const { value, shopId } = await call(`/stock-takes/${encodeURIComponent(id)}`); const saved = parseStockTake(value, shopId); ensure(saved.id === id, 'Wrong stock count receipt.'); return saved },
     async confirmStockTake(draft: StockTakeRecord): Promise<StockTakeResult> {
       ensure(draft.status === 'draft', 'Only a reviewed count draft can be confirmed.')

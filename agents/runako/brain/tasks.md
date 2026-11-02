@@ -298,3 +298,10 @@ Owner mobileReports confusing/embarrassing requests redesign. Runako apps/web Re
 REPORTS-POLISH-001 sourcefrozen141testsPASS/build71modules shop-BsA05o4-.js CSSshop-BzDVHsCO.css; QA/screens/rootGO pending.
 
 REPORTS-POLISH-001 software/packagecomplete7170003bytes SHA2564fc69bbee696e19e25d684eb9a43dbf6f74ffe60b940ddada29b7254fcd49345; samekey/7assetsPASS; physicalacceptanceOwner.
+
+## Assigned by Mutungamiri — 2026-11-02 STOCK-COUNT-HISTORY-UX-001
+Owner standaloneStockCount page withStart stockcounttop historicalcountsbelow. Runakoapps/web scope App/Stock/RetailControl/Stocktake/newpageCSS/clienttests/buildInfo. Dedicatedview reachableStock and existingReports/EndDay countactions; removeburiedcounttab orredirectexistingentry soonecountflow. Pagecleanbranded newStartbutton +datedhistory/draftconfirmedstatus/products/differences summary; open savedcount details expected/count/difference actor/notes/status, confirmedread-only, draftsresumeexistingreview guardedconfirm; newformonlyafterStart nofakehistory. Existingcountsblanknotzero/stale/uncertainreload/ackandstockconfirmation preserved. Hwaro listGETsamecollection returnslistStockTakeRecord newestfirst, existingitemGETresume; parservalidates shop/id/status/dup. Demo disconnectedclearly noactualsavedhistory; loading/error/empty/retry accessible320390. Sourcebuildtests freezeQA; Androidgeneratedpackaging extension afterrootgo samecert/API8001 labelSTOCK-COUNT-HISTORY-001. No backend/nativewrites/livefinancialposts. Followactivation/persistbrains/handoff.
+
+STOCK-COUNT-HISTORY-UX-001 sourcefrozen144frontendPASS/build73modules shop-CwgRw3nQ.js; QA/screens/rootGO pending.
+
+STOCK-COUNT-HISTORY-UX-001 software/packagecomplete7172841bytes SHA256d08bbd5c6470d324f33bf724049601f2bca0bbb96583314a3ce158c8b5259a80; samekey/7assetsPASS; physicalacceptanceOwner.

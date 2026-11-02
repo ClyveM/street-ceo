@@ -204,3 +204,9 @@ Independent test/visual review Runako reportredesign at320/390/desktop, realbuil
 FinalbuiltDOM320/390/1280/filter/error/empty/incomplete/optionalSkip/EndDayCSSpass; screenshotsdata/qa-reports-polish-20261102. Own5clientpass431.71ms; owner141/buildattributed. Handoffpersisted; no activeQA processes, rootvisualreview/package/phone separate.
 
 REPORTS-POLISH-QA-001 finalrootvisualfollowup completedPASS: shop-PXeLLDPl.js/CSSBV9CAqqX newDOM fullchecks +Reportsheader/Todaypreservation/lastrowaccess verified; screenshotsupdated, no activeQA.
+
+## Assigned by Mutungamiri — 2026-11-02 STOCK-COUNT-HISTORY-QA-001
+IndependentQA APIlistshopisolation/newest/reopen no mutation; frontend standaloneStart/history/details/draftresume/confirmedreadonly/emptyerror/loading/safeconfirm/blanknotzero. Tests/ scope readonlyimplementation. ActualbuiltDOM mockAPI320390 screenshotroot; Start→draftreview→explicitackconfirm→historyrefresh, stale/uncertainguard, existingReports/EndDay countlinksleadnewpage. No livefinancialmutation/cloud. Activation6brains/docsboard; waitfrozenbuild; persisthandoff. Packagingrootgoaftergate.
+
+### STOCK-COUNT-HISTORY-QA-001 completed — PASS
+22APItests6.28s +actualDOM320390 Start/history/draftack/confirm/reopenreadonly/503recoveryglobalguards/Reportslink/error/blanknotzero pass. Topviewports data/qa-stock-count-history-20261102/history-top-{390,320}.png. Handoffpersisted, packaginggo, no activeQA.

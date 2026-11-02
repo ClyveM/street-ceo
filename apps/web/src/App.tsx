@@ -1,3 +1,4 @@
+import { StockCountPage } from './StockCountPage'
 import { Reports } from './Reports'
 import { VoicePronunciation } from './HandsFreeVoice'
 import { clientId } from './clientId'
@@ -22,7 +23,7 @@ import { DEMO_BUILD_LABEL } from './buildInfo'
 import './demo-ux.css'
 import './counter-polish.css'
 
-type View = 'today' | 'sell' | 'stock' | 'alerts' | 'transactions' | 'muse' | 'social' | 'profitability' | 'settings' | 'costs' | 'profile' | 'reports'
+type View = 'today' | 'sell' | 'stock' | 'alerts' | 'transactions' | 'muse' | 'social' | 'profitability' | 'settings' | 'costs' | 'profile' | 'reports' | 'stock-count'
 type Basket = Record<string, number>
 
 function Logo() {
@@ -42,8 +43,8 @@ function App() {
   const [saleReview, setSaleReview] = useState(false), [salePending, setSalePending] = useState(false)
   const [cashReceived, setCashReceived] = useState(''), [saleUncertain, setSaleUncertain] = useState(false), [manualReceipt, setManualReceipt] = useState<Sale | null>(null)
   const [voiceBusy, setVoiceBusy] = useState(false)
-  const [retailTab,setRetailTab]=useState<'purchase'|'count'>('purchase')
-  const openStockCount=()=>{setRetailTab('count');setView('costs')}
+  const [countBlocking,setCountBlocking]=useState(false)
+  const openStockCount=()=>{setView('stock-count')}
   const voiceRequestActive = useRef(false)
   const connectionProbe = useRef<AbortController | null>(null)
   const [voiceMode, setVoiceMode] = useState<SaleMode>(() => { if (isNativeAndroid()) return 'quick'; try { return readSaleMode(localStorage) } catch { return 'quick' } })
@@ -142,7 +143,7 @@ function App() {
     if (result.isDemo) throw new Error('Could not refresh live catalogue.')
     setProducts(result.products)
   }
-  const openCosts = (productId?: string) => { setRetailTab('purchase'); setCostProductId(productId); setView('costs') }
+  const openCosts = (productId?: string) => { setCostProductId(productId); setView('costs') }
   const setVoicePreference = (mode: SaleMode) => { setVoiceMode(mode); try { localStorage.setItem(SALE_MODE_KEY, mode) } catch { setNotice({ type: 'error', text: 'Sale mode applies for this session; this browser could not save the preference.' }) } }
   const confirmedVoiceSale = (receipt: QuickReceipt) => {
     setProducts((current) => current.map((product) => receipt.stock_after[product.id] === undefined ? product : { ...product, stock_qty: receipt.stock_after[product.id] }))
@@ -153,14 +154,14 @@ function App() {
 
   return <div className="app-shell">
     <header className="topbar">
-      <button disabled={voiceBusy || salePending || saleUncertain} className="brand brand-button" onClick={() => setView('today')} aria-label="Go to Street CEO home"><Logo /><div><strong>Street CEO</strong><span>Your shop, in control.</span></div></button>
+      <button disabled={voiceBusy || salePending || saleUncertain || countBlocking} className="brand brand-button" onClick={() => setView('today')} aria-label="Go to Street CEO home"><Logo /><div><strong>Street CEO</strong><span>Your shop, in control.</span></div></button>
       <button type="button" className={`connection-pill shop-connection-check ${connection?.status === 'connected' ? 'online' : 'offline'}`} disabled={checkingConnection} onClick={() => setConnectionCheck((value) => value + 1)} title="Check readiness and the configured shop from this device"><span className="status-dot" />{connection?.status === 'connected' ? 'Shop connected' : connection ? 'Shop unavailable' : 'Checking shop…'}</button>
     </header>
 
     <main className="page">
       {(view === 'profile' || view === 'settings') && <section className={`shop-connection-summary ${connection?.status === 'unavailable' ? 'unavailable' : ''}`} aria-label="Shop server connection"><p>Build <strong>{DEMO_BUILD_LABEL}</strong></p><p>Shop server: <code>{connection?.address ?? 'Checking configured address…'}</code></p><p>{connection ? <>Last checked <time dateTime={new Date(connection.checkedAt).toISOString()}>{new Date(connection.checkedAt).toLocaleTimeString()}</time>{checkingConnection ? ' · checking again…' : ' · tap the status above to recheck'}</> : 'Verifying readiness and your shop from this device…'}</p>{connection?.status === 'unavailable' && <><p role="status">{connection.detail}</p><p>{localShopGuidance(connection.address)}</p></>}</section>}
       {view !== 'profile' && view !== 'settings' && connection?.status === 'unavailable' && <details className="counter-connection-alert"><summary>Shop unavailable · connection help</summary><p>{connection.detail}</p><p>{localShopGuidance(connection.address)}</p><p>Server <code>{connection.address}</code> · checked {new Date(connection.checkedAt).toLocaleTimeString()}</p><button type="button" disabled={checkingConnection} onClick={() => setConnectionCheck((value) => value + 1)}>Check again</button></details>}
-      {view !== 'sell' && view !== 'profile' && view !== 'reports' && <section className="welcome"><div><p className="eyebrow"><time dateTime={welcome.dateKey} title={welcome.timeZone}>{welcome.date}</time></p><h1>{welcome.greeting}, Tendai.</h1><p className="muted">Here’s how your shop is doing today.</p></div><button type="button" className="avatar profile-avatar" disabled={voiceBusy || salePending || saleUncertain} aria-label="Open Profile" onClick={() => setView('profile')}>T</button></section>}
+      {view !== 'sell' && view !== 'profile' && view !== 'reports' && view !== 'stock-count' && <section className="welcome"><div><p className="eyebrow"><time dateTime={welcome.dateKey} title={welcome.timeZone}>{welcome.date}</time></p><h1>{welcome.greeting}, Tendai.</h1><p className="muted">Here’s how your shop is doing today.</p></div><button type="button" className="avatar profile-avatar" disabled={voiceBusy || salePending || saleUncertain} aria-label="Open Profile" onClick={() => setView('profile')}>T</button></section>}
       {isDemo && <div className="demo-banner"><span>✦</span><span><strong>Demo mode</strong> · Showing starter catalogue data. Connect the API to use live shop data.</span></div>}
       {connectionNotice && view === 'profile' && <div className="notice" role="status">{connectionNotice}</div>}
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
@@ -168,9 +169,10 @@ function App() {
       {view === 'sell' && <VoiceCapture manualBasket={itemCount>0} onStockCount={openStockCount} blocked={salePending || saleUncertain} connection={connection} checkingConnection={checkingConnection} onCheckConnection={() => setConnectionCheck((value) => value + 1)} onRequestBusy={(value) => { voiceRequestActive.current = value; if (value) { connectionProbe.current?.abort(); setCheckingConnection(false) } }} mode={voiceMode} onConfirmed={confirmedVoiceSale} onUndo={reversedVoiceSale} onBusy={setVoiceBusy} />}
       {view === 'today' && <><Today summary={shopSummary} onSell={() => setView('sell')} onAlerts={() => setView('alerts')} onTransactions={() => setView('transactions')} /><ToolEntryPoints onMuse={() => setView('muse')} onSocial={() => setView('social')} onProfitability={() => setView('profitability')} onSettings={() => setView('settings')} /></>}
       {view === 'sell' && <SellCheckout products={filteredProducts} query={query} setQuery={setQuery} basketItems={basketItems} total={total} itemCount={itemCount} tender={tender} setTender={setTender} addToBasket={addToBasket} removeFromBasket={removeFromBasket} submitSale={() => { void submitSale() }} isLoading={isLoading} review={saleReview} pending={salePending} uncertain={saleUncertain} received={cashReceived} setReceived={setCashReceived} paymentError={paymentError} receivedCents={receivedCents} receipt={manualReceipt} canPost={!isDemo && connection?.status === 'connected' && !voiceBusy} onReview={() => setSaleReview(true)} onEdit={() => setSaleReview(false)} />}
-      {view === 'stock' && <StockCatalog products={products} isDemo={isDemo} images={productImages} onOpenCosts={openCosts} onChanged={refreshCostProducts} />}
-      {view === 'costs' && <RetailControl products={products} isDemo={isDemo} initialProductId={costProductId} initialTab={retailTab} onBack={() => setView('stock')} onChanged={refreshCostProducts} />}
+      {view === 'stock' && <StockCatalog products={products} isDemo={isDemo} images={productImages} onOpenCount={openStockCount} onOpenCosts={openCosts} onChanged={refreshCostProducts} />}
+      {view === 'costs' && <RetailControl products={products} isDemo={isDemo} initialProductId={costProductId} onStockCount={openStockCount} onBack={() => setView('stock')} onChanged={refreshCostProducts} />}
       {view === 'alerts' && <StockAlerts products={products} onBack={() => setView('today')} onOpenStock={() => setView('stock')} />}
+      {view === 'stock-count' && <StockCountPage products={products} isDemo={isDemo} onBack={()=>setView('stock')} onChanged={refreshCostProducts} onBlockingChange={setCountBlocking}/>}
       {view === 'reports' && <Reports onBack={()=>setView('today')} onCount={openStockCount}/>}
       {view === 'transactions' && <Transactions sales={sales} products={isDemo ? [] : products} error={salesError} onBack={() => setView('today')} />}
       {view === 'muse' && <AskMuse onBack={() => setView('today')} />}
@@ -180,7 +182,7 @@ function App() {
       {view === 'settings' && <ApiSettings onBack={() => setView('today')} mode={voiceMode} onMode={setVoicePreference} />}
     </main>
 
-    <nav className="bottom-nav" aria-label="Main navigation">{([['today', '⌂', 'Today'], ['sell', '+', 'Sell'], ['stock', '▥', 'Stock'], ['reports', '▤', 'Reports'], ['profile', '○', 'Profile']] as const).map(([key, icon, label]) => <button disabled={voiceBusy || salePending || saleUncertain} key={key} className={(view === key || (key === 'stock' && view === 'costs')) ? 'active' : ''} onClick={() => { setView(key) }} aria-current={(view === key || (key === 'stock' && view === 'costs')) ? 'page' : undefined}><span className="nav-icon">{icon}</span>{label}{key === 'sell' && itemCount > 0 && <b className="basket-badge">{itemCount}</b>}</button>)}</nav>
+    <nav className="bottom-nav" aria-label="Main navigation">{([['today', '⌂', 'Today'], ['sell', '+', 'Sell'], ['stock', '▥', 'Stock'], ['reports', '▤', 'Reports'], ['profile', '○', 'Profile']] as const).map(([key, icon, label]) => <button disabled={voiceBusy || salePending || saleUncertain || countBlocking} key={key} className={(view === key || (key === 'stock' && (view === 'costs' || view === 'stock-count'))) ? 'active' : ''} onClick={() => { setView(key) }} aria-current={(view === key || (key === 'stock' && (view === 'costs' || view === 'stock-count'))) ? 'page' : undefined}><span className="nav-icon">{icon}</span>{label}{key === 'sell' && itemCount > 0 && <b className="basket-badge">{itemCount}</b>}</button>)}</nav>
   </div>
 }
 
