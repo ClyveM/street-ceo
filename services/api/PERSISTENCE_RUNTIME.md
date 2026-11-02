@@ -41,6 +41,14 @@ startup seed transaction when demo seeding is enabled. Selling prices, stock and
 historical sale COGS snapshots are never rewritten; an old unknown COGS stays
 unknown. Only future sales use a newly established illustrative opening cost.
 
+The six starter products also have bundled PNG illustrations with editable SVG
+sources in `demo_product_images/`. Demo startup fills only missing images for
+the exact default shop/product identities, preserving any existing uploaded
+image metadata. SQLite commits their metadata and bytes inside the existing
+startup seed transaction; repeat startup does not duplicate images. No network,
+provider key or rendering tool is required, and stock, prices and receipts are
+unchanged. Non-demo and renamed catalogue identities are left alone.
+
 Voice and Muse API traces use a separate SQLite file, default
 `data/muse-traces.sqlite3`, configurable through `STREET_CEO_TRACE_DATABASE`.
 Trace payloads are bounded and sanitized; raw audio and credentials are excluded.

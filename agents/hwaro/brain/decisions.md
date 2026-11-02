@@ -62,3 +62,5 @@ No decisions recorded yet. Initialized 2026-10-29; no work performed.
 
 ## 2026-11-02 — STARTER-COGS-001 provenance and scope
 Use canonical JSON six-product fixture and demo_seed cost audits for illustrative opening assumptions approvedRuzivo. Do not add mutable Productsourceflag that couldremainwrong afterrealpurchases/corrections. Exactdefaultidentity+Noneonly guard, preserveknownzero/anycostsource andallhistoricalreceipts; onlyfutureCOGS changes. Parent owns coordinatedactivation; no liveDBmutation bythisagent.
+
+2026-11-03 SEED-IMAGES-001: committed original SVG illustrations plus pre-rendered PNGs, no runtime renderer/network dependency. Any existing image metadata takes priority over demo illustration; strict canonical shop+product identity avoids inferring photos for user-customised catalogues.

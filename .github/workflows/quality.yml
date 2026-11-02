@@ -29,7 +29,7 @@ jobs:
         run: python infra/check_source_manifest.py
       - name: Run service and connected SQLite acceptance tests
         if: ${{ hashFiles('services/api/test_*.py') != '' }}
-        run: python -m pytest services tests/sqlite_demo_acceptance.py tests/starter_cogs_acceptance.py tests/muse_outage_acceptance.py tests/fast_counter_acceptance.py tests/quantity_reply_acceptance.py tests/reports_close_acceptance.py
+        run: python -m pytest services tests/sqlite_demo_acceptance.py tests/starter_cogs_acceptance.py tests/muse_outage_acceptance.py tests/fast_counter_acceptance.py tests/quantity_reply_acceptance.py tests/reports_close_acceptance.py tests/test_seed_product_images.py
 
   shop-web:
     runs-on: ubuntu-latest

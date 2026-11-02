@@ -40,12 +40,16 @@ for the initial `python` commands. The helper creates `.venv`, installs Python
 requirements and uses the committed npm lockfile. Servers run in the foreground;
 Ctrl+C stops them. Startup preserves existing databases and configuration.
 
-The six starter products include illustrative prices, stock and unit costs for
-future COGS. State persists in `data/demo-mvp.sqlite3`; request/response traces
+The six starter products include illustrative prices, stock, unit costs for
+future COGS, and bundled product illustrations: cola, bread, sugar, milk, chips
+and soap. These images ship with the repository and need no image downloads or
+Muse key. State persists in `data/demo-mvp.sqlite3`; request/response traces
 are separate. Both stay local and ignored. See [starter costs](docs/starter-demo-costs.md).
 
 A fresh checkout automatically seeds these six products when the API first starts.
-Normal startup preserves existing shop data; it does not reset sales. An explicit
+Normal startup preserves existing shop data; it does not reset sales. Starter
+images fill missing images only for the matching demo products; uploaded product
+images are preserved. An explicit
 `STREET_CEO_SEED_DEMO=0` disables seeding. Allow roughly **5–15 minutes** for browser
 setup with the prerequisites already installed and working internet; this is an
 estimate and depends on download speed. Android builds require additional setup.

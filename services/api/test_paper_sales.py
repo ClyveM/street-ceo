@@ -167,10 +167,15 @@ def test_stored_product_photos_index_content_and_restart_scope(tmp_path,monkeypa
     app=setup(tmp_path,monkeypatch)
     product=next(iter(app.state.store.shops[UUID(SHOP)].products.values()))
     root=f'/api/v1/shops/{SHOP}'
+    seeded=call(app,'GET',root+'/product-images').json()
+    assert len(seeded)==6
+    assert {item['product_id'] for item in seeded}=={str(item.id) for item in app.state.store.shops[UUID(SHOP)].products.values()}
     uploaded=request(app,'POST',f'{root}/products/{product.id}/image',files={'image':('product.png',b'first-image','image/png')})
     assert uploaded.status_code==201,uploaded.text
     latest=request(app,'POST',f'{root}/products/{product.id}/image',files={'image':('product2.png',b'latest-image','image/png')}).json()
-    assert call(app,'GET',root+'/product-images').json()==[latest]
+    images=call(app,'GET',root+'/product-images').json()
+    expected=sorted([item for item in seeded if item['product_id']!=str(product.id)]+[latest],key=lambda item:item['product_id'])
+    assert images==expected
     content=request(app,'GET',f'{root}/products/{product.id}/image/content')
     assert content.content==b'latest-image' and content.headers['content-type']=='image/png'
     assert content.headers['etag']=='"'+latest['sha256']+'"'
@@ -181,7 +186,7 @@ def test_stored_product_photos_index_content_and_restart_scope(tmp_path,monkeypa
     assert call(app,'GET',f'/api/v1/shops/{other}/products/{product.id}/image/content',shop_header=other).status_code==404
     app.state.store.close()
     app=build(tmp_path/'shop.sqlite3')
-    assert call(app,'GET',root+'/product-images').json()==[latest]
+    assert call(app,'GET',root+'/product-images').json()==expected
     assert request(app,'GET',f'{root}/products/{product.id}/image/content').content==b'latest-image'
     app.state.store.close()
 

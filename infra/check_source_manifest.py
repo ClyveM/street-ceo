@@ -11,6 +11,12 @@ REQUIRED = {
     "apps/android/android/gradle/wrapper/gradle-wrapper.jar",
     "apps/android/android/gradle/wrapper/gradle-wrapper.properties",
     "apps/web/public/street-ceo-logo.png", "infra/dev.py",
+    "services/api/demo_product_images/coke-300.png",
+    "services/api/demo_product_images/bread-700.png",
+    "services/api/demo_product_images/sugar-1kg.png",
+    "services/api/demo_product_images/milk-500.png",
+    "services/api/demo_product_images/chips-100.png",
+    "services/api/demo_product_images/soap-175.png",
 }
 
 

@@ -381,6 +381,7 @@ class InMemoryStore:
         shop_id = UUID(starter["shop"]["id"])
         if shop_id in self.shops:
             self._backfill_demo_costs(self.shops[shop_id], starter)
+            self._backfill_demo_images(self.shops[shop_id], starter)
             return shop_id
         shop = Shop.model_validate(starter["shop"])
         record = _ShopRecord(shop=shop)
@@ -389,7 +390,33 @@ class InMemoryStore:
             record.products[product.id] = product
         self.shops[shop_id] = record
         self._backfill_demo_costs(record, starter)
+        self._backfill_demo_images(record, starter)
         return shop_id
+
+    @staticmethod
+    def _backfill_demo_images(record: _ShopRecord, starter: dict) -> None:
+        """Bundle illustrations for exact starter identities, without replacing uploads."""
+        from pathlib import Path
+
+        if record.shop.model_dump(mode="json") != starter["shop"]:
+            return
+        illustrated_products = {image.product_id for image in record.product_images.values()}
+        for item in starter["products"]:
+            product = record.products.get(UUID(item["id"]))
+            if (product is None or product.shop_id != record.shop.id
+                    or product.sku != item["sku"] or product.name != item["name"]
+                    or product.id in illustrated_products):
+                continue
+            filename = f"{item['sku'].lower()}.png"
+            contents = (Path(__file__).with_name("demo_product_images") / filename).read_bytes()
+            image_id = uuid4()
+            record.product_images[image_id] = ProductImageMetadata(
+                id=image_id, shop_id=record.shop.id, product_id=product.id,
+                filename=filename, content_type="image/png", size_bytes=len(contents),
+                sha256=hashlib.sha256(contents).hexdigest(), storage_backend="memory",
+                storage_ref=f"memory://product-images/{image_id}", uploaded_at=utc_now(),
+            )
+            record.product_image_bytes[image_id] = contents
 
     @staticmethod
     def _backfill_demo_costs(record: _ShopRecord, starter: dict) -> None:
