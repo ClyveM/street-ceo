@@ -44,6 +44,12 @@ The six starter products include illustrative prices, stock and unit costs for
 future COGS. State persists in `data/demo-mvp.sqlite3`; request/response traces
 are separate. Both stay local and ignored. See [starter costs](docs/starter-demo-costs.md).
 
+A fresh checkout automatically seeds these six products when the API first starts.
+Normal startup preserves existing shop data; it does not reset sales. An explicit
+`STREET_CEO_SEED_DEMO=0` disables seeding. Allow roughly **5–15 minutes** for browser
+setup with the prerequisites already installed and working internet; this is an
+estimate and depends on download speed. Android builds require additional setup.
+
 ## Enable cloud Muse
 
 Copy `.env.example` to a local `.env`, then set `LLAMA_API_KEY` and `LLAMA_MODEL`
