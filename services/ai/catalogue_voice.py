@@ -24,9 +24,10 @@ except ImportError:  # unittest discovery from services/ai
 
 _DEFAULT = object()
 # Common conservative matches need no provider wait. Remaining uncertain input
-# gets one small bounded Muse attempt, never a long critical selling-path wait.
-DEFAULT_CATALOGUE_TIMEOUT_SECONDS = 6.0
-MAX_CATALOGUE_TIMEOUT_SECONDS = 6.0
+# gets one bounded Muse attempt. Owner accepts a longer demo wait so a normal
+# provider response is not discarded by the former six-second deadline.
+DEFAULT_CATALOGUE_TIMEOUT_SECONDS = 24.0
+MAX_CATALOGUE_TIMEOUT_SECONDS = 24.0
 _EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="catalogue-voice")
 _CAPACITY = BoundedSemaphore(2)
 _PROVIDER_CACHE_LOCK = Lock()
@@ -61,7 +62,7 @@ class CatalogueVoiceResolution:
 def _cached_provider(settings: MuseSettings) -> Any:
     # Reuse HTTP/TLS connections across catalogue requests. Settings (including
     # key/model) are only retained in process memory, never traced or returned.
-    return build_muse_ai(settings).provider
+    return build_muse_ai(settings, http_timeout_seconds=25.0).provider
 
 
 def _get_provider() -> Any:
@@ -227,7 +228,7 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
     if not isinstance(transcript, str) or not transcript.strip() or len(transcript) > 1000:
         return CatalogueVoiceResolution("needs_clarification", reason="invalid_transcript")
     if not 0 < timeout_seconds <= MAX_CATALOGUE_TIMEOUT_SECONDS:
-        raise ValueError("timeout_seconds must be in (0, 6]")
+        raise ValueError("timeout_seconds must be in (0, 24]")
     try:
         catalogue = _catalogue(products)
     except (ValueError, TypeError):

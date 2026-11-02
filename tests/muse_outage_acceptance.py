@@ -70,10 +70,10 @@ def test_default_and_max_deadlines_fit_frontend_budget(monkeypatch):
     monkeypatch.setattr(voice, "_EXECUTOR", Inline())
     monkeypatch.setattr(voice, "_CAPACITY", BoundedSemaphore(2))
     assert resolve_provider("1 coke", CATALOGUE, provider=Provider()).status == "proposed"
-    assert observed == [6.0]
-    assert resolve_provider("1 coke", CATALOGUE, provider=Provider(), timeout_seconds=6).status == "proposed"
+    assert observed == [24.0]
+    assert resolve_provider("1 coke", CATALOGUE, provider=Provider(), timeout_seconds=24).status == "proposed"
     with pytest.raises(ValueError):
-        resolve_provider("1 coke", CATALOGUE, provider=Provider(), timeout_seconds=6.01)
+        resolve_provider("1 coke", CATALOGUE, provider=Provider(), timeout_seconds=24.01)
 
 
 def test_provider_exception_is_one_attempt_and_does_not_leak_details():

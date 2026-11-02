@@ -42,6 +42,11 @@ is a proposal, not proof that a sale was saved. A late provider response after a
 timeout must not be presented as an accepted basket. Local commands explicitly
 identify that Muse was not called. Unknown and ambiguous inputs remain visible.
 
+For the Owner-approved longer-wait demo, catalogue interpretation can wait up to
+24 seconds for Muse (catalogue HTTP budget 25 seconds; voice client 30 seconds).
+The terminal shows the actual provider and API durations. Waiting longer gives
+a slow response time to arrive; it does not guarantee a catalogue match.
+
 Payloads reuse the investigation sanitizer: credentials, binary data and basic
 personal information are redacted, output is bounded and terminal control
 characters must not execute. The display shows what speech recognition supplied;

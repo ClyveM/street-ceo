@@ -114,3 +114,9 @@ Confirmed8s resolver deadline discarded actual19.506s provider completion; not p
 
 ## 2026-11-02 — FAST-VOICE-001
 Root-approved conservative exact-alias+boundedASRtail immediate proposals (mandatoryYes/source local_catalogue_proposal/providerfalse), immediate exactmissingqty question, remaining realMuse6smax/no retry, same2capacity. Providerpool reused/compactprompt. Focused21/fullAI74passed; final and/plus no-partial guard focusedrerunPASS. RootQA/runtime activation pending. No live actions.
+
+## 2026-11-02 — DEMO-MUSE-WAIT-001
+- Owner explicitly accepts longer demo Muse wait, superseding FAST-VOICE six-second provider deadline. Scope services/ai catalogue_voice.py/muse.py/tests only plus own memory; no backend/frontend/native or live changes.
+- Catalogue resolver default/max now24s; its cached provider receives narrowly scoped HTTP25s override. build_muse_ai keeps general HTTP20s and StructuredAI20s defaults; catalogue calls provider directly under its24s outer deadline. Shared2worker/2inflight capacity, no retries, immediate local matching, item/quantity validation and required confirmation unchanged.
+- Read-only frontend verification apps/web/src/quickSale.ts interpretation request timeout30s, sufficient for resolver24s + normal overhead. No APK rebuild needed for server-only budget update. Transport timeout is not a guarantee of provider latency; slow/unknown results still clarify honestly.
+- Evidence: isolated escalated python -m pytest services/ai -q -p no:cacheprovider --basetemp .pytest-demo-muse-wait-ungwaru =>75passed1.27s. New builder test proves defaultHTTP20 vs catalogueHTTP25; updated resolver24/default boundary/max24.1 rejection and cachedpool override tests. Scoped diff--check PASS; stale6sassert search tests/servicesAI clean. No real provider invocation, API restart, live shop mutation or Git actions. Root/Chengetai own independentgate/activation.

@@ -1,5 +1,15 @@
 # Fast counter acceptance — 2026-11-02
 
+## Later Owner-approved demo override — 2026-11-02
+
+The Owner accepts a longer wait for imperfect product phrases for this demo.
+Catalogue Muse resolution now has a 24-second application budget, with a
+25-second catalogue HTTP timeout and the existing 30-second voice client timeout.
+This replaces the six-second target below. Local matches stay immediate, no
+automatic retries are added, and uncertain results still require confirmation.
+Provider speed and successful product interpretation are not guaranteed by a
+longer timeout. The earlier performance target remains historical context.
+
 Owner: 24 seconds is too long during selling. Preserve the entire hands-free
 catalogue → confirmation → Cash/Bank/amount → durable receipt → next Apo cycle,
 with typing available. Exact catalogue interpretation already has a parser.

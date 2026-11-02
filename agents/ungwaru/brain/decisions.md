@@ -49,3 +49,5 @@ Use catalogue outer deadline24s/max25 against provider20s read/frontend30s budge
 
 ## 2026-11-02 — FAST-VOICE-001 supersedes outage budget
 Owner rejects24s criticalsale wait. Root approved local exactuniquealias+boundedobservedASRtail proposal before realMuse; all items/qty known and explicitYes required, source honest. One-edit deferred. RemainingMuse deadline6smax; keep2capacity/no retry. Cached provider pools reduce TLS setup overhead without model-speed guarantee.
+
+2026-11-02 DEMO-MUSE-WAIT-001: Owner explicitly reaccepts longer wait for demo. Catalogue outer24s/transport25s/frontend30s; other Muse budgets20s unchanged. Supersedes FAST-VOICE6s budget only; local paths and safeguards retained.

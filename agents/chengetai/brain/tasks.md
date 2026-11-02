@@ -178,3 +178,9 @@ After Hwaro TERMINAL-MUSE-001 handoff, independently review and test console tra
 
 ### TERMINAL-MUSE-QA-001 completed — PASS
 37 final affected tests passed7.72s; 5 independent acceptance cases, oversized honest-display finding fixed/retested. See own handoff. Runtime activation root; no active QA processes.
+
+## Assigned by Mutungamiri — 2026-11-02 DEMO-MUSE-WAIT-QA-001
+Review Ungwaru waitbudget24s/catalogueHTTP25s vs existing frontend30s request. Supersedes6s acceptance byOwnerexplicitinstruction. Readonlyimplementation, own focused tests if needed. Verify no local slowdown/retries/financialbehavior changes, failure/timeouts still nonactionable, max2inflight; focusedAI+APIcatalogue+terminal tracing regressions, tempDB blankcredentials only. Wait for implementation handoff before tests. Activationprotocol and persistent QA handoff required. No cloud/liveAPI mutation/restart.
+
+### DEMO-MUSE-WAIT-QA-001 completed — PASS
+117 focused tests passed4.10s;24sresolver/25scatalogueHTTP vs30sfrontend, generalMuse20s and local/safety guards preserved. Handoff persisted; activation root, no activeQA processes.

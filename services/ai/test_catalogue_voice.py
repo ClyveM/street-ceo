@@ -92,7 +92,7 @@ class CatalogueVoiceTests(unittest.TestCase):
             build.return_value.provider = provider
             self.assertIs(module._get_provider(), provider)
             self.assertIs(module._get_provider(), provider)
-        build.assert_called_once_with(settings)
+        build.assert_called_once_with(settings, http_timeout_seconds=25.0)
 
     def test_bread_asr_noise_is_proposal_only_and_contains_catalogue_context(self):
         provider = Provider([proposal()])
@@ -193,7 +193,7 @@ class CatalogueVoiceTests(unittest.TestCase):
         self.assertEqual(timed_out.lines, ())
         time.sleep(0.11)  # let bounded worker finish before other test cases
 
-    def test_default_wait_budget_is_6_seconds_without_waiting_in_test(self):
+    def test_default_demo_wait_budget_is_24_seconds_without_waiting_in_test(self):
         budgets = []
         class CompletedFuture:
             def add_done_callback(self, callback):
@@ -204,12 +204,12 @@ class CatalogueVoiceTests(unittest.TestCase):
         module = resolve_catalogue_voice.__module__
         with patch(module + "._EXECUTOR.submit", return_value=CompletedFuture()) as submit:
             result = resolve_provider_voice("1 bread", CATALOGUE, provider=Provider([proposal()]))
-        self.assertEqual(budgets, [6.0])
+        self.assertEqual(budgets, [24.0])
         self.assertEqual(submit.call_count, 1)
         self.assertEqual(result.status, "proposed")
         self.assertTrue(result.requires_confirmation)
         with self.assertRaises(ValueError):
-            resolve_provider_voice("1 bread", CATALOGUE, provider=None, timeout_seconds=6.1)
+            resolve_provider_voice("1 bread", CATALOGUE, provider=None, timeout_seconds=24.1)
 
     def test_saturated_pool_returns_honest_busy_without_submitting_or_retrying(self):
         module = resolve_catalogue_voice.__module__

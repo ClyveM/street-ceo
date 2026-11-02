@@ -86,7 +86,7 @@ class MuseSettings:
         return cls(os.getenv("LLAMA_MODEL", "").strip(), os.getenv("LLAMA_API_KEY", "").strip() or None)
 
 
-def build_muse_ai(settings: MuseSettings | None = None) -> StructuredAI:
+def build_muse_ai(settings: MuseSettings | None = None, *, http_timeout_seconds: float = 20.0) -> StructuredAI:
     """Build the live provider boundary from server-only environment settings."""
 
     settings = settings or MuseSettings.from_env()
@@ -100,7 +100,7 @@ def build_muse_ai(settings: MuseSettings | None = None) -> StructuredAI:
         # bounded, but allow the verified hosted endpoint enough time to
         # return a draft instead of converting normal provider latency into a
         # misleading unavailable result.
-        client = httpx.Client(verify=truststore.SSLContext(), timeout=20.0)
+        client = httpx.Client(verify=truststore.SSLContext(), timeout=http_timeout_seconds)
     except ImportError:  # pragma: no cover
         return StructuredAI(None)
     return StructuredAI(MetaMuseProvider(settings.api_key, settings.model, client), timeout_seconds=20.0)

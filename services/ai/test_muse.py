@@ -5,10 +5,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 try:
-    from services.ai.muse import MetaMuseProvider, MuseSettings, ask_muse
+    from services.ai.muse import MetaMuseProvider, MuseSettings, ask_muse, build_muse_ai
     from services.ai.boundary import Evidence, ProviderRequest, StructuredAI
 except ModuleNotFoundError:  # unittest discovery from services/ai
-    from muse import MetaMuseProvider, MuseSettings, ask_muse
+    from muse import MetaMuseProvider, MuseSettings, ask_muse, build_muse_ai
     from boundary import Evidence, ProviderRequest, StructuredAI
 
 
@@ -69,6 +69,19 @@ class MuseTests(unittest.TestCase):
 
     def test_settings_without_credentials_are_unconfigured(self):
         self.assertEqual(MuseSettings("", None), MuseSettings("", None))
+
+    def test_catalogue_http_override_does_not_change_other_muse_budgets(self):
+        settings = MuseSettings("synthetic-test-model", "private-test-key")
+        with patch("httpx.Client") as client, patch("truststore.SSLContext", return_value="verified-context"):
+            default = build_muse_ai(settings)
+            client.assert_called_once_with(verify="verified-context", timeout=20.0)
+            self.assertEqual(default.timeout_seconds, 20.0)
+            client.reset_mock()
+            catalogue = build_muse_ai(settings, http_timeout_seconds=25.0)
+            client.assert_called_once_with(verify="verified-context", timeout=25.0)
+            # Catalogue calls provider directly under its own 24s resolver;
+            # the shared business-insight boundary retains its default budget.
+            self.assertEqual(catalogue.timeout_seconds, 20.0)
 
     def test_meta_provider_includes_trusted_context_for_social_catalogue_facts(self):
         response = {"choices": [{"message": {"content": json.dumps({"ok": True})}}]}
