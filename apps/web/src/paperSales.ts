@@ -44,6 +44,18 @@ export function createPaperClient(getConfig:()=>Config,fetcher:typeof fetch=fetc
  }
 }
 export function paperPendingKey(config:Config):string {const url=new URL(config.baseUrl);require(['http:','https:'].includes(url.protocol)&&!url.username&&!url.password);return `street-ceo-paper-confirm-v1:${encodeURIComponent(url.href)}:${config.shopId}`}
+
+export function suggestedPaperAmount(quantity: string, unit: string, cataloguePrice?: number): string {
+ if (!/^\d+$/.test(quantity) || !Number.isSafeInteger(Number(quantity)) || Number(quantity) <= 0) return ''
+ try {
+  const unitCents = unit.trim() ? paperMoney(unit) : cataloguePrice
+  if (unitCents === undefined || !Number.isSafeInteger(unitCents) || unitCents < 0) return ''
+  const total = Number(quantity) * unitCents
+  return Number.isSafeInteger(total) ? paperAmount(total) : ''
+ } catch {
+  return ''
+ }
+}
 export function parsePaperPending(raw:string|null):PaperPending|null {if(raw===null)return null;require(raw.length<3000);const value:unknown=JSON.parse(raw);require(object(value)&&text(value.id)&&text(value.key)&&object(value.body)&&text(value.body.reviewed_version)&&value.body.confirmed===true&&value.body.only_unrecorded===true&&value.body.prices_reviewed===true&&value.body.stock_not_reflected===true);return value as unknown as PaperPending}
 
 export function retirePaperPending(storage:Pick<Storage,'setItem'|'getItem'|'removeItem'>,config:Config,attempt:PaperPending):void {const key=paperPendingKey(config),retiredKey=`${key}:retired:${attempt.id}`,raw=JSON.stringify(attempt);storage.setItem(retiredKey,raw);require(storage.getItem(retiredKey)===raw,'Could not safely retire the old confirmation reference.');storage.removeItem(key);require(storage.getItem(key)===null,'Could not clear the old confirmation reference.')}

@@ -1245,3 +1245,10 @@ Next: parent coordinate safe backend restart and repeat LAN OPTIONS origin http:
 - Added demo_product_images/{coke-300,bread-700,sugar-1kg,milk-500,chips-100,soap-175}.{svg,png}, original code-native illustrations with consistent pastel backgrounds and recognizable packaging shapes, generic cola label. PNG 512x512, six total 104101 bytes; editable SVGs and provenance/runtime README included. Runtime reads committed PNG only, no external downloads/keys/renderer needed. PERSISTENCE_RUNTIME.md documents missing-only behavior.
 - Verification: isolated STOREmemory SEED0 LOCAL_TEAM0 blankLLAMA test_starter_costs.py + test_sqlite_store.py + test_social_data.py PASS20 in3.48s (host temporary databases, no real provider). git diff --check services/api PASS (line-ending warning only). First sandbox renderer/test hung and were cancelled (75013/90605 exit1); local-only escalated Chromium rendering completed3.03s, final pytest4.53swall. No owned active sessions remain.
 - Handoff: Chengetai notified all six PNGs ready; independent tests/manifest/CI inclusion owned QA. Root owns visual review, README, Git publication and optional live activation. No live DB modifications, API restart, Git writes, cloud calls or APK rebuild performed. Existing APK can fetch these images after backend activation because product image APIs are unchanged. Physical phone display not observed by Hwaro.
+
+## 2026-11-03 — W6-LOAN-FOLLOWUP-001
+
+- Routed plain loan conversations through deterministic API intake before Meta can replace the follow-up. Combined forecast/business-plan and affordability paths retain model access.
+- `services/api/loan_planning.py`, `services/api/app.py`, `services/api/test_muse.py` changed. Shona intake asks one missing question and accepts `mwedzi 12`, `10% pagore`, and `hapana muripo`.
+- `python -m pytest services/api/test_muse.py -q -k shona` — 1 passed. Tested `ndikuda laon` → `$500 yekutenga stock` through USD 43.96/month at stated terms.
+- Mutungamiri owns runtime reload and browser smoke. Final estimate uses existing English explanation. No lender application occurs.

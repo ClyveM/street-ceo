@@ -25,7 +25,11 @@ Thread(target=server.serve_forever,daemon=True).start()
 
 def route(r):
     req=r.request;url=urlparse(req.url);path=url.path
-    if url.hostname=='127.0.0.1' and url.port==server.server_port:r.continue_();return
+    if url.hostname=='127.0.0.1' and url.port==server.server_port:
+        dist=(root/'apps/web/dist').resolve();asset=(dist/(url.path.lstrip('/') or 'index.html')).resolve()
+        if asset.is_relative_to(dist) and asset.is_file():r.fulfill(path=str(asset))
+        else:r.fulfill(status=404,body='Missing isolated fixture asset')
+        return
     if url.hostname!='shop.invalid':r.abort('blockedbyclient');return
     def reply(value,status=200):r.fulfill(status=status,content_type='application/json',body=json.dumps(value),headers={'Access-Control-Allow-Origin':'*'})
     if req.method=='OPTIONS':r.fulfill(status=204,headers={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*','Access-Control-Allow-Methods':'*'});return
@@ -68,14 +72,14 @@ def route(r):
 try:
  with sync_playwright() as p:
     browser=p.chromium.launch(channel='msedge',headless=True,timeout=20000,args=['--disable-gpu'])
-    context=browser.new_context(viewport={'width':390,'height':844})
+    context=browser.new_context(viewport={'width':390,'height':844},service_workers='block')
     context.route('**/*',route)
     context.add_init_script("""localStorage.setItem('street-ceo-api-config',JSON.stringify({baseUrl:'http://shop.invalid',shopId:'00000000-0000-0000-0000-000000000001'}));localStorage.setItem('street-ceo-hands-free-v1','off');const plugin={async addListener(){return{async remove(){}}},async start(){},async stop(){},async speak(){},async stopSpeaking(){}};window.Capacitor={getPlatform:()=> 'android',registerPlugin:()=>plugin};""")
     page=context.new_page();page.set_default_timeout(10000);page.set_default_navigation_timeout(30000)
     page.on('pageerror',lambda error:print('Mock-page JavaScript error:',str(error),flush=True))
     page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='domcontentloaded')
     page.locator('nav[aria-label="Main navigation"] button').filter(has_text='Stock').click()
-    page.get_by_role('button',name='Open stock count').click()
+    page.get_by_role('button',name='Stock count →',exact=True).click()
     count=page.locator('.stock-count-page');history=count.locator('.stock-count-history')
     expect(count.get_by_role('heading',name='Stock count',exact=True)).to_be_visible()
     expect(history).to_contain_text('No saved stock counts yet')

@@ -7,6 +7,7 @@ import './voice.css'
 import './pwa.css'
 import './pwa-help.css'
 import './business-navigation.css'
+import './emerald-ux.css'
 
 // Street CEO installs through the APK; keep browser install promotion out of the UI.
 window.addEventListener('beforeinstallprompt', (event) => event.preventDefault())

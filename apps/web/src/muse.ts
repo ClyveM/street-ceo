@@ -84,7 +84,7 @@ export async function requestMuse(
   const shopId = config.shopId.trim()
   const trimmed = question.trim()
   if (!trimmed || trimmed.length > 1000) throw new Error('Enter a question of 1–1,000 characters.')
-  const timeout = AbortSignal.timeout(20000)
+  const timeout = AbortSignal.timeout(65000)
   try {
     const response = await fetcher(`${config.baseUrl.trim().replace(/\/$/, '')}/api/v1/shops/${encodeURIComponent(shopId)}/muse`, {
       method: 'POST',

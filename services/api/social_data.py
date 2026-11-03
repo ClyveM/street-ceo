@@ -79,6 +79,7 @@ class ProductImageMetadata(SocialDataModel):
 
 
 class SocialImageGenerationRequest(SocialDataModel):
+    shop_photo_data: str | None = Field(default=None, max_length=7_000_000)
     product_ids: list[UUID] = Field(min_length=1, max_length=12)
     source_image_id: UUID | None = None
     brief: str = Field(min_length=1, max_length=1000)

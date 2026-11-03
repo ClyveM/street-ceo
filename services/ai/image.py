@@ -146,10 +146,10 @@ def build_muse_image_ai(settings: MuseImageSettings | None = None) -> Structured
     try:
         import httpx
         import truststore
-        client = httpx.Client(verify=truststore.SSLContext(), timeout=20.0)
+        client = httpx.Client(verify=truststore.SSLContext(), timeout=httpx.Timeout(75.0, connect=10.0))
     except ImportError:  # pragma: no cover
         return StructuredAI(None)
-    return StructuredAI(None, timeout_seconds=20.0, image_provider=MetaMuseImageProvider(settings.api_key, settings.model, client))
+    return StructuredAI(None, timeout_seconds=75.0, image_provider=MetaMuseImageProvider(settings.api_key, settings.model, client))
 
 
 def generate_social_image(request: SocialImageRequest, *, ai: StructuredAI | None = None):

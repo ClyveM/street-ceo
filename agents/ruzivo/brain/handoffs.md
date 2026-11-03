@@ -160,3 +160,10 @@ opening balances, daily close, warnings, assumptions, and production/tax questio
 - Counts/labels now separate receipts and sheets inToday, hero, daily/monthly tables, Customerreceiptsempty+summarylink andsavedpaperhistory. Reportparser combinesordinary+sheetmissingcost; exactfinancialCSV/PDF units/sourcecontext/unknowns preserved. Source financialscope approved, not arbitrary directAPI security guarantee.
 - Attributed evidence: Hwaro34early, root162broad+11independentpaper incldiskrollback/restart/exactretry; Runako171frontend; paperDOM5.03s and integratedretainedbasket/manualguard/photo4.93s;5exportunit+actual8page100productPDFvisual. Rootallservicesisolatedfinalsuite stillrunning; notclaimedcomplete. No own application/live/cloud/image/posting runs. PriorisolatedpolicyDecimal checks only.
 - Changed financepolicy finalreview andowncurrent-state/decisions/tasks/handoffs appendonly. Rootmayactivate/package afterQAcompletion. Finalhandoffpersisted; noactiveRuzivoprocesses. Re-reviewfinancialsemanticschanges.
+
+## 2026-11-03 — MUSE-FINANCE-AUDIT
+
+- Reviewed Ask Muse's isolated loan and profitability paths. Financial sign-off blocked for lending estimates until rate and duration are parsed from explicit loan terms.
+- Direct Python reproduction: monthly budget USD 30, last 3 months of profit, set aside 10%, no fees incorrectly returns USD 88.52 principal at an assumed 10% annual rate and 3-month term. USD 10,000, six-month sales forecast, 10% of profit and no fees incorrectly returns USD 1,715.61 monthly. A quoted 5% monthly rate is interpreted as annual. A comma-formatted USD 10,000 is rejected.
+- Code review: fallback profit labels generic month wording as this month, but can include all sales. It subtracts entire overlapping expenses, and missing expense coverage is represented as zero confirmed expenses. Keep gross profit, profit after recorded expenses and actual cash available distinct.
+- No app code edits or live requests. Next: backend guard against ambiguous inputs, share exact month resolver across finance paths, add isolated tests for three-month context and expense coverage.

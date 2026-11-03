@@ -1,9 +1,18 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { suggestedPaperAmount } from '../src/paperSales.ts'
 import {paperMoney,validatePaperReview,parsePaperRecord,createPaperClient,PaperRequestError,parsePaperPending} from '../src/paperSales.ts'
 const review={business_date:'2026-11-02',actor:'Tester',source_ref:'Notebook 1',notes:'',lines:[{product_id:'bread',quantity:3,unit_price_cents:null,line_total_cents:100}],cash_cents:100,bank_cents:0}
 const record={...review,id:'batch',shop_id:'shop',record_type:'daily_sales_batch',status:'reviewed',created_at:'2026-11-02T12:00:00Z',confirmed_at:null,filename:'sheet.png',content_type:'image/png',source_sha256:'a'.repeat(64),ocr_lines:[],warnings:[],extraction_status:'unavailable',lines:[{...review.lines[0],product_name:'Bread',sku:'BREAD'}],total_cents:100,reviewed_version:'version1',stock_baseline:{bread:10},existing_sales_total_cents:0,existing_transaction_count:0,existing_daily_summary_count:0}
 const body={reviewed_version:'version1',confirmed:true,only_unrecorded:true,prices_reviewed:true,stock_not_reflected:true}
+test('paper amount suggests catalogue price only when a written unit price is absent', () => {
+  assert.equal(suggestedPaperAmount('3', '', 180), '5.40')
+  assert.equal(suggestedPaperAmount('3', '1.25', 180), '3.75')
+  assert.equal(suggestedPaperAmount('3', '0', 180), '0.00')
+  assert.equal(suggestedPaperAmount('3', '1.001', 180), '')
+  assert.equal(suggestedPaperAmount('3', '', undefined), '')
+  assert.equal(suggestedPaperAmount('2', '', Number.MAX_SAFE_INTEGER), '')
+})
 test('exact daily line total supports mixed prices without invented unit cost',()=>{assert.equal(validatePaperReview(review),review);assert.equal(paperMoney('0'),0);assert.throws(()=>paperMoney(''));assert.throws(()=>paperMoney('1.001'));assert.throws(()=>validatePaperReview({...review,lines:[{...review.lines[0],unit_price_cents:33}]}));assert.throws(()=>validatePaperReview({...review,bank_cents:1}));assert.throws(()=>validatePaperReview({...review,lines:[...review.lines,...review.lines]}))})
 test('saved summary validates scope and total while nullable OCR remains unknown',()=>{assert.equal(parsePaperRecord(record,'shop').total_cents,100);assert.throws(()=>parsePaperRecord(record,'other'));assert.throws(()=>parsePaperRecord({...record,total_cents:99},'shop'));const draft={...record,status:'draft',reviewed_version:null,lines:[],total_cents:null,cash_cents:null,bank_cents:null,ocr_lines:[{raw_label:'unclear',product_id:null,quantity:null,unit_price_cents:null,line_total_cents:null}]};assert.equal(parsePaperRecord(draft,'shop').ocr_lines[0].quantity,null)})
 test('review comparison binds amounts and metadata without depending on key order',async()=>{const client=createPaperClient(()=>({baseUrl:'http://shop.test',shopId:'shop'}),async(url,init)=>{assert.equal(init.headers['X-Shop-ID'],'shop');return Response.json(record)});assert.equal((await client.review('batch',{...review,lines:[{line_total_cents:100,quantity:3,product_id:'bread',unit_price_cents:null}]})).id,'batch');await assert.rejects(()=>client.review('batch',{...review,actor:'Different'}),/differs/)})

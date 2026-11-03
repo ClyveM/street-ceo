@@ -58,3 +58,8 @@ Coca-Cola 300ml x1 locally, without a Muse/Llama call or sale commit.
 
 ## 2026-11-01 — DEMO-VOICE-TRACE-001
 Voice provider tracing complete in own scope. Chat and ASR HTTP calls now persist sanitized correlated request/response events through services.ai.tracing; ASR stores size/media metadata, not audio. Focused normal-root voice pytest 29 passed; compile and scoped diff PASS. No live provider/phone check. Handoff persisted; parent owns API correlation, runtime activation and APK acceptance.
+
+## 2026-11-03 - VOICE-LEARN-001
+- Scoped web voice changes: HandsFreeVoice.tsx offers five reviewed samples for Apo and Napo. Partial drafts are in memory and cancellation does not persist them. wakePhrase.ts reads optional Apo aliases alongside previous device preferences and validates collisions. Saved wake aliases begin a phrase and preserve matching ordinary words within the product list.
+- Full one-utterance framing and reviewed Napo recognition such as nato verified in apps/web/tests/shortVoiceTrain.test.mjs. 173 frontend tests passed and tsc -b passed. Scoped diff check clean.
+- Product correction learning deferred because the existing proposal lines can merge or reorder heard segments and do not expose a reliable heard-to-product association. Unknown endings still require a known/reviewed finish phrase. No backend, live service, APK or Git mutation. Parent owns integration and physical device acceptance.

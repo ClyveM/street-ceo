@@ -25,7 +25,9 @@ Thread(target=server.serve_forever, daemon=True).start()
 def route(r):
     url = urlparse(r.request.url)
     if url.hostname == '127.0.0.1' and url.port == server.server_port:
-        r.continue_()
+        dist=(root/'apps/web/dist').resolve();asset=(dist/(url.path.lstrip('/') or 'index.html')).resolve()
+        if asset.is_relative_to(dist) and asset.is_file():r.fulfill(path=str(asset))
+        else:r.fulfill(status=404,body='Missing isolated fixture asset')
         return
     if url.hostname != 'shop.invalid':
         r.abort('blockedbyclient')
@@ -43,7 +45,7 @@ def route(r):
 try:
     with sync_playwright() as p:
         browser = p.chromium.launch(channel='msedge', headless=True, timeout=20000, args=['--disable-gpu'])
-        context = browser.new_context(viewport={'width': 390, 'height': 844})
+        context = browser.new_context(viewport={'width': 390, 'height': 844},service_workers='block')
         context.route('**/*', route)
         context.add_init_script("""
         localStorage.setItem('street-ceo-api-config',JSON.stringify({baseUrl:'http://shop.invalid',shopId:'00000000-0000-0000-0000-000000000001'}));

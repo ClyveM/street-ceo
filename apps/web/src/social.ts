@@ -1,8 +1,8 @@
 export type ShopImageMetadata = { filename: string; content_type: string; size_bytes: number }
 export type SocialBriefRequest = { product_ids: string[]; shop_image?: ShopImageMetadata | null }
 export type SocialBrief = { shop_id: string; catalogue_source: 'repository'; created_at: string; shop_image?: ShopImageMetadata | null; products: { product_id: string; sku: string; name: string; unit_price_cents: number; stock_qty: number }[] }
-export type SocialImageRequest = { product_ids: string[]; brief: string; aspect_ratio: '1:1' | '4:5' | '9:16' | '16:9'; source_image_id?: string }
-export type SocialImageResult = Omit<SocialImageRequest, 'source_image_id'> & { id: string; shop_id: string; source_image_id?: string | null; status: 'draft' | 'provider_not_configured' | 'unavailable'; provider: string; model: string | null; image_refs: string[]; warnings: string[]; draft_only: true; output_url: string | null; created_at: string }
+export type SocialImageRequest = { product_ids: string[]; brief: string; aspect_ratio: '1:1' | '4:5' | '9:16' | '16:9'; source_image_id?: string; shop_photo_data?: string }
+export type SocialImageResult = Omit<SocialImageRequest, 'source_image_id' | 'shop_photo_data'> & { id: string; shop_id: string; source_image_id?: string | null; status: 'draft' | 'provider_not_configured' | 'unavailable'; provider: string; model: string | null; image_refs: string[]; warnings: string[]; draft_only: true; output_url: string | null; created_at: string }
 export type SocialDraftResult = { id: string; shop_id: string; title: string; caption: string; voiceover_script: string; shot_list: string[]; selected_product_ids: string[]; claims: { product_id: string; claim: string; source_field: string }[]; status: 'draft' | 'unavailable'; source: 'provider' | 'fallback'; provider: string; model: string | null; warnings: string[]; draft_only: true; created_at: string }
 const stringList = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === 'string')
 export function previewImageRef(value: string | null): string | null {
@@ -29,7 +29,7 @@ function selection(ids: string[]) {
 async function post(config: { baseUrl: string; shopId: string }, suffix: string, payload: unknown, signal?: AbortSignal, fetcher: typeof fetch = fetch): Promise<unknown> {
   if (!config.baseUrl || !config.shopId) throw new Error('Connect your shop before preparing a social update.')
   try {
-    const timeout = AbortSignal.timeout(suffix === 'image-generation' ? 45000 : 20000)
+    const timeout = AbortSignal.timeout(suffix === 'image-generation' ? 90000 : suffix === 'draft' ? 80000 : 10000)
     const response = await fetcher(`${config.baseUrl.replace(/\/$/, '')}/api/v1/shops/${encodeURIComponent(config.shopId)}/social/${suffix}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-Shop-ID': config.shopId }, body: JSON.stringify(payload), signal: signal ? AbortSignal.any([signal, timeout]) : timeout,
     })
@@ -37,7 +37,8 @@ async function post(config: { baseUrl: string; shopId: string }, suffix: string,
     return await response.json()
   } catch (error) {
     if (signal?.aborted) throw error
-    if (error instanceof TypeError || (error instanceof Error && error.name === 'TimeoutError')) throw new Error('Could not reach the social service. Check your connection and try again.')
+    if (error instanceof Error && error.name === 'TimeoutError') throw new Error('The draft request took too long. Your selections are kept. Try again.')
+    if (error instanceof TypeError) throw new Error('Could not reach the social service. Check your connection and try again.')
     if (error instanceof SyntaxError) throw new Error('The social service returned an unreadable response.')
     throw error
   }

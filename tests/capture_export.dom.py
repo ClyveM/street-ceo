@@ -1,5 +1,8 @@
 """Built report UI/filter/viewport checks with strict isolated API fixtures."""
 import calendar
+import base64
+from io import BytesIO
+from zipfile import ZipFile
 import functools
 import json
 from datetime import date, timedelta
@@ -100,17 +103,25 @@ try:
         context.route('**/*',route)
         context.on('requestfailed',lambda r:print('FAILED',r.url,r.failure,flush=True))
         context.on('page',lambda q:q.on('console',lambda m:print('CONSOLE',m.text,flush=True)))
-        context.add_init_script("""localStorage.setItem('street-ceo-api-config',JSON.stringify({baseUrl:'http://shop.invalid',shopId:'00000000-0000-0000-0000-000000000001'}));localStorage.setItem('street-ceo-hands-free-v1','off');window.calls=[];const plugin={async addListener(){return{async remove(){}}},async start(){},async stop(){},async speak(){},async stopSpeaking(){},async shareCsv(o){window.calls.push({kind:'csv',...o})},async sharePdf(o){window.calls.push({kind:'pdf',...o})}};window.Capacitor={getPlatform:()=> 'android',registerPlugin:()=>plugin};window.print=()=>{};""")
+        context.add_init_script("""localStorage.setItem('street-ceo-api-config',JSON.stringify({baseUrl:'http://shop.invalid',shopId:'00000000-0000-0000-0000-000000000001'}));localStorage.setItem('street-ceo-hands-free-v1','off');window.calls=[];const plugin={async addListener(){return{async remove(){}}},async start(){},async stop(){},async speak(){},async stopSpeaking(){},async downloadCsv(o){window.calls.push({kind:'csv',...o});return {opened:true,savedToDownloads:true}},async downloadXlsx(o){window.calls.push({kind:'xlsx',...o});return {opened:true,savedToDownloads:true}},async downloadPdf(o){window.calls.push({kind:'pdf',...o});return {opened:false,savedToDownloads:true}}};window.Capacitor={getPlatform:()=> 'android',registerPlugin:()=>plugin};window.print=()=>{};""")
         page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
         page.goto(f'http://127.0.0.1:{server.server_port}',wait_until='load')
         page.locator('nav[aria-label="Main navigation"] button').filter(has_text='Reports').click()
         reports=page.locator('.reports-page');expect(reports).to_contain_text('USD 87.00')
         reports.get_by_role('button',name='CSV',exact=True).click()
-        expect(reports).to_contain_text('Share sheet opened')
+        expect(reports).to_contain_text('Report saved to Downloads and opened')
         reports.get_by_role('button',name='PDF · logo',exact=True).click()
         expect.poll if False else None
         page.wait_for_function('window.calls.length===2')
         calls=page.evaluate('window.calls');assert calls[0]['content'].startswith('\ufeff');assert 'USD' in calls[0]['content'];assert calls[1]['rows'] and calls[1]['title']=='Sales report'
+        assert calls[1]['summary'] and calls[1]['columns'] and calls[1]['products']
+        reports.get_by_role('button',name='Excel',exact=True).click()
+        page.wait_for_function('window.calls.length===3')
+        workbook=base64.b64decode(page.evaluate('window.calls[2].content'))
+        with ZipFile(BytesIO(workbook)) as archive:
+            assert 'xl/workbook.xml' in archive.namelist()
+            assert 'xl/styles.xml' in archive.namelist()
+        (out/'street-ceo-sales-review.xlsx').write_bytes(workbook)
         page.evaluate("window.Capacitor.getPlatform=()=> 'web';const originalOpen=window.open;window.open=(...a)=>{const w=originalOpen(...a);if(w)Object.defineProperty(w,'print',{value:()=>{},writable:false,configurable:false});return w}")
         with page.expect_popup() as info:reports.get_by_role('button',name='PDF · logo',exact=True).click()
         popup=info.value;popup.wait_for_function('Array.from(document.images).every(i=>i.complete)',timeout=10000);assert popup.locator('header img').evaluate('(i)=>i.naturalWidth')>0;popup.pdf(path=str(out/'street-ceo-sales-review.pdf'),format='A4',print_background=True);popup.close()

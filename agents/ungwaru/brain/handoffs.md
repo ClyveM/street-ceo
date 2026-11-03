@@ -740,3 +740,19 @@ reliability. No credentials or image payloads were recorded.
 - Tests: fullAI101passed1.27s isolatedfakeHTTP/syntheticimages. Tests include known+nullableunknownrows, no inventedfield fill, invalidIDs/quantities/bools/decimalprices/negative/mismatchedamounts/extra fields, imageformats/MIMEmismatch/oversizebytes/pixels/multiframe/truncation, unconfiguredmodel, emptyreadwarnings, actualHTTPpayload+correlatedtrace noimage/key, busy/timeoutno retries. First run100passed2setup errors were pytest implicitbinaryparameterIDs exceeding Windows tempfilepath; explicitshortIDs finalpass. Scoped diffcheckPASS.
 - Permitted lowrisk actualcapability check: GET Meta/v1/models returned200 with configuredmuse-spark-1.3 entry, metadata lackedmodalitydeclaration. Generated ONLY syntheticprintedimage fakeBread Qty2 Unit1.80 Total3.60 with fakecatalogue synthetic-bread; actualMeta review returnedproductID/qty2/price180/total360,warningsnone in3.855s. Traces separate ignoreddata/qa-handwritten-synthetic-provider.sqlite3. No actualuser/shopdata/image uploaded. Confirms syntheticprintedimage support only, NOT handwriting/photoaccuracy. No livefinancial/APIrestart/package/Git actions.
 - Outstanding: root/Hwaro integrate APIreview/confirm/batch/policy guards; Runako UI; independentQA andRuzivofinalgate; Owner realhandwritingphoto physicalacceptance. Sourcefrozen and no runningtests; handoffready.
+
+## 2026-11-03 — W6-LOAN-FOLLOWUP-001 web integration
+
+- Preserved the opening user turn and bounded recent whole turns in `apps/web/src/AskMuse.tsx` so short replies carry their original loan intent. Hwaro owned the API implementation and regression test.
+- Web production build passed and all 12 web Muse tests passed. Hwaro's five-turn API regression passed.
+- Reloaded local SQLite API on port 8001. Live five-turn request sequence `ndikuda laon` → `$500 yekutenga stock` → `mwedzi 12` → `10% pagore` → `hapana muripo` returned Shona intake questions then an illustrative USD 43.96 monthly estimate. No sale or loan application was posted.
+- Final estimate uses English. Live verification exercised the API contract, not a browser interaction.
+
+## 2026-11-03 — W6-LOAN-FOLLOWUP-001 Ask Muse simplification
+- Removed mode tabs from AskMuse.tsx and removed the unused onReel prop in App.tsx. One chat accepts shop and loan questions. Facebook Reel remains on Today. Web build passed. No browser smoke performed.
+
+## 2026-11-03 — W6-LOAN-FOLLOWUP-001 model first
+- Removed the loan early return from services/api/app.py. Meta receives shop evidence and conversational guidance, with verified calculations and provider fallback preserved. Updated services/api/test_muse.py. Seven tests passed. Auto-review blocked the live provider POST because it would transmit shop evidence. Verify via authorized browser request or synthetic shop next.
+
+## 2026-11-03 — Muse loan evidence coverage
+- business_planning.py supplies prior three complete months of recorded sales and cost-backed gross profit for loan questions without an explicit multi-month window. app.py keeps sales, inventory and available cash evidence for loan guidance even if the model selects narrower sources. Existing Muse API suite passed (7). Live provider answer not checked.

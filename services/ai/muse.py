@@ -94,7 +94,7 @@ class MuseSettings:
         return cls(os.getenv("LLAMA_MODEL", "").strip(), os.getenv("LLAMA_API_KEY", "").strip() or None)
 
 
-def build_muse_ai(settings: MuseSettings | None = None, *, http_timeout_seconds: float = 20.0) -> StructuredAI:
+def build_muse_ai(settings: MuseSettings | None = None, *, http_timeout_seconds: float = 20.0, timeout_seconds: float = 20.0) -> StructuredAI:
     """Build the live provider boundary from server-only environment settings."""
 
     settings = settings or MuseSettings.from_env()
@@ -111,7 +111,7 @@ def build_muse_ai(settings: MuseSettings | None = None, *, http_timeout_seconds:
         client = httpx.Client(verify=truststore.SSLContext(), timeout=http_timeout_seconds)
     except ImportError:  # pragma: no cover
         return StructuredAI(None)
-    return StructuredAI(MetaMuseProvider(settings.api_key, settings.model, client), timeout_seconds=20.0)
+    return StructuredAI(MetaMuseProvider(settings.api_key, settings.model, client), timeout_seconds=timeout_seconds)
 
 
 def _response_content(payload: Any) -> str:

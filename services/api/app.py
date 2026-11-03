@@ -8,7 +8,7 @@ import base64
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
 from fastapi import Depends, FastAPI, File, Header, HTTPException, Query, UploadFile, status
@@ -596,6 +596,76 @@ def create_app(
             sales_count=len(record.idempotent_sales), invoice_count=len(record.invoices),
             expense_count=len(record.expenses), cost_audit_count=len(record.cost_audits),
         )
+
+    @app.get("/api/v1/demo/sample-history")
+    def sample_history_status():
+        from .seed_sample_history import SAMPLE_SHOP_ID, sample_receipts
+        if not settings.demo_seed_enabled or not isinstance(store, InMemoryStore):
+            raise HTTPException(404, "Sample data is available only in local demo mode.")
+        record = store.shops.get(SAMPLE_SHOP_ID)
+        receipts = sample_receipts(record)
+        dates = sorted({key[len("sample-history-"):len("sample-history-") + 10] for key in receipts})
+        return {"count": len(receipts), "start": dates[0] if dates else None, "end": dates[-1] if dates else None,
+                "today": datetime.now(ZoneInfo("Africa/Harare")).date().isoformat()}
+
+    @app.post("/api/v1/demo/sample-history")
+    def change_sample_history(action: Literal["seed", "delete", "delete_all"], start: date | None = None,
+                              end: date | None = None, confirm: bool = False,
+                              daily_target: Annotated[int | None, Query(ge=1, le=20)] = None,
+                              monthly_target: Annotated[int | None, Query(ge=1, le=560)] = None,
+                              receipt_target_cents: Annotated[int | None, Query(ge=1, le=100_000)] = None,
+                              daily_sales_cents: Annotated[int | None, Query(ge=1, le=100_000)] = None,
+                              monthly_sales_cents: Annotated[int | None, Query(ge=1, le=3_000_000)] = None):
+        from .seed_sample_history import SAMPLE_SHOP_ID, add_sample_receipts, sample_catalogue, sample_receipts
+        if not settings.demo_seed_enabled or not isinstance(store, InMemoryStore):
+            raise HTTPException(404, "Sample data is available only in local demo mode.")
+        today = datetime.now(ZoneInfo("Africa/Harare")).date()
+        if action != "delete_all" and (
+            start is None or end is None or not today - timedelta(days=359) <= start <= end <= today
+        ):
+            raise HTTPException(422, "Choose a range within the last 360 days, including today.")
+        record = store.shops.get(SAMPLE_SHOP_ID)
+        if action == "seed":
+            from copy import deepcopy
+            record = sample_catalogue() if record is None else deepcopy(record)
+            if sum(value is not None for value in (
+                daily_target, monthly_target, receipt_target_cents, daily_sales_cents, monthly_sales_cents,
+            )) > 1:
+                raise HTTPException(422, "Choose one transaction or sales target.")
+            previous = set(sample_receipts(record))
+            try:
+                changed = add_sample_receipts(
+                    store, record, start, end, daily_target=daily_target,
+                    monthly_target=monthly_target, receipt_target_cents=receipt_target_cents,
+                    daily_sales_cents=daily_sales_cents, monthly_sales_cents=monthly_sales_cents,
+                )
+                store.shops[SAMPLE_SHOP_ID] = record
+            except ValueError as exc:
+                raise HTTPException(422, str(exc)) from exc
+            except (RepositoryInsufficientStock, RepositoryNotFound) as exc:
+                raise HTTPException(409, "Sample stock is insufficient. Delete a sample date range first.") from exc
+        else:
+            if not confirm:
+                raise HTTPException(422, "Confirm deletion of sample receipts.")
+            changed = 0
+            if record:
+                selected = [(key, sale) for key, sale in sample_receipts(record).items()
+                            if action == "delete_all" or start <= sale.created_at.astimezone(ZoneInfo(record.shop.timezone)).date() <= end]
+                if selected and (record.cash_closes or record.day_closes):
+                    raise HTTPException(409, "This sample shop has saved cash closes. Deletion could invalidate their totals.")
+                for key, sale in selected:
+                    for line in sale.lines:
+                        product = record.products.get(line.product_id)
+                        if product is not None and line.product_id in sale.stock_after:
+                            product.stock_qty += line.quantity
+                    del record.idempotent_sales[key]
+                changed = len(selected)
+        result = {**sample_history_status(), "changed": changed}
+        if action == "seed" and changed:
+            generated = [sale for key, sale in sample_receipts(record).items() if key not in previous]
+            result["generated_sales_cents"] = sum(sale.total_cents for sale in generated)
+            result["currency"] = record.shop.currency
+        return result
 
     def shop_scope(
         shop_id: UUID,
@@ -1429,7 +1499,7 @@ def create_app(
             if source is None or source.product_id not in request.product_ids:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="source image not found for selected products")
         products = _social_products(record, request.product_ids)
-        result = (app.state.social_ai or build_muse_ai()).social_draft(
+        result = (app.state.social_ai or build_muse_ai(http_timeout_seconds=65.0, timeout_seconds=65.0)).social_draft(
             SocialRequest(request.brief, products, shop_image_ref=source_ref, duration_seconds=request.duration_seconds)
         )
         draft = result.value
@@ -1454,9 +1524,24 @@ def create_app(
             if source is None or source.product_id not in request.product_ids:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="source image not found for selected products")
         products = _social_products(record, request.product_ids)
+        if request.shop_photo_data:
+            from services.ai.handwritten_sales import validate_image
+
+            header, separator, encoded = request.shop_photo_data.partition(",")
+            content_type = header.removeprefix("data:").removesuffix(";base64")
+            if not separator or header != f"data:{content_type};base64" or content_type not in {"image/jpeg", "image/png", "image/webp"}:
+                raise HTTPException(422, "Choose a JPEG, PNG or WebP shop photo.")
+            try:
+                validate_image(base64.b64decode(encoded, validate=True), content_type)
+            except ValueError as exc:
+                raise HTTPException(422, "Invalid shop photo. Choose a supported image up to 5 MiB.") from exc
+            source_ref = request.shop_photo_data
         size = {"1:1": "1024x1024", "4:5": "1024x1536", "9:16": "1024x1536", "16:9": "1536x1024"}[request.aspect_ratio]
         result = (app.state.image_ai or build_muse_image_ai()).social_image(
-            SocialImageRequest(request.brief, products, shop_image_ref=source_ref, size=size, output_format="png")
+            SocialImageRequest(
+                ("Use the supplied shop photo as the setting or background. " if request.shop_photo_data else "") + request.brief,
+                products, shop_image_ref=source_ref, size=size, output_format="png",
+            )
         )
         draft = result.value
         image_refs = list(draft.image_refs)
@@ -1793,15 +1878,177 @@ def create_app(
 
     @app.post("/api/v1/shops/{shop_id}/muse", response_model=MuseAskResponse)
     def ask_muse_endpoint(request: MuseAskRequest, record: _ShopRecord = Depends(shop_scope)) -> MuseAskResponse:
-        """Answer a shop question from the selected period's repository evidence."""
+        from .business_planning import completed_months, planning_snapshot, requested_month
+
+        question = request.question
+        calculated = repository_muse_answer(request, record)
+        loan_guidance = calculated is not None and calculated.title in {"Kuronga chikwereti", "Plan a business loan"}
+        now = datetime.now(timezone.utc)
+        today = now.astimezone(ZoneInfo(record.shop.timezone)).date()
+        ai = app.state.muse_ai or build_muse_ai(http_timeout_seconds=40.0, timeout_seconds=40.0)
+        plan = ai.shop_data_plan(question, today.isoformat())
+        facts, gaps, evidence = planning_snapshot(record, question, now, report_month=plan.get("month"))
+        affordability = calculated is not None and calculated.title == "Estimate how much you could borrow"
+        explicit_range = completed_months(question) is not None
+        if plan:
+            requested = set(plan["sources"])
+            if loan_guidance or affordability or explicit_range:
+                requested.add("sales")
+            if loan_guidance or affordability:
+                requested.update(("inventory", "cash"))
+            def selected(item):
+                key = item.evidence_id
+                if key.startswith("stock-") or key == "catalogue-size":
+                    return "inventory" in requested
+                if key.endswith("-projection"):
+                    return "forecast" in requested
+                if key == "expected-cash-today":
+                    return "cash" in requested
+                return "sales" in requested or key == "assumed-repayment-budget"
+
+            filtered = tuple(item for item in evidence if selected(item))
+            # The validated insight format requires an evidence ID, even for a clarification.
+            evidence = filtered or (Evidence("shop-currency", "connected shop context", 1, record.shop.currency, str(today)),)
+            facts = [fact for fact in facts if "set-aside assumption" in fact]
+        context = {
+            "currency": record.shop.currency,
+            "timezone": record.shop.timezone,
+            "requested_data": plan.get("sources", []),
+            "facts": facts[:12],
+            "coverage_gaps": gaps,
+        }
+        if calculated is not None and (not loan_guidance or calculated.status == "answered") and (explicit_range or not plan.get("month") or plan["month"] == requested_month(question, today)):
+            context["verified_calculation_or_missing_inputs"] = {
+                "answer": calculated.answer[:2400],
+                "missing_inputs": calculated.missing_data,
+            }
+        if loan_guidance:
+            context["instruction_for_this_answer"] = (
+                "Help the user think through why and whether to borrow using the supplied shop evidence. "
+                "Respond in the user’s language, including Shona. For a vague request, give useful initial guidance "
+                "and ask one helpful follow-up. Ask about lender terms only when needed to evaluate an offer."
+            )
+        if affordability:
+            context["instruction_for_this_answer"] = (
+                "Lead with the exact report dates and the verified monthly set-aside when supplied. "
+                "Gross profit before expenses is distinct from net profit and cash. "
+                "Ask only for missing inputs. Never ask for profit already supplied. "
+                "When verified figures compare repayment terms, show every term and its principal. "
+                "Do not ask the user to pick a single term before showing the comparison."
+            )
+        result = ai.business_insight(InsightRequest(evidence=evidence, question=question, shop_context=context))
+        if result.source == "provider":
+            insight = result.value
+            answer = insight.summary + "\n\n" + insight.suggested_action
+            if affordability and calculated.status == "answered":
+                comparison = calculated.answer.rsplit("\n\n", 1)[-1]
+                answer += "\n\n" + comparison
+            return MuseAskResponse(
+                status="answered", answer=answer,
+                title=insight.title, evidence_ids=list(insight.evidence_ids), missing_data=[],
+                source="meta", confidence=insight.confidence,
+            )
+        if calculated is not None:
+            return calculated
+        return MuseAskResponse(
+            status="unavailable", answer=result.value.summary, title=result.value.title,
+            evidence_ids=[], missing_data=[], source="fallback", confidence=0.0,
+        )
+
+    def repository_muse_answer(request: MuseAskRequest, record: _ShopRecord) -> MuseAskResponse | None:
+        """Prepare optional verified figures and a fallback for supported questions."""
 
         now = datetime.now(timezone.utc)
         question = request.question
-        lowered = question.lower()
+        history, separator, latest = question.rpartition("\nUser: ")
+        if not separator or not history.startswith("Recent conversation:\n"):
+            history, latest = "", question
+        lowered = latest.lower()
+        from .business_planning import loan_question, planning_snapshot
+        user_turns = [line[6:] for line in history.splitlines() if line.startswith("User: ")]
+        continuing_loan = any(loan_question(turn) for turn in user_turns)
+        loan_details = continuing_loan and (
+            any(char.isdigit() for char in latest) or any(phrase in lowered for phrase in ("no fees", "zero fees", "hapana fees", "hapana muripo"))
+        )
+        def affordability(text):
+            words = text.lower().split()
+            return any(word.strip("?.!,") in {"afford", "aford"} for word in words) or "borrowing capacity" in text.lower()
+
+        if affordability(latest) or (any(affordability(turn) for turn in user_turns) and (loan_details or "data" in lowered or "month" in lowered)):
+            from .loan_planning import borrowing_scenario
+            facts, _, evidence = planning_snapshot(record, question, now)
+            profit = next((fact for fact in facts if fact.startswith("Gross profit before expenses:")), None)
+            messages = [*user_turns, latest]
+            assumed = next((item for item in evidence if item.evidence_id == "assumed-repayment-budget"), None)
+            if assumed and record.shop.currency == "USD":
+                messages.insert(0, f"USD {assumed.value:.2f} per month")
+            estimate, missing = borrowing_scenario(messages, record.shop.currency)
+            answer = facts[0] + "\n\n" + (profit or "Gross profit is incomplete because some saved costs are missing.")
+            if assumed:
+                answer += "\n\n" + next(fact for fact in facts if "set-aside assumption" in fact)
+            if estimate:
+                answer += "\n\n" + estimate
+            else:
+                answer += (
+                    "\n\nUse the cash you can set aside after expenses, existing debt payments and a cash buffer. "
+                    "Gross profit alone cannot establish that amount. Please provide: " + ", ".join(missing) +
+                    ". Example format: USD 50 per month, 12 months, 10% annual interest, no fees."
+                )
+            return MuseAskResponse(
+                status="answered" if estimate else "needs_data", title="Estimate how much you could borrow", answer=answer,
+                evidence_ids=[item.evidence_id for item in evidence if item.evidence_id in {"sales-month", "gross-profit-month", "assumed-repayment-budget"}],
+                missing_data=missing, source="repository", confidence=1.0,
+            )
+        if loan_question(latest) or loan_details:
+            from .loan_planning import loan_follow_up, loan_scenario
+            facts, gaps, evidence = planning_snapshot(record, latest, now)
+            shona = any(word in " ".join([*user_turns, latest]).lower() for word in ("ndikuda", "ndinoda", "chikwereti"))
+            estimate, missing = loan_scenario([*user_turns, latest], record.shop.currency)
+            if estimate:
+                follow_up = estimate
+            else:
+                follow_up = loan_follow_up(missing, shona)
+            answer = follow_up + "\n\n" + facts[0]
+            if "business plan" in lowered or "forecast" in lowered:
+                answer = "\n\n".join(facts)
+                if "business plan" in lowered:
+                    answer += (
+                        "\n\nBank plan outline: Describe the shop and customers, explain how the loan will be spent, "
+                        "attach the recorded sales and costs, then show the sales forecast, operating expenses and repayment schedule."
+                    )
+                answer += "\n\n" + follow_up
+                missing = [*missing, *[gap for gap in gaps if "baseline forecast" in gap]]
+            return MuseAskResponse(
+                status="answered" if estimate else "needs_data",
+                title="Kuronga chikwereti" if shona else "Plan a business loan",
+                answer=answer,
+                evidence_ids=[item.evidence_id for item in evidence if item.evidence_id in {"sales-month", "gross-profit-month", "sales-projection"}], missing_data=missing,
+                source="repository", confidence=1.0,
+            )
         from .sales_answers import repository_sales_answer
-        repository_answer = repository_sales_answer(question, record)
+        repository_answer = repository_sales_answer(latest, record)
         if repository_answer is not None:
             return MuseAskResponse(**repository_answer)
+        from .business_planning import planning_question, planning_snapshot
+        if planning_question(latest):
+            facts, missing, evidence = planning_snapshot(record, question, now)
+            answer = "\n\n".join(facts)
+            title = "Shop business overview"
+            source = "repository"
+            if "business plan" in lowered:
+                title = "Business plan from your shop records"
+                answer += (
+                    "\n\nStock: Review the lowest-stock products first and prioritize items with recorded demand. "
+                    "\n\nCash: Record purchases, expenses and refunds daily and count cash at close. "
+                    "\n\nSales: Review recorded sales and gross profit weekly before changing prices or expanding stock."
+                )
+            elif "forecast" in lowered or "projection" in lowered:
+                title = "Recorded sales and cash forecast"
+            return MuseAskResponse(
+                status="answered", answer=answer, title=title,
+                evidence_ids=[item.evidence_id for item in evidence[:7]], missing_data=missing,
+                source=source, confidence=1.0 if source == "repository" else result.value.confidence,
+            )
         period_start = _muse_period_start(lowered, now)
         zone = ZoneInfo(record.shop.timezone)
         if 'today' in lowered:
@@ -1816,7 +2063,7 @@ def create_app(
         period_name = _muse_period_name(lowered)
         sales_cents = sum(sale.total_cents for sale in sales)+sum(batch.total_cents for batch in batches)
         evidence = (
-            Evidence(f"sales-{period_name}", "sales_total", float(sales_cents), "cents", period_name),
+            Evidence(f"sales-{period_name}", "sales_total", sales_cents / 100, record.shop.currency, period_name),
             Evidence(f"transactions-{period_name}", "transaction_count", float(len(sales)), "transactions", period_name),
         )
         if batches:
@@ -1881,28 +2128,7 @@ def create_app(
                 confidence=1.0,
             )
 
-        ai = app.state.muse_ai or build_muse_ai()
-        result = ai.business_insight(InsightRequest(evidence=evidence, question=question))
-        insight = result.value
-        if result.source == "fallback":
-            return MuseAskResponse(
-                status="unavailable",
-                answer=insight.summary,
-                title=insight.title,
-                evidence_ids=list(insight.evidence_ids),
-                missing_data=[],
-                source="fallback",
-                confidence=insight.confidence,
-            )
-        return MuseAskResponse(
-            status="answered",
-            answer=insight.summary,
-            title=insight.title,
-            evidence_ids=list(insight.evidence_ids),
-            missing_data=[],
-            source="meta",
-            confidence=insight.confidence,
-        )
+        return None
 
     @app.post("/api/v1/shops/{shop_id}/social/brief", response_model=SocialBriefResponse)
     def social_brief(request: SocialBriefRequest, record: _ShopRecord = Depends(shop_scope)) -> SocialBriefResponse:

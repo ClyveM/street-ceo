@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {test} from 'node:test'
-import {addNapoSamples,readPronunciation,WakeCommand,catalogueReplyEvent,conflictingAliases} from '../src/wakePhrase.ts'
+import {addNapoSamples,addPronunciationSamples,readPronunciation,WakeCommand,catalogueReplyEvent,conflictingAliases} from '../src/wakePhrase.ts'
 import {spokenPaymentQuestion,SALE_SAVED_SPEECH} from '../src/voicePrompts.ts'
 const old={apo:'apo',napo:'nah po'}
 test('five samples retain legacy end and normalized distinct variations across storage',()=>{
@@ -45,4 +45,26 @@ test('short audio leaves complete visible question and cash amount clarification
  const amount={question:'How much cash did you receive? Total 1.50.',missing:['amount_received_cents']}
  assert.equal(spokenPaymentQuestion(amount),amount.question)
  assert.equal(SALE_SAVED_SPEECH,'Sale saved')
+})
+
+test('five reviewed Apo samples persist alongside legacy wake and end phrases', () => {
+  const previous = { apo: 'hey shop', napo: 'nah po', napoAliases: ['nepo'] }
+  const trained = addPronunciationSamples(previous, 'apo', ['Apo', 'Apple', 'Ah po', 'A p o', 'Happy'])
+  const restored = readPronunciation({ getItem: () => JSON.stringify(trained) })
+  assert.deepEqual(restored, trained)
+  for (const wake of ['Apo', 'Apple', 'Ah po', 'A p o', 'Happy', 'hey shop']) {
+    assert.equal(new WakeCommand().accept(`${wake} one apple one happy soap nepo`, restored), 'Apo one apple one happy soap Napo')
+  }
+  assert.throws(() => addPronunciationSamples(restored, 'apo', ['apple']))
+  assert.throws(() => addPronunciationSamples(restored, 'apo', Array(5).fill('nepo')))
+  assert.equal(new WakeCommand().acceptEvent('one happy soap', restored).woke, false)
+})
+
+test('reviewed Napo mistranscription closes a full utterance only at the end', () => {
+  const trained = addNapoSamples({ apo: 'apo', napo: 'napo' }, Array(5).fill('nato'))
+  const machine = new WakeCommand()
+  assert.deepEqual(machine.acceptEvent('Apo one sugar one coke nato', trained), {
+    command: 'Apo one sugar one coke Napo', woke: true,
+  })
+  assert.equal(machine.accept('Apo one nato soap Napo', trained), 'Apo one nato soap Napo')
 })

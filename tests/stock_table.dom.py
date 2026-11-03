@@ -54,7 +54,7 @@ def route(r):
 try:
  with sync_playwright() as p:
   browser=p.chromium.launch(channel='msedge',headless=True,timeout=20000,args=['--disable-gpu'])
-  context=browser.new_context(viewport={'width':390,'height':844});context.route('**/*',route)
+  context=browser.new_context(viewport={'width':390,'height':844},service_workers='block');context.route('**/*',route)
   context.add_init_script("""localStorage.setItem('street-ceo-api-config',JSON.stringify({baseUrl:'http://shop.invalid',shopId:'00000000-0000-0000-0000-000000000001'}));localStorage.setItem('street-ceo-hands-free-v1','off');""")
   page=context.new_page();page.set_default_timeout(10000);page.set_default_navigation_timeout(30000)
   page_errors=[]
