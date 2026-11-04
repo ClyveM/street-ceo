@@ -63,6 +63,9 @@ data/demo-launcher-state.json
 /apps/web/dist-office/
 /docs/local-office/
 
+# Local agent roles and working notes
+/agents/
+
 # Reproducible product-diagram exports; keep editable SVG and HTML tracked.
 /docs/product-diagram/review-preview.png
 /docs/product-diagram/street-ceo-product.png
