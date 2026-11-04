@@ -149,19 +149,20 @@ test('interpretation is shop-scoped; unavailable/ambiguous responses cannot auth
   assert.throws(() => parseVoiceReview({ status: 'unavailable', error: 'Speech service unavailable' }, config.shopId), /Speech service unavailable/)
 })
 
-test('nonexact catalogue proposals require explicit yes before tender and exact legacy requests omit the new flag',async()=>{
+test('nonexact proposals can quote before explicit yes but cannot send payment, and exact legacy requests omit the flag',async()=>{
  const proposal=parseVoiceReview({...response,transcript:'1 bread glove number',status:'needs_match_confirmation',requires_match_confirmation:true,resolution_source:'muse_catalogue',provider_called:true,clarification_question:'Did you mean 1 Bread loaf? Say yes or no.',lines:[{product_id:'bread',product_name:'Bread loaf',quantity:1}]},config.shopId)
  assert.equal(proposal.canCommit,false);assert.equal(proposal.providerCalled,true)
  const bodies=[]
  const client=createQuickSaleClient(()=>config,async(url,init)=>{const body=JSON.parse(init.body);bodies.push(body);return Response.json({...question,review_id:body.review_id})})
- await assert.rejects(client.commit(proposal,null,'proposal'),/verified sale review/)
- await assert.rejects(client.commit({...proposal,canCommit:true},null,'proposal'),/Say Yes/)
+ await assert.rejects(client.commit(proposal,{tender:'bank'},'proposal'),/Say Yes/)
  assert.equal(bodies.length,0)
+ assert.equal((await client.commit(proposal,null,'proposal')).kind,'question')
+ assert.equal('match_confirmed' in bodies[0],false);assert.equal(bodies[0].tender,undefined)
  const confirmed=confirmVoiceMatch(proposal)
  assert.equal(proposal.canCommit,false);assert.equal(confirmed.matchConfirmed,true)
  assert.equal((await client.commit(confirmed,null,'proposal')).kind,'question')
- assert.equal(bodies[0].match_confirmed,true);assert.equal(bodies[0].tender,undefined)
- await client.commit(review,null,'exact');assert.equal('match_confirmed' in bodies[1],false)
+ assert.equal(bodies[1].match_confirmed,true);assert.equal(bodies[1].tender,undefined)
+ await client.commit(review,null,'exact');assert.equal('match_confirmed' in bodies[2],false)
   const exactCorrection=confirmVoiceMatch(review)
   assert.equal(exactCorrection.requiresMatchConfirmation,false)
   assert.match(catalogueMatchQuestion(exactCorrection),/Did you mean 1 Coca-Cola/)
@@ -237,7 +238,7 @@ test('fast local catalogue proposal retains provenance and cannot reach payment 
   assert.equal(proposal.canCommit, false)
   const calls = []
   const client = createQuickSaleClient(() => config, async (_url, init) => { calls.push(JSON.parse(init.body)); return Response.json(question) })
-  await assert.rejects(client.commit(proposal, null, 'proposal-key'), /verified sale review/)
+  await assert.rejects(client.commit(proposal, { tender: 'bank' }, 'proposal-key'), /Say Yes/)
   assert.equal(calls.length, 0)
   const confirmed = confirmVoiceMatch(proposal)
   assert.equal((await client.commit(confirmed, null, 'proposal-key')).kind, 'question')

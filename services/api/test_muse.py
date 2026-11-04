@@ -100,9 +100,10 @@ def test_local_demo_seed_matches_frontend_shop_id_without_sales():
     assert result.evidence_ids == ["sales-last_30_days", "transactions-last_30_days"]
 
 
-def test_default_local_app_seeds_the_frontend_shop_id(monkeypatch):
+def test_default_local_app_seeds_the_frontend_shop_id(monkeypatch, tmp_path):
     monkeypatch.delenv("STREET_CEO_STORE", raising=False)
     monkeypatch.delenv("STREET_CEO_SEED_DEMO", raising=False)
+    monkeypatch.setenv("STREET_CEO_SQLITE_PATH", str(tmp_path / "demo.sqlite3"))
     app = create_app()
 
     demo_shop_id = "00000000-0000-0000-0000-000000000001"

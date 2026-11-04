@@ -84,16 +84,33 @@ needs microphone permission and supported speech APIs; remote HTTP microphone
 access may be restricted. Typing remains available. The full hands-free demo
 requires Android installation and physical-device testing.
 
+## Download the Android demo
+
+[Download the Street CEO Android APK](https://raw.githubusercontent.com/ClyveM/street-ceo/main/releases/street-ceo-demo-2026-11-04.apk)
+from this repository. This is a debug-signed demo build. Install it on Android
+and grant microphone permission to use hands-free sales.
+
+SHA-256: `836a5f5a967aead172b627c24b651b8b394db1e8f2c95ec86892b9d093e1ce8f`.
+
+The APK needs a running Street CEO API. On the computer hosting the API, follow
+the setup steps above, then start it from the repository root on a reachable
+interface using the activated Python environment:
+
+```sh
+python -m uvicorn services.api.app:app --host 0.0.0.0 --port 8001 --workers 1
+```
+
+Connect the phone and computer to the same network. In the app's **Profile →
+Shop connection**, enter your computer's LAN address, for example
+`http://192.168.1.20:8001`, and keep the default demo shop ID. Check that the
+phone can reach the server on port 8001. The API uses `data/demo-mvp.sqlite3` by
+default. To enable cloud Muse, configure the backend as described above.
+
 ## Build an Android demo
 
 Install Android Studio, its Java runtime and Android SDK 35. The Android project
-and Gradle wrapper are included; generated APKs are not committed. Use your PC's
+and Gradle wrapper are included. Use your PC's
 reachable LAN address in the web build and run the API on `0.0.0.0`.
-
-Cloning this repository does not download an installable APK. Share a tested APK
-as a GitHub Release asset for a public download; pushing source alone does not
-publish a release. The local port-8081 APK link depends on the developer's PC and
-network and is not a public distribution link.
 
 Follow [Android setup](apps/android/README.md) and the [demo runbook](docs/demo-runbook.md).
 Browser setup does not require Android Studio. The demo is connected; offline

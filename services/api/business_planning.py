@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from services.ai.boundary import Evidence
 from .cash_close import cash_events, calculate_cash_preview
+from .muse_cash import muse_cash_estimate
 from .reports import sales_report
 
 
@@ -157,8 +158,15 @@ def planning_snapshot(record, question, now, report_month=None):
     if cash.expected_cash_cents is not None:
         facts.append(f"Expected cash on hand today from recorded activity: {money(cash.expected_cash_cents)}. Confirm with a cash count.")
         evidence.append(Evidence("expected-cash-today", "expected cash on hand before cash count", cash.expected_cash_cents / 100, currency, str(today)))
-    if cash.opening_cash_cents is None:
-        missing.append("An opening cash balance or prior counted close to estimate cash on hand.")
+    elif cash.requires_opening:
+        drawer = muse_cash_estimate(record, today, today, now=now)
+        estimate = drawer["estimated_ending_cash_cents"]
+        if estimate is not None:
+            facts.append(f"Estimated drawer cash today: {money(estimate)}. {drawer['assumption_note']}")
+            evidence.append(Evidence("estimated-cash-today", "estimated drawer cash with assumed zero opening; not counted",
+                                     estimate / 100, currency, str(today)))
+        else:
+            missing.append("Actual cash payment amounts are needed to complete the zero-opening estimate.")
     if forecast:
         facts.append(f"{label} scenario ({forecast_period}), using the daily average over {period}, including days with no saved sales. " + " ".join(forecast))
         facts.append("Cash movement covers recorded cash sales, purchases, expenses, refunds and adjustments. Unrecorded activity and future commitments can change the result.")

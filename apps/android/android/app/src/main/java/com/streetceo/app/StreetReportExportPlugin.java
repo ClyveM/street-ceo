@@ -41,7 +41,11 @@ import java.util.List;
 public class StreetReportExportPlugin extends Plugin {
     private File target(PluginCall call, String extension) throws Exception {
         String name = call.getString("filename", "");
-        if (!name.matches("street-ceo-(sales|profit)-[0-9]{4}-[0-9]{2}-[0-9]{2}-to-[0-9]{4}-[0-9]{2}-[0-9]{2}")) throw new IllegalArgumentException();
+        boolean businessPlanPdf = extension.equals("pdf") && name.equals("street-ceo-business-plan")
+                && "Business plan".equals(call.getString("title", ""));
+        if (!businessPlanPdf && !name.matches("street-ceo-(sales|profit)-[0-9]{4}-[0-9]{2}-[0-9]{2}-to-[0-9]{4}-[0-9]{2}-[0-9]{2}")) {
+            throw new IllegalArgumentException("Invalid export filename");
+        }
         File directory = new File(getContext().getCacheDir(), "report-exports").getCanonicalFile();
         if (!directory.exists() && !directory.mkdirs()) throw new IllegalStateException();
         File file = new File(directory, name + "-" + UUID.randomUUID() + "." + extension).getCanonicalFile();
@@ -194,9 +198,11 @@ public class StreetReportExportPlugin extends Plugin {
         try {
             String title = call.getString("title", "");
             String subtitle = call.getString("subtitle", "");
-            if (!(title.equals("Sales report") || title.equals("Product gross profit report"))
+            boolean businessPlan = title.equals("Business plan");
+            if (!(businessPlan || title.equals("Sales report") || title.equals("Product gross profit report"))
                     || subtitle.length() > 300) throw new IllegalArgumentException();
             JSArray headers = call.getArray("columns");
+            if (businessPlan && (headers != null || subtitle.trim().isEmpty())) throw new IllegalArgumentException();
             String[] columns = null;
             String[] notes = null;
             List<String[]> summary = null;
@@ -244,7 +250,7 @@ public class StreetReportExportPlugin extends Plugin {
                 document.close();
             }
             saveReport(call, file, "application/pdf", "pdf");
-        } catch (Exception failure) { if (file != null) file.delete(); call.reject("Could not prepare PDF. Select a smaller report and try again."); }
+        } catch (Exception failure) { if (file != null) file.delete(); call.reject("Could not prepare or save the PDF. Please try again."); }
     }
     private class Painter {
         private static final int GREEN = 0xff145743;
@@ -289,7 +295,7 @@ public class StreetReportExportPlugin extends Plugin {
                 canvas.drawBitmap(logo, null, new RectF(49, 39, 98, 88), paint);
             }
             textStyle(9, 0xffc5e4d7, true);
-            canvas.drawText("STREET CEO  /  SHOP REPORTS", 114, 45, paint);
+            canvas.drawText(title.equals("Business plan") ? "STREET CEO  /  BUSINESS PLANNING" : "STREET CEO  /  SHOP REPORTS", 114, 45, paint);
             textStyle(20, Color.WHITE, true);
             canvas.drawText(title, 114, 68, paint);
             textStyle(9, MUTED, false);
@@ -301,7 +307,7 @@ public class StreetReportExportPlugin extends Plugin {
             y += 10;
             fill(LEFT, 799, RIGHT, 800, 0xffd8e8df);
             textStyle(9, MUTED, false);
-            canvas.drawText("Street CEO  /  Saved records", LEFT, 816, paint);
+            canvas.drawText(title.equals("Business plan") ? "Street CEO  /  Business plan" : "Street CEO  /  Saved records", LEFT, 816, paint);
             String footer = "Page " + number;
             canvas.drawText(footer, RIGHT - paint.measureText(footer), 816, paint);
         }

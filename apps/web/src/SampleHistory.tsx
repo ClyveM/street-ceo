@@ -1,6 +1,7 @@
 import './sample-history.css'
 import { useEffect, useState } from 'react'
-import { getApiConfig, saveApiConfig } from './api'
+import { getLiveShopId, saveApiConfig, type ApiConfig } from './api'
+import { SAMPLE_SHOP_ID } from './muse'
 
 type SampleStatus = { count: number; start: string | null; end: string | null; today: string; changed?: number }
 type SampleAction = 'seed' | 'delete' | 'delete_all'
@@ -11,8 +12,9 @@ function daysBefore(iso: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-export function SampleHistory({ shopId, switchDisabled }: { shopId: string; switchDisabled: boolean }) {
-  const { baseUrl, shopId: activeShopId } = getApiConfig()
+export function SampleHistory({ config, switchDisabled, onChanged }: { config: ApiConfig; switchDisabled: boolean; onChanged: () => Promise<boolean> }) {
+  const { baseUrl, shopId: activeShopId } = config
+  const isSample = activeShopId.toLowerCase() === SAMPLE_SHOP_ID
   const endpoint = baseUrl + '/api/v1/demo/sample-history'
   const [status, setStatus] = useState<SampleStatus | null>(null)
   const [start, setStart] = useState('')
@@ -72,6 +74,9 @@ export function SampleHistory({ shopId, switchDisabled }: { shopId: string; swit
       } else {
         setMessage('No new receipts added. Check for dates already seeded or closed.')
       }
+      if (isSample && result.changed > 0 && !await onChanged()) {
+        setMessage(previous => previous + ' Some shop views could not refresh. Reopen Street CEO to reload them.')
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Sample data request failed.')
     } finally {
@@ -81,7 +86,7 @@ export function SampleHistory({ shopId, switchDisabled }: { shopId: string; swit
 
   return <section className="analysis-card sample-history" aria-label="Sample sales data">
     <header className="sample-history-header"><span>DEMO WORKSPACE</span><h3>Sample sales data</h3></header>
-    <p>Choose dates within the last 360 days, including today. Sample receipts live in a separate shop and feed Reports and Ask Muse there.</p>
+    <p>Choose dates within the last 360 days, including today. Generated receipts feed Reports and Ask Muse in the sample shop. To switch shops after generating, choose Open sample shop below.</p>
     {status && <>
       <div className="sample-history-summary"><strong>{status.count.toLocaleString()}</strong><span>Sample receipts</span><small>{status.start ? `${status.start} to ${status.end}` : 'Choose a date range to get started'}</small></div>
       <div className="sample-history-dates">
@@ -115,11 +120,16 @@ export function SampleHistory({ shopId, switchDisabled }: { shopId: string; swit
         <button type="button" disabled={busy || switchDisabled} onClick={() => void change(confirming)}>Confirm deletion</button>
         <button type="button" onClick={() => setConfirming(null)}>Cancel</button>
       </div>}
-      {status.count > 0 && activeShopId !== shopId && <button className="sample-history-open" type="button" disabled={busy || switchDisabled} onClick={() => {
-        try { saveApiConfig({ baseUrl, shopId }); window.location.reload() }
-        catch { setMessage('Could not open the sample shop. Check your shop connection.') }
-      }}>Open sample shop</button>}
     </>}
+    <div className="sample-history-switch">
+      <strong>{isSample ? 'Sample shop is open' : 'Live shop is open'}</strong>
+      {(isSample || !!status?.count) && <button className="sample-history-open" type="button" disabled={busy || switchDisabled} onClick={() => {
+        try {
+          saveApiConfig({ baseUrl, shopId: isSample ? getLiveShopId(baseUrl) : SAMPLE_SHOP_ID })
+          window.location.reload()
+        } catch { setMessage('Could not switch shops. Check your shop connection.') }
+      }}>{isSample ? 'Open live shop' : 'Open sample shop'}</button>}
+    </div>
     {message && <p role="status">{message}</p>}
   </section>
 }

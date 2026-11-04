@@ -5,6 +5,10 @@ from infra.check_source_manifest import REQUIRED, forbidden
 
 
 class SourceManifestTests(unittest.TestCase):
+    def test_only_the_published_demo_apk_is_allowed(self):
+        self.assertFalse(forbidden("releases/street-ceo-demo-2026-11-04.apk"))
+        self.assertTrue(forbidden("releases/another.apk"))
+
     def test_required_wrapper_locks_and_assets_are_not_forbidden(self):
         for path in REQUIRED:
             self.assertFalse(forbidden(path), path)

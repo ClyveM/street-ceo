@@ -2,7 +2,8 @@
 
 The native Capacitor project and Gradle wrapper are included. Do not run
 `cap add android` again. Generated web assets, SDK paths, Gradle caches, signing
-keys and APKs remain local and ignored.
+keys and routine build outputs remain local and ignored. The repository README
+links to the published demo APK.
 
 ## Prerequisites
 

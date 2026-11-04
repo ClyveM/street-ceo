@@ -15,6 +15,9 @@ from typing import Any, Protocol
 from uuid import UUID, uuid4
 
 
+DEFAULT_SQLITE_PATH = str(Path(__file__).resolve().parents[2] / "data" / "demo-mvp.sqlite3")
+
+
 @dataclass(frozen=True)
 class Settings:
     """Runtime configuration with a safe, credential-free local default."""
@@ -25,7 +28,7 @@ class Settings:
     team_activity_enabled: bool = True
     voice_enabled: bool = True
     demo_seed_enabled: bool = False
-    sqlite_path: str = "data/street-ceo.sqlite3"
+    sqlite_path: str = DEFAULT_SQLITE_PATH
     local_team_enabled: bool = False
 
     def __post_init__(self) -> None:
@@ -50,7 +53,7 @@ class Settings:
         demo_seed_enabled = (backend in {"memory", "sqlite"}) if seed_value is None else seed_value.strip().lower() in {"1", "true", "yes", "on"}
         if backend not in {"memory", "postgres", "sqlite"}:
             raise ValueError("STREET_CEO_STORE must be 'memory', 'sqlite' or 'postgres'")
-        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled, voice_enabled=voice_enabled, demo_seed_enabled=demo_seed_enabled, sqlite_path=os.getenv("STREET_CEO_SQLITE_PATH", "data/street-ceo.sqlite3"), local_team_enabled=local_team_enabled)
+        return cls(store_backend=backend, database_url=database_url, repository_root=repository_root, team_activity_enabled=enabled, voice_enabled=voice_enabled, demo_seed_enabled=demo_seed_enabled, sqlite_path=os.getenv("STREET_CEO_SQLITE_PATH", DEFAULT_SQLITE_PATH), local_team_enabled=local_team_enabled)
 
 
 class Repository(Protocol):

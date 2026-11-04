@@ -8,6 +8,15 @@ from services.api.app import SaleCreate, SaleLine, Shop, _ShopRecord, create_app
 from services.api.persistence import POSTGRES_SCHEMA_SQL, PostgresRepository, Settings, build_repository
 
 
+def test_sqlite_default_matches_demo_launcher_from_any_working_directory(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("STREET_CEO_SQLITE_PATH", raising=False)
+    expected = Path(__file__).resolve().parents[2] / "data" / "demo-mvp.sqlite3"
+    assert Path(Settings.from_env().sqlite_path) == Path(Settings().sqlite_path) == expected
+    monkeypatch.setenv("STREET_CEO_SQLITE_PATH", "explicit.sqlite3")
+    assert Settings.from_env().sqlite_path == "explicit.sqlite3"
+
+
 def test_local_mode_is_explicit_and_credential_free(monkeypatch, tmp_path) -> None:
     monkeypatch.delenv("STREET_CEO_STORE", raising=False)
     monkeypatch.setenv("STREET_CEO_DATABASE_URL", "")

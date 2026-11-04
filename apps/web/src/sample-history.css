@@ -16,3 +16,6 @@
 .sample-history-confirm button { margin-right: 8px; }
 .sample-history button { min-height: 44px; }
 @media (max-width: 370px) { .sample-history-dates { grid-template-columns: 1fr; } }
+
+.sample-history-switch { display: grid; gap: 8px; color: #164b37; }
+.shop-connection-choices { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }

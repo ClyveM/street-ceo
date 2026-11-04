@@ -146,12 +146,20 @@ class _RollbackResponse(Exception):
 
 class SQLiteTransactionMiddleware(BaseHTTPMiddleware):
     """Serializes requests and commits before a successful response is sent."""
-    def __init__(self, app, store: SQLiteStore):
+    def __init__(self, app, store: SQLiteStore, lock: asyncio.Lock):
         super().__init__(app)
         self.store = store
-        self.lock = asyncio.Lock()
+        self.lock = lock
 
     async def dispatch(self, request, call_next):
+        path_parts = request.url.path.split("/")
+        if path_parts[1:4] == ["api", "v1", "shops"] and path_parts[5:7] == ["muse", "jobs"]:
+            # Jobs commit their own short queue transactions and never run a provider here.
+            async with self.lock:
+                try:
+                    return await call_next(request)
+                except sqlite3.Error:
+                    return JSONResponse({"detail": "Muse job storage unavailable; retry with the same Idempotency-Key"}, status_code=503)
         from services.ai.tracing import SQLiteTraceStore, trace_context
         paper_extract = '/daily-sales-batches/' in request.url.path and request.url.path.endswith('/extract')
         traced = request.method == "POST" and ("/voice/" in request.url.path or request.url.path.endswith("/muse") or paper_extract)

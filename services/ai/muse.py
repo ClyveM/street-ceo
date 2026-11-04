@@ -57,6 +57,17 @@ class MetaMuseProvider:
                 ],
                 "response_format": {"type": "json_object"},
             }
+        if request.task == "business_investigation":
+            provider_request["max_completion_tokens"] = 4096
+        if request.native_tools is not None:
+            provider_request.pop("response_format")
+            provider_request["tools"] = [
+                {"type": "function", "function": {
+                    "name": name, "description": name.replace("_", " "), "parameters": schema,
+                }}
+                for name, schema in request.native_tools.items()
+            ]
+            provider_request["messages"].extend(request.tool_messages)
         def send():
             response = self.http_client.post(
                 "https://api.meta.ai/v1/chat/completions",
@@ -67,6 +78,31 @@ class MetaMuseProvider:
             return response.json()
         payload = traced_call(operation=request.task, model=self.model, request=provider_request,
                               call=send, secret_values=(self.api_key,))
+        if request.native_tools is not None:
+            message = payload["choices"][0]["message"]
+            calls = message.get("tool_calls")
+            if calls:
+                if not isinstance(calls, list) or len(calls) > 4:
+                    raise ValueError("Too many native tool calls")
+                normalized = []
+                ids = set()
+                for call in calls:
+                    ident = call["id"]
+                    function = call["function"]
+                    if not isinstance(ident, str) or not ident or ident in ids or len(ident) > 128:
+                        raise ValueError("Invalid native tool call ID")
+                    ids.add(ident)
+                    arguments = function["arguments"]
+                    if not isinstance(arguments, str) or len(arguments) > 4000:
+                        raise ValueError("Invalid native tool arguments")
+                    try:
+                        decoded = json.loads(arguments)
+                    except ValueError:
+                        decoded = None
+                    normalized.append({"id": ident, "tool": function["name"], "arguments": decoded})
+                return {"calls": normalized, "native_message": {
+                    "role": "assistant", "content": message.get("content"), "tool_calls": calls,
+                }}
         content = _response_content(payload)
         parsed = json.loads(content)
         # Some hosted responses wrap JSON-only output in a single text field.

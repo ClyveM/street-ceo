@@ -6,12 +6,12 @@ import { Reports } from './Reports'
 import { VoicePronunciation } from './HandsFreeVoice'
 import { clientId } from './clientId'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { apiClient, demoProducts, formatMoney, getApiConfig, Product, Sale, saveApiConfig, ShopSummary, Tender, type SaleRequest, type ApiConfig } from './api'
+import { apiClient, demoProducts, formatMoney, getApiConfig, getLiveShopId, Product, Sale, saveApiConfig, ShopSummary, Tender, type SaleRequest, type ApiConfig } from './api'
 import { requestSale, SaleRequestError } from './saleRequest'
 import { VoiceCapture } from './VoiceCapture'
 import { isNativeAndroid } from './speechRecognition'
 import { AskMuse } from './AskMuse'
-import { DEMO_SHOP_ID, migrateKnownDemoConnection } from './muse'
+import { SAMPLE_SHOP_ID, migrateKnownDemoConnection } from './muse'
 import { StockCatalog } from './StockCatalog'
 import { useProductImages } from './useProductImages'
 import { SocialUpdate } from './SocialUpdate'
@@ -26,7 +26,6 @@ import { DEMO_BUILD_LABEL } from './buildInfo'
 import './demo-ux.css'
 import './counter-polish.css'
 
-const SAMPLE_SHOP_ID = '00000000-0000-0000-0000-000000000120'
 
 type View = 'profit-report' | 'today' | 'sell' | 'stock' | 'alerts' | 'transactions' | 'muse' | 'social' | 'profitability' | 'settings' | 'costs' | 'profile' | 'reports' | 'stock-count' | 'paper-sales'
 type Basket = Record<string, number>
@@ -37,6 +36,7 @@ function Logo() {
 
 function App() {
   const [connectionNotice] = useState(() => { try { return migrateKnownDemoConnection(localStorage, { baseUrl: import.meta.env.VITE_API_BASE_URL, shopId: import.meta.env.VITE_SHOP_ID }, isNativeAndroid()) } catch { return null } })
+  const [activeConnection] = useState(getApiConfig)
   const [view, setView] = useState<View>(() => isNativeAndroid() ? 'sell' : 'today')
   const productImages = useProductImages()
   const [costProductId, setCostProductId] = useState<string | undefined>()
@@ -47,6 +47,7 @@ function App() {
   const [salesError, setSalesError] = useState('')
   const [salesLoading,setSalesLoading]=useState(true)
   const salesGeneration=useRef(0)
+  const summaryGeneration = useRef(0)
   const [saleReview, setSaleReview] = useState(false), [salePending, setSalePending] = useState(false)
   const [cashReceived, setCashReceived] = useState(''), [saleUncertain, setSaleUncertain] = useState(false), [manualReceipt, setManualReceipt] = useState<Sale | null>(null)
   const [voiceBusy, setVoiceBusy] = useState(false)
@@ -65,6 +66,12 @@ function App() {
   const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [connection, setConnection] = useState<ShopReachability | null>(null), [checkingConnection, setCheckingConnection] = useState(true), [connectionCheck, setConnectionCheck] = useState(0)
   const [welcome, setWelcome] = useState(() => formatShopWelcome(Date.now()))
+  const refreshSummary = async (clearOnFailure = false) => {
+    const id = ++summaryGeneration.current
+    const summary = await apiClient.getSummary()
+    if (id === summaryGeneration.current && (summary || clearOnFailure)) setShopSummary(summary)
+    return !!summary
+  }
   const refreshSales = async () => {
     const id=++salesGeneration.current;setSalesLoading(true)
     try { const records = await apiClient.listSales(); if(id===salesGeneration.current){setSales(records);setSalesError('')} return true }
@@ -82,10 +89,9 @@ function App() {
   useEffect(() => {
     const load = async () => {
       setIsLoading(true)
-      const [result, summary] = await Promise.all([apiClient.listProducts(), apiClient.getSummary(), refreshSales()])
+      const [result] = await Promise.all([apiClient.listProducts(), refreshSummary(true), refreshSales()])
       setProducts(result.products)
       setIsDemo(result.isDemo)
-      setShopSummary(summary)
       setIsLoading(false)
     }
     void load()
@@ -122,8 +128,7 @@ function App() {
   const paymentError = tender === 'cash' && (receivedCents === null ? 'Enter the cash received using at most two decimal places.' : receivedCents < total ? 'Cash received is below the basket total.' : '')
 
   const refreshConfirmedSale = async (sale: Sale | QuickReceipt, label: string) => {
-    const [summary, history] = await Promise.allSettled([apiClient.getSummary(), refreshSales()])
-    if (summary.status === 'fulfilled' && summary.value) setShopSummary(summary.value)
+    const [summary, history] = await Promise.allSettled([refreshSummary(), refreshSales()])
     if (summary.status === 'rejected' || !summary.value || history.status === 'rejected' || !history.value) setNotice({ type: 'success', text: `${label} ${sale.id} recorded. Stock is updated from its receipt; summary or history refresh is unavailable. Do not record this sale again.` })
   }
 
@@ -154,6 +159,16 @@ function App() {
     if (result.isDemo) throw new Error('Could not refresh live catalogue.')
     setProducts(result.products)
   }
+  const refreshSampleShop = async () => {
+    const current = getApiConfig()
+    if (activeConnection.shopId.toLowerCase() !== SAMPLE_SHOP_ID ||
+      current.shopId !== activeConnection.shopId || current.baseUrl !== activeConnection.baseUrl) return true
+    const [summary, history, products] = await Promise.allSettled([
+      refreshSummary(), refreshSales(), refreshCostProducts(),
+    ])
+    return summary.status === 'fulfilled' && summary.value &&
+      history.status === 'fulfilled' && history.value && products.status === 'fulfilled'
+  }
   const openCosts = (productId?: string) => { setCostProductId(productId); setView('costs') }
   const setVoicePreference = (mode: SaleMode) => { setVoiceMode(mode); try { localStorage.setItem(SALE_MODE_KEY, mode) } catch { setNotice({ type: 'error', text: 'Sale mode applies for this session; this browser could not save the preference.' }) } }
   const confirmedVoiceSale = (receipt: QuickReceipt) => {
@@ -173,7 +188,7 @@ function App() {
       {(view === 'profile' || view === 'settings') && <details className={`shop-connection-summary ${connection?.status === 'unavailable' ? 'unavailable' : ''}`} aria-label="Shop server connection"><summary>Shop connection & build</summary><p>Build <strong>{DEMO_BUILD_LABEL}</strong></p><p>Shop server: <code>{connection?.address ?? 'Checking configured address…'}</code></p><p>{connection ? <>Last checked <time dateTime={new Date(connection.checkedAt).toISOString()}>{new Date(connection.checkedAt).toLocaleTimeString()}</time>{checkingConnection ? ' · checking again…' : ' · tap the status above to recheck'}</> : 'Verifying readiness and your shop from this device…'}</p>{connection?.status === 'unavailable' && <><p role="status">{connection.detail}</p><p>{localShopGuidance(connection.address)}</p></>}</details>}
       {view !== 'profile' && view !== 'settings' && connection?.status === 'unavailable' && <details className="counter-connection-alert"><summary>Shop unavailable · connection help</summary><p>{connection.detail}</p><p>{localShopGuidance(connection.address)}</p><p>Server <code>{connection.address}</code> · checked {new Date(connection.checkedAt).toLocaleTimeString()}</p><button type="button" disabled={checkingConnection} onClick={() => setConnectionCheck((value) => value + 1)}>Check again</button></details>}
       {view !== 'sell' && view !== 'profile' && view !== 'reports' && view !== 'stock-count' && view !== 'stock' && view !== 'transactions' && view !== 'paper-sales' && <section className="welcome"><div><p className="eyebrow"><time dateTime={welcome.dateKey} title={welcome.timeZone}>{welcome.date}</time></p><h1>{welcome.greeting}, Tendai.</h1><p className="muted">Here’s how your shop is doing today.</p></div><button type="button" className="avatar profile-avatar" disabled={voiceBusy || salePending || saleUncertain || countBlocking || stockBlocking || paperBlocking} aria-label="Open Profile" onClick={() => setView('profile')}>T</button></section>}
-      {getApiConfig().shopId === SAMPLE_SHOP_ID && <div className="demo-banner"><strong>Sample shop</strong> · Synthetic sales history</div>}
+      {activeConnection.shopId.toLowerCase() === SAMPLE_SHOP_ID && <div className="demo-banner"><strong>Sample shop</strong> · Synthetic sales history</div>}
       {isDemo && <div className="demo-banner"><span>✦</span><span><strong>Demo mode</strong> · Showing starter catalogue data. Connect the API to use live shop data.</span></div>}
       {connectionNotice && view === 'profile' && <div className="notice" role="status">{connectionNotice}</div>}
       {notice && <div className={`notice ${notice.type}`} role="status"><span>{notice.type === 'success' ? '✓' : '!'}</span>{notice.text}<button aria-label="Dismiss message" onClick={() => setNotice(null)}>×</button></div>}
@@ -189,12 +204,12 @@ function App() {
       {view === 'stock-count' && <StockCountPage products={products} isDemo={isDemo} onBack={()=>setView('stock')} onChanged={refreshCostProducts} onBlockingChange={setCountBlocking}/>}
       {view === 'reports' && <Reports onBack={()=>setView('today')} onCount={openStockCount}/>}
       {view === 'transactions' && <Transactions onOpenDaily={() => setView('paper-sales')} currency={connection?.status==='connected'?connection.currency:undefined} shopId={getApiConfig().shopId} loading={salesLoading} onRefresh={refreshSales} sales={sales} products={isDemo ? [] : products} error={salesError} onBack={() => setView('today')} />}
-      {view === 'muse' && <AskMuse onBack={() => setView('today')} />}
+      {view === 'muse' && <AskMuse config={activeConnection} onBack={() => setView('today')} />}
       {view === 'social' && <SocialUpdate products={products} isDemo={isDemo} images={productImages} onBack={() => setView('today')} />}
       {view === 'profit-report' && <Reports initialView="profit" onBack={() => setView('profitability')} onCount={openStockCount} />}
       {view === 'profitability' && <Profitability onBack={() => setView('today')} onAnalyse={() => setView('profit-report')} />}
-      {view === 'profile' && <section className="profile-page"><header><p className="eyebrow">YOUR ACCOUNT</p><h2>Profile</h2></header><VoicePronunciation /><SampleHistory shopId={SAMPLE_SHOP_ID} switchDisabled={saleUncertain || salePending || voiceBusy || countBlocking || stockBlocking || paperBlocking} /><details className="profile-investigations"><summary>Activity & request history</summary><RequestHistory /></details><button className="settings-link" type="button" disabled={saleUncertain} onClick={() => setView('settings')}>Shop Connection & voice sale mode →</button></section>}
-      {view === 'settings' && <ApiSettings onBack={() => setView('today')} mode={voiceMode} onMode={setVoicePreference} />}
+      {view === 'profile' && <section className="profile-page"><header><p className="eyebrow">YOUR ACCOUNT</p><h2>Profile</h2></header><VoicePronunciation /><SampleHistory config={activeConnection} onChanged={refreshSampleShop} switchDisabled={saleUncertain || salePending || voiceBusy || countBlocking || stockBlocking || paperBlocking} /><details className="profile-investigations"><summary>Activity & request history</summary><RequestHistory /></details><button className="settings-link" type="button" disabled={saleUncertain} onClick={() => setView('settings')}>Shop Connection & voice sale mode →</button></section>}
+      {view === 'settings' && <ApiSettings switchDisabled={saleUncertain || salePending || voiceBusy || countBlocking || stockBlocking || paperBlocking} onBack={() => setView('today')} mode={voiceMode} onMode={setVoicePreference} />}
     </main>
 
     <nav className="bottom-nav" aria-label="Main navigation">{([['today', '⌂', 'Today'], ['sell', '+', 'Sell'], ['stock', '▥', 'Stock'], ['reports', '▤', 'Reports'], ['profile', '○', 'Profile']] as const).map(([key, , label]) => <button disabled={voiceBusy || salePending || saleUncertain || countBlocking || stockBlocking || paperBlocking} key={key} className={(view === key || (key==='sell'&&view==='paper-sales') || (key === 'stock' && (view === 'costs' || view === 'stock-count'))) ? 'active' : ''} onClick={() => { setView(key) }} aria-current={(view === key || (key==='sell'&&view==='paper-sales') || (key === 'stock' && (view === 'costs' || view === 'stock-count'))) ? 'page' : undefined}><span className="nav-icon"><ShopIcon name={key as ShopIconName} /></span>{label}{key === 'sell' && itemCount > 0 && <b className="basket-badge">{itemCount}</b>}</button>)}</nav>
@@ -229,13 +244,34 @@ function Profitability({ onBack, onAnalyse }: { onBack: () => void; onAnalyse: (
   </section>
 }
 
-function ApiSettings({ onBack, mode, onMode }: { onBack: () => void; mode: SaleMode; onMode: (mode: SaleMode) => void }) {
+function ApiSettings({ onBack, mode, onMode, switchDisabled }: { switchDisabled: boolean; onBack: () => void; mode: SaleMode; onMode: (mode: SaleMode) => void }) {
   const current = getApiConfig()
   const [baseUrl, setBaseUrl] = useState(current.baseUrl)
   const [shopId, setShopId] = useState(current.shopId)
   const [saveError, setSaveError] = useState('')
-  const save = () => { try { saveApiConfig({ baseUrl, shopId }); window.location.reload() } catch (error) { setSaveError(error instanceof Error ? error.message : 'Could not save connection.') } }
-  return <section className="tool-placeholder"><button className="back-link" onClick={onBack}>← Back to Today</button><div className="tool-hero social-tool"><span className="tool-glyph">⚙</span><p className="eyebrow">SHOP CONNECTION</p><h2>Connect Street CEO</h2><p>This connects the browser to your Street CEO backend. It is not the Muse/Meta AI setup.</p></div><div className="analysis-card"><label>Voice sale mode<select value={mode} onChange={(event) => onMode(event.target.value as SaleMode)}><option value="quick">Quick Sale · Napo ends a clear basket (default)</option><option value="review">Review · confirm the basket manually</option></select></label><p>Quick Sale asks for missing payment details and exceptions. Speech needs supported microphone/audio access; typed commands use the same verified sale boundary.</p><label>Street CEO API base URL<input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="http://localhost:8000" /></label><p className="muted">Enter the backend root without /api/v1. A phone needs the computer’s reachable network address.</p>{saveError && <p role="alert">{saveError}</p>}<label>Shop ID<input value={shopId} onChange={(event) => setShopId(event.target.value)} /></label><p className="muted">Use your shop’s non-zero UUID. The confirmed local demo ID is {DEMO_SHOP_ID}.</p><button className="back-link" type="button" onClick={() => { setShopId(DEMO_SHOP_ID); setSaveError('') }}>Use confirmed local demo shop ID</button><button className="back-link" type="button" onClick={() => { setShopId(SAMPLE_SHOP_ID); setSaveError('') }}>Use sample shop ID</button><button className="primary-action full" onClick={save}>Save connection <span className="arrow">→</span></button><p className="muted">AI setup is managed securely in the Street CEO backend. You do not need to enter it here.</p></div></section>
+  const save = (selectedId: string) => { if (switchDisabled) return; try { saveApiConfig({ baseUrl, shopId: selectedId }); window.location.reload() } catch (error) { setSaveError(error instanceof Error ? error.message : 'Could not save connection.') } }
+  return <section className="tool-placeholder">
+    <button className="back-link" onClick={onBack}>← Back to Today</button>
+    <div className="tool-hero social-tool"><span className="tool-glyph">⚙</span><h2>Shop connection</h2><p>Choose the server and shop this device connects to.</p></div>
+    <div className="analysis-card">
+      <label>Server address<input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} placeholder="http://localhost:8001" /></label>
+      <p className="muted">Enter the server root without /api/v1. On a phone, use the computer’s reachable network address.</p>
+      <label>Shop ID<input value={shopId} onChange={(event) => setShopId(event.target.value)} /></label>
+      <p className="muted">Enter a shop ID and save, or open a shop directly using the server address above.</p>
+      <div className="shop-connection-choices">
+        <button type="button" disabled={switchDisabled} onClick={() => save(getLiveShopId(baseUrl))}>Open live shop</button>
+        <button type="button" disabled={switchDisabled} onClick={() => save(SAMPLE_SHOP_ID)}>Open sample shop</button>
+      </div>
+      {saveError && <p role="alert">{saveError}</p>}
+      {switchDisabled && <p role="status">Finish the current shop activity before changing the connection.</p>}
+      <button className="primary-action full" disabled={switchDisabled} onClick={() => save(shopId)}>Save connection <span className="arrow">→</span></button>
+    </div>
+    <div className="analysis-card">
+      <h3>Voice sales</h3>
+      <label>Voice sale mode<select value={mode} onChange={(event) => onMode(event.target.value as SaleMode)}><option value="quick">Quick Sale · Napo ends a clear basket (default)</option><option value="review">Review · confirm the basket manually</option></select></label>
+      <p>Quick Sale asks for missing payment details and exceptions. Speech needs microphone access. Typed commands use the same sale checks.</p>
+    </div>
+  </section>
 }
 
 export default App

@@ -55,7 +55,7 @@ def test_noisy_match_requires_explicit_approval_before_tender_and_payment(tmp_pa
     assert app.state.store.shops[UUID(SHOP)].idempotent_sales == {}
     app.state.store.close()
     app = build(path, resolver)
-    question = call(app, "POST", route + "/commit", "paid", {**body, "tender": None, "amount_received_cents": None, "match_confirmed": True})
+    question = call(app, "POST", route + "/commit", "paid", {**body, "tender": None, "amount_received_cents": None, "match_confirmed": False})
     assert question.json()["status"] == "needs_tender"
     paid_body = {**body, "match_confirmed": True}
     paid = call(app, "POST", route + "/commit", "paid", paid_body)
@@ -134,3 +134,56 @@ def test_exact_commands_do_not_call_resolver_and_legacy_paid_fingerprint_survive
     assert call(app, "POST", route + "/commit", "old-key", body).json() == receipt
     assert call(app, "POST", route + "/commit", "old-key", {**body, "match_confirmed": False}).json() == receipt
     app.state.store.close()
+
+def test_unknown_muse_reply_offers_only_a_unique_candidate_and_preserves_quantity(tmp_path, monkeypatch):
+    monkeypatch.setenv("STREET_CEO_TRACE_DATABASE", str(tmp_path / "trace.sqlite3"))
+    provider = SyntheticProvider(None)
+    app = build(
+        tmp_path / "shop.sqlite3",
+        lambda transcript, products: resolve_catalogue_voice(
+            transcript, products, provider=provider, allow_local_proposals=False,
+        ),
+    )
+    route = f"/api/v1/shops/{SHOP}/voice/transcript"
+
+    initial = call(app, "POST", route, "heard-cook", {"transcript": "one cook"}).json()
+    assert initial["status"] == "needs_clarification"
+    assert initial["lines"] == []
+    assert initial["clarification_question"].startswith("Did you mean one Coca-Cola")
+    assert initial["pending_items"][0]["quantity"] == 1
+    accepted = call(app, "POST", route, "yes-cook", {
+        "transcript": "Yes", "clarification_of": initial["request_id"],
+    }).json()
+    assert accepted["status"] == "needs_match_confirmation"
+    assert accepted["lines"][0]["quantity"] == 1
+    assert accepted["lines"][0]["product_name"] == "Coca-Cola 300ml"
+
+    unknown = call(app, "POST", route, "heard-unicorn", {"transcript": "two unicorns"}).json()
+    assert unknown["pending_items"][0]["product_id"] is None
+    assert unknown["pending_items"][0]["quantity"] == 2
+    named = call(app, "POST", route, "named-bread", {
+        "transcript": "bread", "clarification_of": unknown["request_id"],
+    }).json()
+    assert named["lines"][0]["quantity"] == 2
+    assert named["lines"][0]["product_name"] == "Bread loaf"
+
+    from uuid import uuid4
+
+    from services.api.app import Product
+
+    with app.state.store.transaction():
+        cookies = Product(id=uuid4(), shop_id=UUID(SHOP), sku="COOKIE-100",
+                          name="Cookies", unit_price_cents=150, stock_qty=10)
+        app.state.store.shops[UUID(SHOP)].products[cookies.id] = cookies
+    ambiguous = call(app, "POST", route, "heard-cook-again", {"transcript": "one cook"}).json()
+    assert ambiguous["clarification_question"] == "I heard one cook. Did you mean Coke or cookies?"
+    assert ambiguous["pending_items"][0]["product_id"] is None
+    yes = call(app, "POST", route, "ambiguous-yes", {
+        "transcript": "Yes", "clarification_of": ambiguous["request_id"],
+    }).json()
+    assert yes["lines"] == []
+    assert yes["pending_items"][0]["quantity"] == 1
+    picked = call(app, "POST", route, "picked-cookies", {
+        "transcript": "Cookies", "clarification_of": yes["request_id"],
+    }).json()
+    assert picked["lines"] == [{"product_id": str(cookies.id), "product_name": "Cookies", "quantity": 1}]

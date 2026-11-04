@@ -21,6 +21,8 @@ REQUIRED = {
 
 
 def forbidden(path):
+    if path == "releases/street-ceo-demo-2026-11-04.apk":
+        return False
     value = PurePosixPath(path)
     name = value.name.lower()
     parts = value.parts

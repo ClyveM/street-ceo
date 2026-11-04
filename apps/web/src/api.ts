@@ -1,4 +1,4 @@
-import { requestMuse, resolveShopConnection, shopConfigurationError } from './muse'
+import { DEMO_SHOP_ID, SAMPLE_SHOP_ID, requestMuseJob, resolveShopConnection, shopConfigurationError } from './muse'
 import { normalizeApiBaseUrl, validateApiBaseUrl } from './apiUrl'
 import { createCostsClient } from './costs'
 import { createProductCostsClient } from './productCosts'
@@ -68,11 +68,30 @@ export function getApiConfig(): ApiConfig {
   }
 }
 
+export function getLiveShopId(baseUrl: string): string {
+  baseUrl = normalizeApiBaseUrl(baseUrl)
+  const current = getApiConfig()
+  if (current.baseUrl === baseUrl && current.shopId !== SAMPLE_SHOP_ID &&
+    !shopConfigurationError(current)) return current.shopId
+  try {
+    const saved = JSON.parse(localStorage.getItem(CONFIG_KEY) ?? 'null')
+    const shopId = saved?.previousLiveShopId
+    if (saved?.baseUrl === baseUrl && typeof shopId === 'string' &&
+      shopId !== SAMPLE_SHOP_ID && !shopConfigurationError({ baseUrl, shopId })) return shopId
+  } catch { /* A legacy sample connection falls back to the confirmed demo shop. */ }
+  return DEMO_SHOP_ID
+}
+
 export function saveApiConfig(config: ApiConfig): void {
   const normalized = { baseUrl: validateApiBaseUrl(config.baseUrl), shopId: config.shopId.trim() }
   const error = shopConfigurationError(normalized)
   if (error) throw new Error(error)
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(normalized))
+  const current = getApiConfig()
+  const previousLiveShopId = normalized.shopId === SAMPLE_SHOP_ID && current.baseUrl === normalized.baseUrl
+    ? current.shopId === SAMPLE_SHOP_ID ? getLiveShopId(current.baseUrl)
+      : !shopConfigurationError(current) ? current.shopId : undefined
+    : undefined
+  localStorage.setItem(CONFIG_KEY, JSON.stringify({ ...normalized, previousLiveShopId }))
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -106,9 +125,7 @@ export const productCostsApi = createProductCostsClient(() => {
 
 /** The only network boundary used by screens. Fambai can later decorate this with sync. */
 export const apiClient = {
-  askMuse(question: string, signal?: AbortSignal) {
-    return requestMuse(getApiConfig(), question, signal)
-  },
+  askMuseJob: requestMuseJob,
   async listProducts(): Promise<{ products: Product[]; isDemo: boolean }> {
     const config = getApiConfig()
     if (!config.baseUrl) return { products: demoProducts, isDemo: true }

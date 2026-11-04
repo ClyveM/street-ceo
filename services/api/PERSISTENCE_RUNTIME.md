@@ -19,7 +19,8 @@ tracked development records.
 
 The connected demo defaults to SQLite when `STREET_CEO_STORE` is unset.
 Set `STREET_CEO_STORE=sqlite` explicitly for a reproducible launch and optionally
-set `STREET_CEO_SQLITE_PATH` (default `data/street-ceo.sqlite3`). Run exactly one
+set `STREET_CEO_SQLITE_PATH` to override the default, `data/demo-mvp.sqlite3`
+in the repository. Run exactly one
 Uvicorn worker. Existing `.env` configuration may override the default and must
 be checked without exposing credentials. There is no silent memory fallback.
 
@@ -145,3 +146,26 @@ stock is validated, the sale/lines are inserted, and stock is decremented.
 or the migration has not created `public.shops`. Apply
 `migrations/0001_initial.sql` before serving traffic. No connection strings,
 credentials, or customer data belong in source control.
+
+## Ask Muse jobs
+
+Use `POST /api/v1/shops/{shop_id}/muse/jobs` with the same JSON question as
+the synchronous `POST /api/v1/shops/{shop_id}/muse` and an `Idempotency-Key`
+of up to 128 characters. Poll `GET /api/v1/shops/{shop_id}/muse/jobs/{job_id}`.
+Both routes require the existing matching `X-Shop-ID` header. Submissions
+return 202 and both routes return `{job_id, status, result, error}`. Statuses
+are `queued`, `running`, `succeeded`, `failed`, and `expired`. A successful
+job contains the normal Muse response, including its own answer status.
+The job ID is also returned as `X-Correlation-ID`. Reuse the same key and
+question for an uncertain submission. A changed question conflicts with 409.
+
+The local SQLite worker executes the same reasoning path as the synchronous
+route, using the committed shop snapshot available when it claims the job.
+Model work runs outside the shop transaction. An interrupted job can resume
+once at the next startup. This deployment supports one API worker per file.
+Other repository modes use an ephemeral queue. The pending question and
+completed answer are private job data in the shop database. The question
+is cleared at completion, and the answer expires after 24 hours. The
+expired job and hashed key binding are removed after another 24 hours.
+The separate investigation database holds bounded, sanitized events keyed
+by job ID. Raw idempotency keys are excluded from events.

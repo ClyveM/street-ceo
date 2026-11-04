@@ -18,3 +18,11 @@
 .ask-muse .muse-unavailable { font-size: 16px; line-height: 1.6; }
 .ask-muse button:focus-visible, .ask-muse textarea:focus-visible, .ask-muse summary:focus-visible { outline: 3px solid var(--teal-dark); outline-offset: 3px; }
 .ask-muse .primary-action:disabled { cursor: default; opacity: .65; }
+.muse-document { display: grid; gap: 14px; }
+.muse-document-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.muse-document-header button { min-height: 44px; }
+.muse-document-section { padding: 12px 14px; border-left: 3px solid #2f8867; border-radius: 0 10px 10px 0; background: #edf6ef; display: grid; gap: 8px; }
+.muse-document-section h4 { margin: 0; font-size: 16px; color: #084d39; }
+
+.muse-shop-scope { display: grid; gap: 3px; margin: 0; padding: 10px 14px; border-radius: 10px; background: #edf6ef; color: #084d39; overflow-wrap: anywhere; }
+.muse-shop-scope span { font-size: 13px; }

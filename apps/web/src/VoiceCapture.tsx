@@ -34,6 +34,7 @@ export function VoiceCapture({ photos = {}, mode, blocked = false, connection = 
   const [questionUnavailable, setQuestionUnavailable] = useState(false)
   const [latestReceipt, setLatestReceipt] = useState<QuickReceipt | null>(null)
   const [originalTranscript, setOriginalTranscript] = useState('')
+  const [proposedPayment, setProposedPayment] = useState<TenderAnswer | null>(null)
   const [catalogueAnswer, setCatalogueAnswer] = useState('')
   const clarificationContext = useRef<string | undefined>(undefined)
   const isCatalogueReply = useRef(false)
@@ -146,6 +147,19 @@ export function VoiceCapture({ photos = {}, mode, blocked = false, connection = 
     if(interpreted.pendingItems?.length||retentionActive.current&&interpreted.status==='needs_match_confirmation'){retentionActive.current=true;try{saveRetainedBasket(localStorage,getApiConfig(),{review:interpreted,attempt:null},parseVoiceReview);setCheckpointError('')}catch{setCheckpointError('This device could not save the basket for reload. Keep this screen open; payment requires clearing any older checkpoint.')}}
     if (!mounted.current) return
     setTranscript(raw); setReview(interpreted); setReceipt(null); setReversal(null); setQuestion(null); setUncertain(false); pending.current = null; setOpen(true)
+    setProposedPayment(null)
+    if (focused && interpreted.status === 'needs_match_confirmation') {
+      try {
+        const quote = await voiceClient.commit(interpreted, null, `voice-sale-${interpreted.reviewId}`, signal)
+        if (quote.kind === 'question') {
+          setQuestion(quote); setAnswer(''); setPhase('tender')
+          prompt(`Total ${money(quote.amount_due_cents)}. Cash or bank?`)
+          return
+        }
+      } catch {
+        if (signal.aborted) return
+      }
+    }
     if (interpreted.status === 'needs_match_confirmation') { setCatalogueAnswer(''); setPhase('match'); prompt(interpreted.clarificationQuestion!); return }
     if (interpreted.status === 'needs_clarification') { setCatalogueAnswer(''); setPhase('clarification'); prompt(interpreted.clarificationQuestion!); return }
     if (conversationReply && interpreted.canCommit) { setCatalogueAnswer(''); setPhase('match'); prompt(catalogueMatchQuestion(interpreted)); return }
@@ -165,19 +179,21 @@ export function VoiceCapture({ photos = {}, mode, blocked = false, connection = 
     if(phase==='clarification'&&!review?.pendingItems?.length){let pronunciation={apo:'apo',napo:'napo'};try{pronunciation=readPronunciation(localStorage)}catch{};const framed=catalogueReplyEvent(new WakeCommand(),raw,pronunciation);if(framed.capturing){setTranscript(raw);prompt('Finish the retry with Napo. Please repeat the complete command, or say Cancel.');return};if(framed.command)reply=paymentCommand(framed.command)}
     const response = matchAnswer(reply)
     if (response === 'cancel' || phase === 'clarification' && cancelPayment(reply)) {
-      if(retentionActive.current||checkpointUnknown.current)clearRetainedBasket(localStorage,getApiConfig());retentionActive.current=false;checkpointUnknown.current=false;setResumeOffer(null);setCheckpointError('');focusedAttempt.current=null; pending.current = null; clarificationContext.current = undefined; setReview(null); setQuestion(null); setQuestionUnavailable(false); setOpen(false); setPhase('idle'); setTranscript(reply)
+      if(retentionActive.current||checkpointUnknown.current)clearRetainedBasket(localStorage,getApiConfig());retentionActive.current=false;checkpointUnknown.current=false;setResumeOffer(null);setCheckpointError('');focusedAttempt.current=null; pending.current = null; clarificationContext.current = undefined; setProposedPayment(null); setReview(null); setQuestion(null); setQuestionUnavailable(false); setOpen(false); setPhase('idle'); setTranscript(reply)
       prompt('Basket cancelled. No sale recorded. Say Apo for a new sale.'); return
     }
     if(phase==='clarification'&&focusedAttempt.current&&/^retry[.!?]*$/i.test(reply.trim())){const attempt=focusedAttempt.current;await process(attempt.transcript,signal,undefined,attempt.context,true);return}
     if (phase === 'match') {
+      if (response === 'no' && proposedPayment) { setProposedPayment(null); setPhase('tender'); prompt('Cash or bank? Or say Cancel.'); return }
       if (response === 'no') { if(retentionActive.current||checkpointUnknown.current)clearRetainedBasket(localStorage,getApiConfig());retentionActive.current=false;checkpointUnknown.current=false; clarificationContext.current = undefined; setReview(null); setCatalogueAnswer(''); setPhase('clarification'); setTranscript(reply); prompt('Okay. Say the complete basket with quantities and catalogue product names, or Cancel.'); return }
       if (response !== 'yes' || !review) { prompt('Say Yes to accept these products, No to correct the basket, or Cancel.'); return }
-      const confirmed = confirmVoiceMatch(review); setReview(confirmed); setTranscript(reply); await commit(confirmed, null, signal); return
+      const confirmed = confirmVoiceMatch(review); setReview(confirmed); setTranscript(reply); await commit(confirmed, proposedPayment, signal); setProposedPayment(null); return
     }
     if (phase === 'clarification') { setCommand(reply); await process(reply, signal, undefined, review?.status === 'needs_clarification' ? review.reviewId : undefined, true) }
   })
   const submitAnswer = (text = answer) => run(async (signal) => {
     if (!uncertain && phase === 'tender' && cancelPayment(text)) {
+      if (retentionActive.current || checkpointUnknown.current) discardBasket()
       pending.current = null; setReview(null); setQuestion(null); setQuestionUnavailable(false); setReceipt(null); setOpen(false); setPhase('idle'); setAnswer(''); setTranscript(text)
       prompt('Basket cancelled. No sale recorded. Say Apo for a new sale.'); return
     }
@@ -185,7 +201,29 @@ export function VoiceCapture({ photos = {}, mode, blocked = false, connection = 
     if (questionUnavailable) { setError('Restore the shop connection, then say Retry to retrieve the payment question, or Cancel.'); prompt('Please restore the shop connection, then say Retry or Cancel.'); return }
     const payment = tenderAnswer(text, question?.missing.includes('amount_received_cents'))
     if (!payment || !review) { setError('Please say Cash, Cash 100, or Bank.'); prompt('Cash or Bank? For cash, say the amount received.'); return }
-    setTranscript(text); await commit(review, payment, signal)
+    setTranscript(text)
+    if (review.requiresMatchConfirmation && !review.matchConfirmed && question) {
+      const due = question.amount_due_cents
+      const received = payment.amount_received_cents
+      if (payment.tender === 'cash' && (received === undefined || received < due)) {
+        setQuestion({ ...question, question: 'How much cash did you receive?', missing: ['amount_received_cents'] })
+        setAnswer('')
+        prompt(received === undefined ? 'How much cash did you receive?' : 'That is below the total. How much cash did you receive?')
+        return
+      }
+      if (payment.tender === 'bank' && received !== undefined && received !== due) {
+        prompt('Bank payment must equal the total. Say Bank or Cancel.')
+        return
+      }
+      setProposedPayment(payment); setCatalogueAnswer(''); setPhase('match')
+      const products = review.lines.map(line => `${line.quantity} ${line.product_name}`).join(', ')
+      const paymentSummary = payment.tender === 'cash' && received !== undefined
+        ? `Cash ${money(received)}. Change ${money(received - due)}.`
+        : 'Bank.'
+      prompt(`${products}. Total ${money(due)}. ${paymentSummary} Save this sale? Say Yes or No.`)
+      return
+    }
+    await commit(review, payment, signal)
   })
   const recover = () => run(async (signal) => {
     if (operation.current === 'undo' && receipt) { const result = await voiceClient.undo(receipt, undoKey.current, signal); setReversal(result); setPhase('reversed'); setUncertain(false); await onUndo() }
@@ -264,7 +302,7 @@ export function VoiceCapture({ photos = {}, mode, blocked = false, connection = 
     {open && createPortal(<div className="quick-modal-backdrop"><section className={`quick-modal counter-modal ${paid ? 'counter-paid' : ''}`} role="dialog" aria-modal="true" aria-label={paid ? 'Saved sale receipt' : 'Apo sale basket'} onKeyDown={modalKeys} onFocusCapture={typingFocus} onBlurCapture={typingBlur}>
       <header className="counter-modal-heading"><div className="counter-brand"><img src="/street-ceo-logo.png" alt="" /><div><p className="counter-kicker">{paid ? 'ALL SAVED' : uncertain ? 'NEEDS CHECKING' : 'STREET CEO'}</p><h2>{paid ? 'Sale saved.' : phase === 'reversed' ? 'Stock reversed' : phase === 'match' ? 'These products?' : phase === 'clarification' ? 'One quick question' : phase === 'tender' ? 'Payment' : 'Your basket'}</h2></div></div><button ref={closeButton} className="counter-close" disabled={busy || listening} onClick={closeCounterModal} aria-label="Close Apo sale basket">{paid ? 'Done' : 'Close'}</button></header>
       <div className="counter-voice-bar">{voiceToggle}<span role="status" data-listening-state={handsFreeStatus.state}>{voicePaused ? busy ? 'Checking…' : outputActive ? 'Apo is speaking…' : typingFocused ? 'Waiting while you type…' : uncertain ? 'Recover the original request.' : 'Listening paused' : handsFreeStatus.state === 'listening' ? phase === 'clarification' ? handsFreeStatus.capturing ? handsFreeStatus.message : 'Listening — answer the question, or Cancel. No Apo needed.' : phase === 'match' ? 'Listening — say Yes, No, or Cancel.' : phase === 'tender' ? 'Listening — say Cash, Bank, or Cancel.' : paid ? 'Listening — ready for your next Apo.' : 'Listening for Apo.' : handsFreeStatus.message}</span></div>
-      {(phase === 'match' || phase === 'clarification') && <section className="counter-question" aria-label="Catalogue clarification"><h3>{phase === 'match' && review ? catalogueMatchQuestion(review) : review?.clarificationQuestion ?? 'Say your basket with quantities and product names.'}</h3><p>{phase === 'match' ? 'Say Yes, No, or Cancel. Confirm the products before payment.' : 'Answer this question by voice, or Cancel. Your understood items stay in the basket.'}</p><details><summary>Type instead</summary><div className="quick-actions">{phase === 'match' && <><button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('Yes') }}>Yes</button><button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('No') }}>No</button></>}<button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('Cancel') }}>Cancel basket</button></div><label>Your answer<input value={catalogueAnswer} onChange={(event) => setCatalogueAnswer(event.target.value)} maxLength={1000} disabled={busy || uncertain} /></label><button type="button" disabled={!catalogueAnswer.trim() || busy || uncertain} onClick={() => { void submitCatalogueReply(catalogueAnswer) }}>Send answer</button></details></section>}
+      {(phase === 'match' || phase === 'clarification') && <section className="counter-question" aria-label="Catalogue clarification"><h3>{phase === 'match' && review ? catalogueMatchQuestion(review) : review?.clarificationQuestion ?? 'Say your basket with quantities and product names.'}</h3><p>{phase === 'match' ? proposedPayment ? 'Say Yes to save, No to change payment, or Cancel.' : 'Say Yes, No, or Cancel. Confirm the products before payment.' : 'Answer this question by voice, or Cancel. Your understood items stay in the basket.'}</p><details><summary>Type instead</summary><div className="quick-actions">{phase === 'match' && <><button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('Yes') }}>Yes</button><button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('No') }}>No</button></>}<button type="button" disabled={busy || uncertain} onClick={() => { void submitCatalogueReply('Cancel') }}>Cancel basket</button></div><label>Your answer<input value={catalogueAnswer} onChange={(event) => setCatalogueAnswer(event.target.value)} maxLength={1000} disabled={busy || uncertain} /></label><button type="button" disabled={!catalogueAnswer.trim() || busy || uncertain} onClick={() => { void submitCatalogueReply(catalogueAnswer) }}>Send answer</button></details></section>}
       {phase==='clarification'&&!!review?.pendingItems?.length&&<section className="retained-basket-context" aria-label="Retained basket"><p><strong>{review.retainedLines?.length??0} products kept.</strong> Answer only the current item. Nothing is saved as a sale yet.</p><button disabled={busy||uncertain||!!focusedAttempt.current} onClick={()=>{void submitCatalogueReply('remove this item')}}>Remove this item</button>{focusedAttempt.current&&<button disabled={busy||uncertain} onClick={()=>{void submitCatalogueReply('Retry')}}>Retry this answer</button>}<details><summary>Kept products ({review.retainedLines?.length??0})</summary><ul className="quick-lines counter-items">{review.retainedLines?.map(line=><li key={`retained-${line.product_id}`}><strong>{line.product_name}</strong><span>× {line.quantity}</span></li>)}</ul></details><details><summary>Items still to clarify ({review.pendingItems.length})</summary><ol>{review.pendingItems.map(item=><li key={`pending-${item.slot_id}`}>{item.product_name??item.heard??'Unclear product'} · {item.quantity&&item.quantity>0?`${item.quantity} units`:'quantity needed'}</li>)}</ol></details></section>}
       <ul className="quick-lines counter-items">{review?.lines.map((line) => <li key={line.product_id}><strong className="sale-basket-product">{photos[line.product_id]?.previewUrl&&<img className="sale-basket-photo" src={photos[line.product_id].previewUrl} alt={productPhotoAlt(photos[line.product_id]?.source,line.product_name)}/>}<span>{line.product_name}</span></strong><span>× {line.quantity}</span></li>)}</ul>
       {paid && receipt ? <section className="counter-payment-summary" aria-label="Saved receipt amounts"><dl><div><dt>Total</dt><dd>{money(receipt.total_cents)}</dd></div><div><dt>Tendered · {receipt.tender}</dt><dd>{money(receipt.amount_received_cents)}</dd></div></dl><div className="counter-change"><span>Change</span><strong>{money(receipt.change_cents)}</strong></div></section> : total !== undefined && <dl className="quick-totals"><dt>Total</dt><dd>{money(total)}</dd><dt>Tendered</dt><dd>{entered?.amount_received_cents !== undefined ? `${money(entered.amount_received_cents)} · preview` : 'Awaiting payment'}</dd></dl>}

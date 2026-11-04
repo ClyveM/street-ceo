@@ -1,6 +1,7 @@
 /** Contract verified against services/api/app.py: MuseAskRequest/MuseAskResponse. */
 // Confirmed in InMemoryStore.seed_demo_shop() and Hwaro's W3-MUSE-SHOP-001 handoff.
 export const DEMO_SHOP_ID = '00000000-0000-0000-0000-000000000001'
+export const SAMPLE_SHOP_ID = '00000000-0000-0000-0000-000000000120'
 export type ShopConnection = { baseUrl: string; shopId: string }
 
 /** Upgrade only the retired, known APK demo connection. Custom shops and browsers stay unchanged. */
@@ -37,6 +38,9 @@ export function shopConfigurationError(config: ShopConnection): string | null {
   return null
 }
 
+export type MuseSection = { title: string; body: string; evidence_ids?: string[] }
+export type MuseDocument = { title: string; sections: MuseSection[] }
+
 export type MuseResponse = {
   status: 'answered' | 'needs_data' | 'unavailable'
   title: string
@@ -45,6 +49,9 @@ export type MuseResponse = {
   missing_data: string[]
   source: string
   confidence: number
+  document?: MuseDocument | null
+  sections?: MuseSection[]
+  partial?: boolean
 }
 
 export function parseMuseResponse(value: unknown): MuseResponse {
@@ -59,7 +66,29 @@ export function parseMuseResponse(value: unknown): MuseResponse {
     typeof data.confidence !== 'number' || !Number.isFinite(data.confidence) || data.confidence < 0 || data.confidence > 1) {
     throw new Error('Muse returned an unreadable response. Please try again.')
   }
+  if (data.sections != null && !validMuseSections(data.sections)) {
+    throw new Error('Muse returned unreadable investigation sections.')
+  }
+  if (data.document != null && !validMuseDocument(data.document)) {
+    throw new Error('Muse returned an unreadable business plan.')
+  }
   return data as MuseResponse
+}
+
+const boundedMuseText = (field: unknown, limit: number): field is string =>
+  typeof field === 'string' && !!field.trim() && field.length <= limit
+
+function validMuseSections(value: unknown): value is MuseSection[] {
+  return Array.isArray(value) && value.length <= 20 && value.every(section =>
+    section && boundedMuseText(section.title, 250) && boundedMuseText(section.body, 12000) &&
+    (section.evidence_ids == null || Array.isArray(section.evidence_ids) && section.evidence_ids.length <= 24 &&
+      section.evidence_ids.every((id: unknown) => boundedMuseText(id, 64))))
+}
+
+function validMuseDocument(value: unknown): value is MuseDocument {
+  if (!value || typeof value !== 'object') return false
+  const { title, sections } = value as Record<string, unknown>
+  return boundedMuseText(title, 250) && validMuseSections(sections) && sections.length > 0
 }
 
 /** Period comes from returned evidence, never from a guess about the question. */
@@ -106,5 +135,103 @@ export async function requestMuse(
     if (error instanceof TypeError) throw new Error('Could not reach Muse. Check your connection and try again.')
     if (error instanceof SyntaxError) throw new Error('Muse returned an unreadable response. Please try again.')
     throw error
+  }
+}
+
+export type MuseJobStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'expired'
+const museProgressLabels = {
+  discovering: 'Muse is checking which business records are available…',
+  investigating: 'Muse is reviewing the evidence…',
+  retrieving: 'Muse is reading the records it selected…',
+  drafting: 'Muse is preparing your answer…',
+}
+type MuseProgressStage = keyof typeof museProgressLabels
+
+export type MuseJob = { job_id: string; status: MuseJobStatus; result: MuseResponse | null; progress?: MuseProgressStage }
+
+function parseMuseProgress(progress: unknown): MuseProgressStage | undefined {
+  if (!progress || typeof progress !== 'object') return
+  const { stage } = progress as Record<string, unknown>
+  if (typeof stage === 'string' && Object.prototype.hasOwnProperty.call(museProgressLabels, stage)) return stage as MuseProgressStage
+}
+
+export function museJobProgressLabel(job: MuseJob): string {
+  if (job.status === 'queued') return 'Muse has queued your question…'
+  return job.progress ? museProgressLabels[job.progress] : 'Muse is working on your answer…'
+}
+export type PendingMuseJob = {
+  requestId: string
+  jobId?: string
+  priorJobId?: string
+  startedAt: number
+  chatId: string
+  message: string
+  question: string
+}
+
+export class MuseJobError extends Error {
+  readonly retryable: boolean
+  constructor(message: string, retryable: boolean) {
+    super(message)
+    this.retryable = retryable
+  }
+}
+
+const jobIdPattern = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i
+
+export async function requestMuseJob(
+  config: ShopConnection, pending: PendingMuseJob, signal: AbortSignal, fetcher: typeof fetch = fetch,
+): Promise<MuseJob> {
+  const configError = shopConfigurationError(config)
+  if (configError) throw new MuseJobError(configError, false)
+  const question = pending.question.trim()
+  if (!question || question.length > 1000 || !jobIdPattern.test(pending.requestId) ||
+      (pending.jobId && !jobIdPattern.test(pending.jobId)) ||
+      (pending.priorJobId && !jobIdPattern.test(pending.priorJobId))) {
+    throw new MuseJobError('Muse could not accept this question. Check it and try again.', false)
+  }
+  const shopId = config.shopId.trim()
+  const headers: Record<string, string> = { Accept: 'application/json', 'X-Shop-ID': shopId }
+  const timeout = AbortSignal.timeout(8000)
+  const url = `${config.baseUrl.trim().replace(/\/$/, '')}/api/v1/shops/${encodeURIComponent(shopId)}/muse/jobs`
+  try {
+    if (!pending.jobId) {
+      headers['Content-Type'] = 'application/json'
+      headers['Idempotency-Key'] = pending.requestId
+    }
+    const response = await fetcher(pending.jobId ? `${url}/${pending.jobId}` : url, {
+      method: pending.jobId ? 'GET' : 'POST',
+      headers,
+      body: pending.jobId ? undefined : JSON.stringify({ question, prior_job_id: pending.priorJobId }),
+      signal: AbortSignal.any([signal, timeout]),
+      cache: 'no-store',
+    })
+    if (!response.ok) {
+      const message = response.status === 404
+        ? pending.jobId ? 'Muse could not find the saved request.' : 'Ask Muse jobs are unavailable on this backend, or the shop was not found.'
+        : response.status === 403 ? 'The shop connection was rejected. Check your Shop ID.'
+        : response.status === 422 ? 'Muse could not accept this question. Check it and try again.'
+        : response.status === 409 ? 'Muse could not match the saved request.'
+        : 'Muse is temporarily unavailable.'
+      throw new MuseJobError(message, response.status >= 500 || [408, 425, 429].includes(response.status))
+    }
+    const data = await response.json()
+    if (typeof data?.job_id !== 'string' || !jobIdPattern.test(data.job_id) ||
+      (pending.jobId && pending.jobId !== data.job_id) ||
+      !['queued', 'running', 'succeeded', 'failed', 'expired'].includes(data.status)) {
+      throw new Error('Invalid Muse job')
+    }
+    const progress = parseMuseProgress(data.progress)
+    return {
+      job_id: data.job_id, status: data.status,
+      result: data.status === 'succeeded' ? parseMuseResponse(data.result) : null,
+      ...(progress ? { progress } : {}),
+    }
+  } catch (error) {
+    if (signal.aborted || error instanceof MuseJobError) throw error
+    const message = timeout.aborted || error instanceof TypeError
+      ? 'Could not reach Muse. Check your connection.'
+      : 'Muse returned an unreadable response.'
+    throw new MuseJobError(message, true)
   }
 }

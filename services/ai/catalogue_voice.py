@@ -160,6 +160,19 @@ def _aliases(product: Mapping[str, str]) -> set[tuple[str, ...]]:
     return {tuple(re.findall(r"[a-z0-9]+", value.lower())) for value in values if value}
 
 
+def catalogue_clarification_candidates(fragment, catalogue):
+    heard = tuple(re.findall(r"[a-z0-9]+", fragment.lower()))
+    if len(heard) != 1 or len(heard[0]) < 4:
+        return []
+    word = heard[0]
+    return [
+        product_id for product_id, product in catalogue.items()
+        if any(len(alias) == 1 and len(alias[0]) >= 4
+               and (alias[0].startswith(word) or SequenceMatcher(None, word, alias[0]).ratio() >= 0.75)
+               for alias in _aliases(product))
+    ]
+
+
 def _local_resolution(segments: list[dict[str, Any]], catalogue: Mapping[str, Mapping[str, str]],
                       transcript: str) -> CatalogueVoiceResolution | None:
     """Exact unique alias + bounded observed tail, always ask spoken approval.
@@ -246,14 +259,22 @@ def _retained_clarification(segments, catalogue, *, provider_called, source, rea
             retained.append(line)
             used.add(line.product_id)
         else:
+            if target is None and line is None and segment["quantity"] and source == "muse_catalogue" and reason == "product_not_found":
+                candidates = catalogue_clarification_candidates(segment["heard"], catalogue)
+                if len(candidates) == 1 and candidates[0] not in used:
+                    target = candidates[0]
             pending.append(CataloguePendingItem(segment['segment_id'], segment['heard'][:500], segment['quantity'], target))
-    if not pending or (not retained and len(segments) == 1):
+    if not pending or (not retained and len(segments) == 1 and not (
+        pending[0].quantity and source == "muse_catalogue" and reason == "product_not_found"
+    )):
         return None
     active = pending[0]
     name = catalogue[active.product_id]['name'] if active.product_id in catalogue else None
     question = f"How many {name}? Say just the quantity." if name else f"I kept {len(retained)} understood item(s). What product did you mean by '{active.heard}'? Say only this item" + (" and its quantity." if active.quantity is None else f"; I heard quantity {active.quantity}.")
+    if name and active.quantity:
+        question = f"Did you mean {active.quantity} {name}? Say Yes, or say the product name."
     return CatalogueVoiceResolution('needs_clarification', question=question, provider_called=provider_called, source=source,
-                                    reason='missing_quantity' if name else reason, clarification_product_id=active.product_id,
+                                    reason='confirm_product' if name and active.quantity else 'missing_quantity' if name else reason, clarification_product_id=active.product_id,
                                     retained_lines=tuple(retained), pending_items=tuple(pending))
 
 
@@ -302,7 +323,11 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
             "Proposal only, never execute. JSON exactly {segments:[{segment_id,product_id,quantity,resolution}]}. "
             "Return every segment once. Preserve segment_id and quantity exactly, including null. "
             "product_id must be a catalogue ID or null; resolution matched|uncertain|unknown|ambiguous. "
-            "Unrelated, extra unknown, or multiple implied products => null/unknown or ambiguous. "
+            "When one segment contains multiple clearly named products in order, you may add split: "
+            "[{product_id,heard}] to that segment. Use null product_id and ambiguous resolution on the parent. "
+            "Each heard phrase must be copied from the transcript; together they must cover the entire segment. "
+            "The application will carry the spoken quantity to the first item and ask for the others. "
+            "If the split is uncertain or there are extra unknown words, return ambiguous without split. "
             "Never invent/drop items, quantities, prices, tender, or fields. No prose."
         ),
         untrusted_input=transcript,
@@ -334,7 +359,7 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
             raise ValueError("incomplete item coverage")
         indexed = {}
         for proposal in proposals:
-            if not isinstance(proposal, Mapping) or set(proposal) != {"segment_id", "product_id", "quantity", "resolution"}:
+            if not isinstance(proposal, Mapping) or set(proposal) - {"split"} != {"segment_id", "product_id", "quantity", "resolution"}:
                 raise ValueError("invalid proposal keys")
             slot = proposal["segment_id"]
             if type(slot) is not int or slot < 0 or slot >= len(segments) or slot in indexed:
@@ -346,6 +371,41 @@ def resolve_catalogue_voice(transcript: str, products: Sequence[Mapping[str, Any
             if proposal["resolution"] not in {"matched", "uncertain", "unknown", "ambiguous"}:
                 raise ValueError("invalid resolution")
             indexed[slot] = proposal
+        if any("split" in proposal for proposal in indexed.values()):
+            expanded = []
+            split_matches = {}
+            for slot, segment in enumerate(segments):
+                proposal = indexed[slot]
+                if "split" not in proposal:
+                    expanded.append({**segment, "segment_id": len(expanded)})
+                    continue
+                parts = proposal["split"]
+                if proposal["resolution"] != "ambiguous" or proposal["product_id"] is not None or not isinstance(parts, list) or not 2 <= len(parts) <= 8:
+                    raise ValueError("invalid split")
+                spoken = []
+                used = set()
+                for index, part in enumerate(parts):
+                    if not isinstance(part, Mapping) or set(part) != {"product_id", "heard"}:
+                        raise ValueError("invalid split item")
+                    product_id, heard = part["product_id"], part["heard"]
+                    if not isinstance(product_id, str) or product_id not in catalogue or product_id in used or not isinstance(heard, str):
+                        raise ValueError("invalid split product")
+                    words = tuple(re.findall(r"[a-z0-9]+", heard.lower()))
+                    matches = [key for key, product in catalogue.items() if words in _aliases(product)]
+                    if matches != [product_id]:
+                        raise ValueError("split phrase is not a unique catalogue alias")
+                    spoken.extend(words)
+                    used.add(product_id)
+                    child = len(expanded)
+                    expanded.append({"segment_id": child, "heard": heard, "quantity": segment["quantity"] if index == 0 else None})
+                    split_matches[child] = product_id
+                if spoken != re.findall(r"[a-z0-9]+", segment["heard"].lower()):
+                    raise ValueError("split changed spoken words")
+            partial = _retained_clarification(expanded, catalogue, provider_called=True, source="muse_catalogue",
+                                              reason="missing_quantity", validated=split_matches)
+            if partial is None:
+                raise ValueError("split did not yield a focused clarification")
+            return partial
         validated = {}
         for slot, segment in enumerate(segments):
             proposal = indexed[slot]

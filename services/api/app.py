@@ -231,6 +231,7 @@ class ErrorResponse(ApiModel):
 
 class MuseAskRequest(ApiModel):
     question: str = Field(min_length=1, max_length=1000)
+    prior_job_id: UUID | None = None
 
     @field_validator("question")
     @classmethod
@@ -249,6 +250,9 @@ class MuseAskResponse(ApiModel):
     missing_data: list[str]
     source: str
     confidence: float = Field(ge=0, le=1)
+
+    sections: list[dict] = Field(default_factory=list)
+    document: dict | None = None
 
 
 @dataclass
@@ -541,6 +545,8 @@ def create_app(
     app.state.invoice_ai = invoice_ai
     app.state.voice_catalogue_resolver = voice_catalogue_resolver
     app.state.paper_extractor = paper_extractor
+    from services.api.muse_jobs import MuseJobs
+    muse_jobs = MuseJobs(getattr(store, "path", None))
     if settings.local_team_enabled:
         try:
             from services.api.local_team import mount_local_team
@@ -555,7 +561,7 @@ def create_app(
             app.state.demo_shop_id = str(store.seed_demo_shop())
     if hasattr(store, "transaction") and hasattr(store, "path"):
         from services.api.sqlite_store import SQLiteTransactionMiddleware
-        app.add_middleware(SQLiteTransactionMiddleware, store=store)
+        app.add_middleware(SQLiteTransactionMiddleware, store=store, lock=muse_jobs.lock)
 
     @app.get("/healthz")
     def healthz() -> dict[str, str]:
@@ -863,15 +869,38 @@ def create_app(
 
     def retained_clarification(record, transcript, retained, pending, source, provider_called=False, input_kind='transcript'):
         active = pending[0]
-        if active.product_id:
+        candidate = active.product_id and active.quantity
+        if candidate:
+            count = "one" if active.quantity == 1 else str(active.quantity)
+            question = f"Did you mean {count} {active.product_name}? Say Yes, or say the product name."
+        elif active.product_id:
             question = f"How many {active.product_name}? Say just the quantity."
+            if retained and source == "muse_catalogue":
+                proposed = ", ".join(f"{line.quantity} {line.product_name}" for line in retained)
+                question = f"I heard {proposed[:650]}. How many {active.product_name}? Say just the quantity."
+
         else:
-            question = f"I kept {len(retained)} understood item(s). What product did you mean by '{active.heard}'? Say only this item"
+            question = f"What product did you mean by '{active.heard}'? Say only this item"
             question += " and its quantity." if not active.quantity else f"; I heard quantity {active.quantity}."
+            if active.quantity:
+                from services.ai.catalogue_voice import catalogue_clarification_candidates
+                catalogue = {product.id: {"name": product.name, "sku": product.sku} for product in record.products.values()}
+                choices = catalogue_clarification_candidates(active.heard, catalogue)
+                if len(choices) == 2:
+                    first, second = (catalogue[key]["name"] for key in choices)
+                    coke = parse_catalogue_sale("one Coke", record.products.values())
+                    if coke and coke[0].product_id in choices:
+                        first, second = ("Coke", second) if coke[0].product_id == choices[0] else ("Coke", first)
+                    if second.lower() == "cookies":
+                        second = "cookies"
+                    count = "one" if active.quantity == 1 else str(active.quantity)
+                    heard = active.heard.rstrip(".!?")
+                    question = f"I heard {count} {heard}. Did you mean {first} or {second}?"
+
         return VoiceResponse(request_id=uuid4(), shop_id=record.shop.id, input_kind=input_kind, status='needs_clarification',
                              transcript=transcript, retained_lines=retained, pending_items=pending, clarification_question=question[:1000],
-                             error=question[:1000], error_code='quantity_required' if active.product_id else 'product_not_found',
-                             clarification_code='missing_quantity' if active.product_id else 'unresolved_item',
+                             error=question[:1000], error_code='quantity_required' if active.product_id and not candidate else 'product_not_found',
+                             clarification_code='confirm_product' if candidate else 'missing_quantity' if active.product_id else 'unresolved_item',
                              clarification_product_id=active.product_id, clarification_product_name=active.product_name,
                              clarification_product_sku=active.product_sku,
                              resolution_source=source, provider_called=provider_called)
@@ -889,6 +918,17 @@ def create_app(
         if re.search(r'\b(?:and|plus)\s*[,;.!?]*$', transcript, re.I):
             return retained_clarification(record, previous.transcript, retained, pending, 'local_clarification')
         quantity = parse_quantity_reply(transcript)
+        candidate = active.product_id and active.quantity
+        answer = transcript.strip().lower().rstrip(".!?")
+        if candidate and answer == "no":
+            pending[0] = active.model_copy(update={"product_id": None, "product_name": None, "product_sku": None})
+            return retained_clarification(record, previous.transcript, retained, pending, "local_clarification")
+        if candidate and (quantity is not None or answer in {"yes", "yes please", "correct"}):
+            quantity = active.quantity if answer in {"yes", "yes please", "correct"} else None
+            if quantity is None:
+                return retained_clarification(record, previous.transcript, retained, pending, "local_clarification")
+        if not active.product_id and answer in {"yes", "yes please", "correct", "no"}:
+            return retained_clarification(record, previous.transcript, retained, pending, "local_clarification")
         if active.product_id and quantity is not None:
             product = record.products.get(active.product_id)
             if product is None:
@@ -910,7 +950,7 @@ def create_app(
                 reply = resolve_catalogue_response(focused, record, 'transcript')
                 reply_lines = reply.lines
                 source, called = reply.resolution_source, reply.provider_called
-                if not reply_lines and reply.clarification_product_id:
+                if not reply_lines and reply.clarification_code == 'missing_quantity' and reply.clarification_product_id:
                     pending[0] = active.model_copy(update={'heard': focused[:500], 'product_id': reply.clarification_product_id, 'product_name': reply.clarification_product_name, 'product_sku': reply.clarification_product_sku, 'quantity': None})
         if len(reply_lines or []) != 1:
             return retained_clarification(record, previous.transcript, retained, pending, source, called)
@@ -1046,7 +1086,7 @@ def create_app(
         review = record.voice_reviews.get(request.review_id)
         if review is None or review.status not in {"needs_confirmation", "needs_match_confirmation"}:
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="voice review is missing or already committed")
-        if review.requires_match_confirmation and not request.match_confirmed:
+        if review.requires_match_confirmation and not request.match_confirmed and request.tender is not None:
             raise HTTPException(status_code=409, detail={"code": "match_confirmation_required", "question": review.clarification_question or "Please confirm the proposed catalogue products before payment."})
         expected = [(line.product_id, line.quantity) for line in review.lines]
         actual = [(line.product_id, line.quantity) for line in request.lines]
@@ -1876,8 +1916,43 @@ def create_app(
         record.day_close_idempotency[key] = (fingerprint, item)
         return item
 
+    @app.post("/api/v1/shops/{shop_id}/muse/jobs", status_code=202)
+    async def submit_muse_job(
+        request: MuseAskRequest,
+        record: _ShopRecord = Depends(shop_scope),
+        idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    ):
+        return muse_jobs.submit(str(record.shop.id), idempotency_key, request)
+
+    @app.get("/api/v1/shops/{shop_id}/muse/jobs/{job_id}")
+    async def read_muse_job(job_id: UUID, record: _ShopRecord = Depends(shop_scope)):
+        return muse_jobs.read(str(record.shop.id), str(job_id))
+
+    def muse_data_scope(record: _ShopRecord) -> str:
+        from .seed_sample_history import SAMPLE_SHOP_ID
+        return "sample" if record.shop.id == SAMPLE_SHOP_ID else "connected_shop"
+
+    def label_muse_result(answer: MuseAskResponse, record: _ShopRecord) -> MuseAskResponse:
+        if muse_data_scope(record) != "sample":
+            return answer
+        label = "Sample shop — this analysis uses demo records, which can include generated transactions."
+        update = {"answer": label + "\n\n" + answer.answer}
+        if answer.document:
+            update["document"] = {
+                **answer.document,
+                "title": "Sample shop — " + answer.document["title"],
+                "sections": [
+                    {"title": "Data provenance", "body": label, "evidence_ids": []},
+                    *answer.document["sections"],
+                ],
+            }
+        return answer.model_copy(update=update)
+
     @app.post("/api/v1/shops/{shop_id}/muse", response_model=MuseAskResponse)
     def ask_muse_endpoint(request: MuseAskRequest, record: _ShopRecord = Depends(shop_scope)) -> MuseAskResponse:
+        return label_muse_result(legacy_muse_answer(request, record), record)
+
+    def legacy_muse_answer(request: MuseAskRequest, record: _ShopRecord) -> MuseAskResponse:
         from .business_planning import completed_months, planning_snapshot, requested_month
 
         question = request.question
@@ -1902,15 +1977,17 @@ def create_app(
                     return "inventory" in requested
                 if key.endswith("-projection"):
                     return "forecast" in requested
-                if key == "expected-cash-today":
+                if key in {"expected-cash-today", "estimated-cash-today"}:
                     return "cash" in requested
                 return "sales" in requested or key == "assumed-repayment-budget"
 
             filtered = tuple(item for item in evidence if selected(item))
             # The validated insight format requires an evidence ID, even for a clarification.
             evidence = filtered or (Evidence("shop-currency", "connected shop context", 1, record.shop.currency, str(today)),)
-            facts = [fact for fact in facts if "set-aside assumption" in fact]
+            facts = [fact for fact in facts if "set-aside assumption" in fact or
+                     ("cash" in requested and fact.startswith("Estimated drawer cash today:"))]
         context = {
+            "data_scope": muse_data_scope(record),
             "currency": record.shop.currency,
             "timezone": record.shop.timezone,
             "requested_data": plan.get("sources", []),
@@ -1954,6 +2031,49 @@ def create_app(
             status="unavailable", answer=result.value.summary, title=result.value.title,
             evidence_ids=[], missing_data=[], source="fallback", confidence=0.0,
         )
+
+    def investigate_muse_job(request: MuseAskRequest, record: _ShopRecord) -> MuseAskResponse:
+        return label_muse_result(investigate_muse_job_unlabelled(request, record), record)
+
+    def investigate_muse_job_unlabelled(request: MuseAskRequest, record: _ShopRecord) -> MuseAskResponse:
+        from .sales_answers import repository_sales_answer
+        from .muse_tools import toolset
+        from .muse_jobs import muse_previous_result, report_muse_progress
+        from services.ai.investigation import investigate
+
+        question = request.question
+        if not question.startswith("Recent conversation:"):
+            simple = repository_sales_answer(question, record)
+            if simple is not None:
+                return MuseAskResponse(**simple)
+        ai = app.state.muse_ai or build_muse_ai(http_timeout_seconds=35.0, timeout_seconds=35.0)
+        if not isinstance(ai, StructuredAI):
+            return legacy_muse_answer(request, record)
+        context = {"currency": record.shop.currency, "data_scope": muse_data_scope(record),
+                   "shop_today": datetime.now(ZoneInfo(record.shop.timezone)).date().isoformat()}
+        previous = muse_previous_result()
+        if previous:
+            context["previous_investigation_untrusted"] = previous
+        result = investigate(ai, question, toolset(record), context, progress=report_muse_progress)
+        if result is not None:
+            sections = result["sections"]
+            document = None
+            if sections and not result["partial"] and result.get("document_type") == "business_plan":
+                document = {"title": result["title"], "sections": sections}
+            return MuseAskResponse(
+                status="needs_data" if result["partial"] else "answered",
+                answer=result["answer"], title=result["title"], evidence_ids=result["evidence_ids"],
+                sections=sections, document=document, missing_data=[], source="meta", confidence=0.0,
+            )
+        fallback = repository_muse_answer(request, record)
+        if fallback is not None:
+            return fallback
+        return MuseAskResponse(
+            status="unavailable", answer="Muse couldn't complete the investigation. Please try again.",
+            title="Investigation unavailable", evidence_ids=[], missing_data=[], source="fallback", confidence=0,
+        )
+
+    app.router.lifespan_context = muse_jobs.lifespan(store, MuseAskRequest, investigate_muse_job)
 
     def repository_muse_answer(request: MuseAskRequest, record: _ShopRecord) -> MuseAskResponse | None:
         """Prepare optional verified figures and a fallback for supported questions."""

@@ -17,7 +17,7 @@ def test_quantity_reply_never_infers_or_truncates(heard):
     assert parse_quantity_reply(heard) is None
 
 
-@pytest.mark.parametrize("heard,qualified", [("putado chips naples", True), ("unicorn chips", False), ("chips and unicorn", False)])
+@pytest.mark.parametrize("heard,qualified", [("putado chips naples", True), ("unicorn chips", False)])
 def test_model_target_qualification_does_not_rely_on_one_similar_word(heard, qualified):
     class Provider:
         def complete(self, query):
@@ -26,3 +26,18 @@ def test_model_target_qualification_does_not_rely_on_one_similar_word(heard, qua
     result = resolve_catalogue_voice(heard, CHIPS, provider=Provider(), allow_local_proposals=False)
     assert result.lines == ()
     assert (result.clarification_product_id == "chips") is qualified
+
+
+def test_distinct_unknown_item_stays_pending_alongside_grounded_chips():
+    class Provider:
+        def complete(self, query):
+            return {"segments": [{"segment_id": item["segment_id"], "product_id": "chips", "quantity": item["quantity"], "resolution": "uncertain"} for item in query.trusted_context["segments"]]}
+
+    result = resolve_catalogue_voice("chips and unicorn", CHIPS, provider=Provider(), allow_local_proposals=False)
+    assert result.status == "needs_clarification"
+    assert result.lines == ()
+    assert result.clarification_product_id == "chips"
+    assert [(item.heard, item.product_id, item.quantity) for item in result.pending_items] == [
+        ("chips", "chips", None),
+        ("unicorn", None, None),
+    ]

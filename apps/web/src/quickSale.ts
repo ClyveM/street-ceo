@@ -178,11 +178,12 @@ export function createQuickSaleClient(getConfig: () => { baseUrl: string; shopId
       return parseVoiceReview(value, shopId)
     },
     async commit(review: VoiceReview, answer: TenderAnswer | null, key: string, signal?: AbortSignal): Promise<TenderQuestion | { kind: 'sale'; sale: QuickReceipt }> {
-      if (!review.canCommit || review.shopId !== getConfig().shopId) throw new QuickSaleError('This basket is not a verified sale review for the connected shop.')
-      if (review.requiresMatchConfirmation && !review.matchConfirmed) throw new QuickSaleError('Say Yes to confirm the proposed catalogue products before payment.')
+      const isProposal = review.status === 'needs_match_confirmation' && review.requiresMatchConfirmation && review.lines.length > 0
+      if ((!review.canCommit && !isProposal) || review.shopId !== getConfig().shopId) throw new QuickSaleError('This basket is not a verified sale review for the connected shop.')
+      if (answer && isProposal && !review.matchConfirmed) throw new QuickSaleError('Say Yes to confirm the proposed catalogue products before payment.')
       if (answer != null && (!record(answer) || !['cash', 'bank'].includes(String(answer.tender)) || answer.amount_received_cents != null && !minor(answer.amount_received_cents))) throw new QuickSaleError('Payment must be Cash or Bank with a non-negative whole number of cents. No payment request was sent.')
       const mayCommit = answer?.tender === 'bank' || answer?.tender === 'cash' && minor(answer.amount_received_cents)
-      const { value } = await call('/commit', { review_id: review.reviewId, lines: review.lines.map(({ product_id, quantity }) => ({ product_id, quantity })), ...(review.requiresMatchConfirmation ? { match_confirmed: true } : {}), ...answer }, key, signal, mayCommit)
+      const { value } = await call('/commit', { review_id: review.reviewId, lines: review.lines.map(({ product_id, quantity }) => ({ product_id, quantity })), ...(isProposal && review.matchConfirmed ? { match_confirmed: true } : {}), ...answer }, key, signal, mayCommit)
       if (record(value) && value.status === 'needs_tender') {
         if (value.review_id !== review.reviewId || !text(value.question) || !minor(value.amount_due_cents) || !Array.isArray(value.allowed_tenders) || value.allowed_tenders.some((item) => !['cash', 'bank'].includes(String(item))) || !Array.isArray(value.missing) || value.missing.some((item) => typeof item !== 'string')) throw new QuickSaleError('The payment question could not be verified. No sale receipt was received.', mayCommit, 'payment_question_response')
         return { ...value, kind: 'question' } as unknown as TenderQuestion

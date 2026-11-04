@@ -10,6 +10,13 @@ $ErrorActionPreference = 'Stop'
 $Repository = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $DataDirectory = Join-Path $Repository 'data'
 $Database = Join-Path $DataDirectory 'demo-mvp.sqlite3'
+if ($env:STREET_CEO_SQLITE_PATH) {
+    $Database = $env:STREET_CEO_SQLITE_PATH
+    if (-not [System.IO.Path]::IsPathRooted($Database)) {
+        $Database = Join-Path $Repository $Database
+    }
+    $Database = [System.IO.Path]::GetFullPath($Database)
+}
 $TraceDatabase = Join-Path $DataDirectory 'muse-traces.sqlite3'
 $StateFile = Join-Path $DataDirectory 'demo-launcher-state.json'
 $Apk = Join-Path $Repository 'apps\android\android\app\build\outputs\apk\debug\app-debug.apk'

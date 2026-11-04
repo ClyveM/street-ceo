@@ -26,6 +26,8 @@ class ProviderRequest:
     untrusted_input: str
     trusted_context: Mapping[str, Any]
     output_schema: Mapping[str, Any]
+    native_tools: Mapping[str, Any] | None = None
+    tool_messages: Sequence[Mapping[str, Any]] = ()
 
 
 @dataclass(frozen=True)
@@ -813,6 +815,7 @@ class StructuredAI:
             system_instruction=(
                 "Return one structured insight only. Use only supplied evidence IDs and values. "
                 "Do not invent facts, prices, accounting treatment, or actions that post data. "
+                "If shop data_scope is sample, identify the records as demo data in your answer. "
                 "Report money in the supplied currency with two decimal places. Do not reinterpret its scale. "
                 "Act as a shop assistant. Continue from the recent user turns and answer in the language of the latest user message. Use English for English messages and Shona for Shona messages. Avoid mixing languages unless requested. "
                 "Use the requested report period and verified calculations as given. Never ask for figures already supplied in shop evidence. Distinguish recorded sales, gross profit and available cash. "
