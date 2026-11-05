@@ -21,7 +21,20 @@ function global:New-Item { throw 'Dry run attempted to create a directory' }
 function global:Set-Content { throw 'Dry run attempted to write a file' }
 function global:Invoke-RestMethod { throw 'Synthetic service unavailable' }
 function global:netstat.exe { $global:LASTEXITCODE=0; 'Active Connections'; 'Proto Local Address Foreign Address State PID' }
-""" + inventory + "\n& '" + str(SCRIPT).replace("'", "''") + "' " + ("-CheckOnly " if check_only else "") + "-LanAddress 192.168.10.213 " + ("-ServeApk " if serve_apk else "") + "| ConvertTo-Json -Compress"
+""" + inventory
+        script_path = str(SCRIPT).replace("'", "''")
+        flags = "-CheckOnly " if check_only else ""
+        flags += "-LanAddress 192.168.10.213 "
+        flags += "-ServeApk " if serve_apk else ""
+        # Use the exception message before PowerShell renders and wraps its error record.
+        command += f"""
+try {{
+    & '{script_path}' {flags}| ConvertTo-Json -Compress
+}} catch {{
+    [Console]::Error.WriteLine($_.Exception.Message)
+    exit 1
+}}
+"""
         encoded = base64.b64encode(command.encode("utf-16-le")).decode("ascii")
         return subprocess.run([SHELL, "-NoProfile", "-NonInteractive", "-EncodedCommand", encoded],
                               capture_output=True, text=True, timeout=20)
